@@ -47,7 +47,12 @@ The C member is an array, and these lack value semantics. Therefore `a` and `b` 
 
 ## What the analyser does
 
-It scans your records, and reports any members that don't have value semantics. It also scans into any nested stucts and tuples.
+It scans your records, and reports any members that don't have value semantics. It also scans into any nested stucts and tuples. In the above example, it would cause a warning on the C field:
+
+```
+record TestRecord(int A, string B, IReadOnlyList<int> C);
+                                   ~~~~~~~~~~~~~~~~~~~~  JSV01: member lacks value semantics
+```
 
 It was built for C# 11 and .NET 7. It checks `record class` and `record struct` types for the following:
 
