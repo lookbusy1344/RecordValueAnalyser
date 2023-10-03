@@ -1,5 +1,7 @@
 # Value-Semantics Analyser for C# Records
 
+[![CodeQL](https://github.com/lookbusy1344/RecordValueAnalyser/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/lookbusy1344/RecordValueAnalyser/actions/workflows/github-code-scanning/codeql)
+
 This project is a C# Roslyn code analyser to check records for correct value semantics.
 
 ## Why?
