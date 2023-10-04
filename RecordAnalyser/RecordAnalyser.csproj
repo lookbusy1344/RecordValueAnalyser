@@ -13,6 +13,12 @@
 		<LangVersion>preview</LangVersion>
 		<Nullable>enable</Nullable>
 		<EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+		
+		<PackageId>lookbusy1344.RecordValueAnalyser</PackageId>
+		<Authors>lookbusy1344</Authors>
+		<Company>lookbusy1344</Company>
+		<PackageTags>Roslyn;CodeAnalysis;Analyzers;ValueSemantics;Semantics;IEquatable</PackageTags>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 	</PropertyGroup>
 
 	<PropertyGroup>
