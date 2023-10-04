@@ -2,6 +2,8 @@
 
 This project is a C# Roslyn code analyser to check records for correct value semantics.
 
+https://github.com/lookbusy1344/RecordValueAnalyser
+
 ## Why?
 
 Records are a feature in modern C#. They are intended to be used for immutable data with value semantics. This means that two instances of the same record type should be considered equal if all their members are equal. This is the same as the behaviour of `struct` and tuple types.
@@ -74,16 +76,6 @@ It can produce 4 warnings:
 - JSV02 - a record propery fails
 - JSV03 - a record field fails
 - JSV04 - a nested tuple or struct fails
-
-## Usage
-
-In your csproj file, make sure you reference the assembly.
-
-```
-<ProjectReference Include="Path\To\RecordAnalyser.csproj" OutputItemType="Analyzer" 
-    ReferenceOutputAssembly="false" />
-
-```
 
 ## Examples
 

@@ -79,7 +79,15 @@ It can produce 4 warnings:
 
 ## Usage
 
-In your csproj file, make sure you reference the assembly. It is not currently on nuget.
+https://www.nuget.org/packages/lookbusy1344.RecordValueAnalyser
+
+```
+<PackageReference Include="lookbusy1344.RecordValueAnalyser">
+	<PrivateAssets>all</PrivateAssets>
+</PackageReference>
+```
+
+..or from source, edit your csproj file:
 
 ```
 <ProjectReference Include="Path\To\RecordAnalyser.csproj" OutputItemType="Analyzer" 
