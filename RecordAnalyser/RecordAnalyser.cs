@@ -30,8 +30,7 @@ public class RecordAnalyzer : DiagnosticAnalyzer
 		context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
 		context.EnableConcurrentExecution();
 
-		context.RegisterSyntaxNodeAction(AnalyzeRecordDeclaration, SyntaxKind.RecordDeclaration);
-		context.RegisterSyntaxNodeAction(AnalyzeRecordDeclaration, SyntaxKind.RecordStructDeclaration);
+		context.RegisterSyntaxNodeAction(AnalyzeRecordDeclaration, SyntaxKind.RecordDeclaration, SyntaxKind.RecordStructDeclaration);
 	}
 
 	private static void AnalyzeRecordDeclaration(SyntaxNodeAnalysisContext context)
