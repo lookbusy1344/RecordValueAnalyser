@@ -79,13 +79,24 @@ It can produce 4 warnings:
 
 ## Usage
 
-Check out the repo, and link to it in your csproj file:
+https://www.nuget.org/packages/lookbusy1344.RecordValueAnalyser
+
+```
+<PackageReference Include="lookbusy1344.RecordValueAnalyser" Version="0.9.5">
+	<PrivateAssets>all</PrivateAssets>
+	<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+</PackageReference>
+```
+
+..or from source, edit your csproj file:
 
 ```
 <ProjectReference Include="Path\To\RecordAnalyser.csproj" OutputItemType="Analyzer" 
     ReferenceOutputAssembly="false" />
 
 ```
+
+Thanks to Thomas for helping with nuget packaging. https://github.com/elmahio/CronExpressions
 
 ## Examples
 

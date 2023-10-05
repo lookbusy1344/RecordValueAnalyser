@@ -7,8 +7,8 @@
 </Target>
 
 	<PropertyGroup>
-		<Version>0.9.4.2</Version> 
-		<PackageVersion>0.9.4.2</PackageVersion>
+		<Version>0.9.5.0</Version> 
+		<PackageVersion>0.9.5.0</PackageVersion>
 		<InformationalVersion>$(SourceRevisionId)</InformationalVersion> 
 		<TargetFramework>netstandard2.0</TargetFramework>
 		<LangVersion>preview</LangVersion>
