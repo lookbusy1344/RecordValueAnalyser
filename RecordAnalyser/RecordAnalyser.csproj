@@ -7,8 +7,8 @@
 </Target>
 
 	<PropertyGroup>
-		<Version>0.9.5.0</Version> 
-		<PackageVersion>0.9.5.0</PackageVersion>
+		<Version>0.9.6.0</Version> 
+		<PackageVersion>0.9.6.0</PackageVersion>
 		<InformationalVersion>$(SourceRevisionId)</InformationalVersion> 
 		<TargetFramework>netstandard2.0</TargetFramework>
 		<LangVersion>preview</LangVersion>
@@ -48,17 +48,11 @@
 
 	<ItemGroup>
 	  <None Include="README.md" Pack="true" PackagePath="." />
+	  <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
 	</ItemGroup>
-	
+		
 	<ItemGroup>
-		<None Update="tools\*.ps1" CopyToOutputDirectory="Always" Pack="true" PackagePath="" />
-		<None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
-	</ItemGroup>
-	
-	<ItemGroup>		
-		<PackageReference Include="Microsoft.CodeAnalysis.Common" Version="4.7.0" />
-		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.7.0" />
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.7.0" PrivateAssets="all" />
 		<PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.4" PrivateAssets="all" />
-		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.7.0" />
 	</ItemGroup>
 </Project>
