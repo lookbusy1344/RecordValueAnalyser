@@ -7,7 +7,8 @@
 </Target>
 
 	<PropertyGroup>
-		<Version>0.9.3.0</Version> 
+		<Version>0.9.4.0</Version> 
+		<PackageVersion>0.9.4.0</PackageVersion>
 		<InformationalVersion>$(SourceRevisionId)</InformationalVersion> 
 		<TargetFramework>netstandard2.0</TargetFramework>
 		<LangVersion>preview</LangVersion>
@@ -15,18 +16,22 @@
 		<EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
 		
 		<PackageId>lookbusy1344.RecordValueAnalyser</PackageId>
+		<AssemblyName>lookbusy1344.RecordValueAnalyser</AssemblyName>
 		<Description>Analyser to check if records have value semantics</Description>
 		<Authors>lookbusy1344</Authors>
 		<Company>lookbusy1344</Company>
 		<PackageTags>Roslyn;CodeAnalysis;Analyzers;ValueSemantics;Semantics;IEquatable</PackageTags>
 		<PackageProjectUrl>https://github.com/lookbusy1344/RecordValueAnalyser</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/lookbusy1344/RecordValueAnalyser</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
-		
-		<developmentDependency>true</developmentDependency>
-		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-		<IncludeBuildOutput>false</IncludeBuildOutput>
+		<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
 		<NoPackageAnalysis>true</NoPackageAnalysis>
+		<GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
+		<GenerateAssemblyDescriptionAttribute>false</GenerateAssemblyDescriptionAttribute>
+		<GenerateAssemblyCopyrightAttribute>false</GenerateAssemblyCopyrightAttribute>
+		<DevelopmentDependency>true</DevelopmentDependency>
 		
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 	</PropertyGroup>
