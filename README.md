@@ -83,6 +83,12 @@ It works in Visual Studio 2022 and Visual Studio Code, and also on the command l
 
 - JSV01 - a record member lacks value semantics eg `record Test(IList<int> Fail)`
 
+## Testing
+
+[![Test](https://github.com/lookbusy1344/RecordValueAnalyser/actions/workflows/test.yml/badge.svg)](https://github.com/lookbusy1344/RecordValueAnalyser/actions/workflows/test.yml)
+
+Tests are in `RecordValueAnalyser.Test`. They are run in the CI pipeline.
+
 ## Usage
 
 https://www.nuget.org/packages/lookbusy1344.RecordValueAnalyser
