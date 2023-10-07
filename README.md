@@ -2,9 +2,18 @@
 
 [![CodeQL](https://github.com/lookbusy1344/RecordValueAnalyser/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/lookbusy1344/RecordValueAnalyser/actions/workflows/github-code-scanning/codeql)
 
-This project is a C# Roslyn code analyser to check records for correct value semantics.
+## TL;DR
+
+Equality checks on .NET records don’t always work properly. This analyser reports when. For example:
+
+```
+record TestRecord(int A, string B, IReadOnlyList<int> C);
+                                   ~~~~~~~~~~~~~~~~~~~~  JSV01: member lacks value semantics
+```
 
 ## Why?
+
+This project is a C# Roslyn code analyser to check records for correct value semantics.
 
 Records are a feature in modern C#. They are intended to be used for immutable data with value semantics. This means that two instances of the same record type should be considered equal if all their members are equal. This is the same as the behaviour of `struct` and tuple types.
 

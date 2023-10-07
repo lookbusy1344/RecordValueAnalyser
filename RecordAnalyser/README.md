@@ -1,6 +1,17 @@
 # Value-Semantics Analyser for C# Records
 
-This project is a C# Roslyn code analyser to check records for correct value semantics.
+## TL;DR
+
+Equality checks on .NET records don’t always work properly. This analyser reports when. For example:
+
+```
+record TestRecord(int A, string B, IReadOnlyList<int> C);
+                                   ~~~~~~~~~~~~~~~~~~~~  JSV01: member lacks value semantics
+```
+
+## Repository
+
+This project is a C# Roslyn code analyser to check records for correct value semantics. Source code is available here:
 
 https://github.com/lookbusy1344/RecordValueAnalyser
 
