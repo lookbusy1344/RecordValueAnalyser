@@ -10,7 +10,7 @@ internal static class Program
 	{
 		var tester = new RecordValueAnalyserUnitTest();
 
-		await tester.ValueTypesOnlyTest();
-		await tester.ReadOnlyListTest();
+		await tester.ValueTypesOnly();
+		await tester.ReadOnlyList();
 	}
 }
