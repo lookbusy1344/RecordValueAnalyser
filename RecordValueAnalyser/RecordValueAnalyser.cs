@@ -4,26 +4,18 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using System.Collections.Immutable;
 
-namespace JS_RecordAnalyser;
+namespace RecordValueAnalyser;
 
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
-public class RecordAnalyzer : DiagnosticAnalyzer
+public class RecordValueAnalyser : DiagnosticAnalyzer
 {
-	private static readonly DiagnosticDescriptor ParamValueSemanticsRule = new("JSV01", "Parameter semantics warning",
+	public const string DiagnosticId = "JSV01";
+
+	private static readonly DiagnosticDescriptor ParamValueSemanticsRule = new(DiagnosticId, "Value semantics warning",
 		"Member '{0}' does not have value semantics", "Design", DiagnosticSeverity.Warning, isEnabledByDefault: true,
 		description: "Member '{0}' does not have value semantics.");
-	private static readonly DiagnosticDescriptor PropertyValueSemanticsRule = new("JSV02", "Property semantics warning",
-		"Property '{0}' does not have value semantics", "Design", DiagnosticSeverity.Warning, isEnabledByDefault: true,
-		description: "Property '{0}' does not have value semantics.");
-	private static readonly DiagnosticDescriptor FieldValueSemanticsRule = new("JSV03", "Field semantics warning",
-		"Field '{0}' does not have value semantics", "Design", DiagnosticSeverity.Warning, isEnabledByDefault: true,
-		description: "Field '{0}' does not have value semantics.");
-	private static readonly DiagnosticDescriptor NestedValueSemanticsRule = new("JSV04", "Nested semantics warning",
-		"Nested '{0}' does not have value semantics", "Design", DiagnosticSeverity.Warning, isEnabledByDefault: true,
-		description: "Nested '{0}' does not have value semantics.");
 
-	public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(ParamValueSemanticsRule, PropertyValueSemanticsRule,
-		FieldValueSemanticsRule, NestedValueSemanticsRule);
+	public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(ParamValueSemanticsRule);
 
 	public override void Initialize(AnalysisContext context)
 	{
@@ -58,17 +50,16 @@ public class RecordAnalyzer : DiagnosticAnalyzer
 				// otherwise, we have a problem. show a diagnostic
 				var typestr = type?.ToDisplayString(NullableFlowState.None) ?? "";
 				var memberstr = recparam.Identifier.ValueText;
-				var rule = (result == ValueEqualityResult.NestedFailed) ? NestedValueSemanticsRule : ParamValueSemanticsRule;
 				var args = errormember == null ? $"{typestr} {memberstr}" : $"{typestr} {memberstr} ({errormember})";
 
-				var diagnostic = Diagnostic.Create(rule, recparam.GetLocation(), args);
+				var diagnostic = Diagnostic.Create(ParamValueSemanticsRule, recparam.GetLocation(), args);
 				context.ReportDiagnostic(diagnostic);
 			}
 
 		// check fields and properties
 		foreach (var member in recordDeclaration.Members)
 		{
-			var (unwrappedtype, memberstr, isproperty) = NodeHelpers.GetPropertyOrFieldUnderlyingType(context, member);
+			var (unwrappedtype, memberstr, _) = NodeHelpers.GetPropertyOrFieldUnderlyingType(context, member);
 			if (unwrappedtype == null) continue;
 
 			// if the property has value semantics, then we're ok
@@ -76,19 +67,12 @@ public class RecordAnalyzer : DiagnosticAnalyzer
 			if (result == ValueEqualityResult.Ok) continue;
 
 			// otherwise, we have a problem. show a diagnostic
-			var rule = GetRule(result, isproperty);
 			var typestr = unwrappedtype?.ToDisplayString(NullableFlowState.None) ?? "";
 			memberstr ??= "?";
 			var args = errormember == null ? $"{typestr} {memberstr}" : $"{typestr} {memberstr} ({errormember})";
 
-			var diagnostic = Diagnostic.Create(rule, member.GetLocation(), args);
+			var diagnostic = Diagnostic.Create(ParamValueSemanticsRule, member.GetLocation(), args);
 			context.ReportDiagnostic(diagnostic);
 		}
-	}
-
-	private static DiagnosticDescriptor GetRule(ValueEqualityResult result, bool isproperty)
-	{
-		if (result == ValueEqualityResult.NestedFailed) return NestedValueSemanticsRule;
-		return isproperty ? PropertyValueSemanticsRule : FieldValueSemanticsRule;
 	}
 }
