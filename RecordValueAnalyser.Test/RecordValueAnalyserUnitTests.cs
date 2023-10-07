@@ -2,56 +2,41 @@
 using System.Threading.Tasks;
 using VerifyCS = RecordValueAnalyser.Test.CSharpCodeFixVerifier<RecordValueAnalyser.RecordValueAnalyser, RecordValueAnalyser.RecordValueAnalyserCodeFixProvider>;
 
+// if tests weirdly fail, try deleting files in:
+// C:\Users\ps\AppData\Local\Temp\test-packages
+
+#pragma warning disable RCS1046 // Asynchronous method name should end with 'Async'.
+
 namespace RecordValueAnalyser.Test
 {
 	[TestClass]
 	public class RecordValueAnalyserUnitTest
 	{
-		//No diagnostics expected to show up
+		private const string coGeneral = @"
+using System;
+using System.Collections.Generic;
+
+namespace System.Runtime.CompilerServices { internal static class IsExternalInit { } }
+";
+
 		[TestMethod]
-		public async Task TestMethod1Async()
+		public async Task ValueTypesOnlyTest()
 		{
-			const string test = "";
+			const string test = coGeneral + "public record class A(int I, string S, DateTime Dt);";
 
 			await VerifyCS.VerifyAnalyzerAsync(test);
 		}
 
-		//Diagnostic and CodeFix both triggered and checked for
 		[TestMethod]
-		public async Task TestMethod2Async()
+		public async Task ReadOnlyListTest()
 		{
-			const string test = @"
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-    using System.Threading.Tasks;
-    using System.Diagnostics;
+			const string test = coGeneral + "public record class A(int I, string S, IReadOnlyList<int> Fail);";
 
-    namespace ConsoleApplication1
-    {
-        class {|#0:TypeName|}
-        {   
-        }
-    }";
+			var expected = VerifyCS.Diagnostic("JSV01")
+				.WithSpan(6, 40, 6, 63)
+				.WithArguments("System.Collections.Generic.IReadOnlyList<int> Fail");
 
-			const string fixtest = @"
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-    using System.Threading.Tasks;
-    using System.Diagnostics;
-
-    namespace ConsoleApplication1
-    {
-        class TYPENAME
-        {   
-        }
-    }";
-
-			var expected = VerifyCS.Diagnostic("RecordValueAnalyser").WithLocation(0).WithArguments("TypeName");
-			await VerifyCS.VerifyCodeFixAsync(test, expected, fixtest);
+			await VerifyCS.VerifyAnalyzerAsync(test, expected);
 		}
 	}
 }

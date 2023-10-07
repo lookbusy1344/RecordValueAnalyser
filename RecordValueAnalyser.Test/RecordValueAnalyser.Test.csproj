@@ -6,6 +6,10 @@
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
 	
+	<!-- For tracing the test project -->
+	<!-- <StartupObject>RecordValueAnalyser.Test.Program</StartupObject> 
+	-->
+	
   </PropertyGroup>
 
   <ItemGroup>
