@@ -1,6 +1,7 @@
 # Value-Semantics Analyser for C# Records
 
 [![CodeQL](https://github.com/lookbusy1344/RecordValueAnalyser/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/lookbusy1344/RecordValueAnalyser/actions/workflows/github-code-scanning/codeql)
+[![Test](https://github.com/lookbusy1344/RecordValueAnalyser/actions/workflows/test.yml/badge.svg)](https://github.com/lookbusy1344/RecordValueAnalyser/actions/workflows/test.yml)
 
 ## TL;DR
 
