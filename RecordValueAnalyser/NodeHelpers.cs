@@ -6,7 +6,7 @@ using System.Linq;
 
 // https://learn.microsoft.com/en-us/dotnet/api/microsoft.codeanalysis.itypesymbol?view=roslyn-dotnet-4.6.0
 
-namespace JS_RecordAnalyser;
+namespace RecordValueAnalyser;
 
 internal enum ValueEqualityResult
 {

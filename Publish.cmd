@@ -1,4 +1,4 @@
 @echo off
 dotnet clean
-cd .\RecordAnalyser
-dotnet build -c Release
+dotnet build -c Release RecordValueAnalyser.Package
+cd RecordValueAnalyser.Package

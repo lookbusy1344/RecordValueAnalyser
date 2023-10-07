@@ -1,0 +1,29 @@
+name: Test
+
+on:
+  push:
+    branches: [ "main", "extension" ]
+
+  pull_request:
+    branches: [ "main", "extension" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v3.2.0
+      with:
+        dotnet-version: '7.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build
+      run: dotnet build --configuration Debug --no-restore RecordValueAnalyser.Test
+
+    - name: Test
+      run: dotnet test --no-restore

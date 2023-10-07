@@ -1,6 +1,7 @@
 # Value-Semantics Analyser for C# Records
 
 [![CodeQL](https://github.com/lookbusy1344/RecordValueAnalyser/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/lookbusy1344/RecordValueAnalyser/actions/workflows/github-code-scanning/codeql)
+[![Test](https://github.com/lookbusy1344/RecordValueAnalyser/actions/workflows/test.yml/badge.svg)](https://github.com/lookbusy1344/RecordValueAnalyser/actions/workflows/test.yml)
 
 ## TL;DR
 
@@ -80,11 +81,13 @@ It works in Visual Studio 2022 and Visual Studio Code, and also on the command l
 
 ## Warnings
 
-It can produce 4 warnings:
 - JSV01 - a record member lacks value semantics eg `record Test(IList<int> Fail)`
-- JSV02 - a record propery fails
-- JSV03 - a record field fails
-- JSV04 - a nested tuple or struct fails
+
+## Testing
+
+[![Test](https://github.com/lookbusy1344/RecordValueAnalyser/actions/workflows/test.yml/badge.svg)](https://github.com/lookbusy1344/RecordValueAnalyser/actions/workflows/test.yml)
+
+Tests are in `RecordValueAnalyser.Test`. They are run in the CI pipeline.
 
 ## Usage
 
