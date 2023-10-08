@@ -173,4 +173,30 @@ namespace System.Runtime.CompilerServices { internal static class IsExternalInit
 
 		await VerifyCS.VerifyAnalyzerAsync(test);
 	}
+
+	[TestMethod]
+	public async Task RecordWithTuplePass()
+	{
+		// Tuple are find if they contain value types
+		const string test = coGeneral
+			+ """
+				public record class Tup1(int IPass, (int a, int b) TupPass, DateTime? DtPass);
+				public record class Tup2(int IPass, (bool, int) TupPass);
+				""";
+
+		await VerifyCS.VerifyAnalyzerAsync(test);
+	}
+
+	[TestMethod]
+	public async Task RecordWithTupleFail()
+	{
+		// A tuple containing an array is not ok
+		const string test = coGeneral + "public record class Tup(int IPass, (int a, int[] b) TupFail);";
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 36, 6, 60)
+			.WithArguments("(int a, int[] b) TupFail (int[])");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
 }
