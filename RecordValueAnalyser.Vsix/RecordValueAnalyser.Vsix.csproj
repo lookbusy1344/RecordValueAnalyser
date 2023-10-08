@@ -2,7 +2,14 @@
 <Project>
   <Import Sdk="Microsoft.NET.Sdk" Project="Sdk.props" />
 
+<Target Name="SetSourceRevisionId" BeforeTargets="InitializeSourceControlInformation">
+    <Exec Command="git describe --long --always --dirty=+ --broken --exclude=* --abbrev=40" ConsoleToMSBuild="True" IgnoreExitCode="False">
+      <Output PropertyName="SourceRevisionId" TaskParameter="ConsoleOutput" />
+    </Exec>
+</Target>
+
   <PropertyGroup>
+	<InformationalVersion>$(SourceRevisionId)</InformationalVersion> 
     <TargetFramework>net472</TargetFramework>
     <RootNamespace>RecordValueAnalyser.Vsix</RootNamespace>
     <AssemblyName>RecordValueAnalyser.Vsix</AssemblyName>
@@ -23,6 +30,7 @@
   </ItemGroup>
 
   <PropertyGroup>
+  	<Version>0.9.8.0</Version> 
     <StartAction>Program</StartAction>
     <StartProgram>$(DevEnvDir)devenv.exe</StartProgram>
     <StartArguments>/rootsuffix $(VSSDKTargetPlatformRegRootSuffix)</StartArguments>
@@ -43,5 +51,15 @@
     <!-- https://github.com/Microsoft/extendvs/issues/57 -->
     <ProjectReference Update="@(ProjectReference)" Name="%(Filename)" />
   </ItemGroup>
+
+	<PropertyGroup>
+		<EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
+	
+		<AnalysisModeDesign>All</AnalysisModeDesign>
+		<AnalysisModeSecurity>All</AnalysisModeSecurity>
+		<AnalysisModePerformance>All</AnalysisModePerformance>
+		<AnalysisModeReliability>All</AnalysisModeReliability>
+		<AnalysisModeUsage>All</AnalysisModeUsage>
+	</PropertyGroup>
 
 </Project>
