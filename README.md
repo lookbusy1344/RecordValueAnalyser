@@ -12,6 +12,14 @@ record TestRecord(int A, string B, IReadOnlyList<int> C);
                                    ~~~~~~~~~~~~~~~~~~~~  JSV01: member lacks value semantics
 ```
 
+## Contents
+
+This project contains:
+- the Roslyn code analyser itself
+- a wrapper to make a nuget package https://www.nuget.org/packages/lookbusy1344.RecordValueAnalyser
+- a VSIX plugin for Visual Studio 2022
+- a test project
+
 ## Why?
 
 This project is a C# Roslyn code analyser to check records for correct value semantics.
@@ -91,14 +99,9 @@ Tests are in `RecordValueAnalyser.Test`. They are run in the CI pipeline.
 
 ## Usage
 
-https://www.nuget.org/packages/lookbusy1344.RecordValueAnalyser
+Install from nuget:
 
-```
-<PackageReference Include="lookbusy1344.RecordValueAnalyser" Version="0.9.9">
-	<PrivateAssets>all</PrivateAssets>
-	<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-</PackageReference>
-```
+https://www.nuget.org/packages/lookbusy1344.RecordValueAnalyser
 
 ..or from source, edit your csproj file:
 
