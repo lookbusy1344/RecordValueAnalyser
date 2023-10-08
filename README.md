@@ -1,6 +1,6 @@
 # Value-Semantics Analyser for C# Records
 
-[![CodeQL](https://github.com/lookbusy1344/RecordValueAnalyser/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/lookbusy1344/RecordValueAnalyser/actions/workflows/github-code-scanning/codeql)
+[![CodeQL](https://github.com/lookbusy1344/RecordValueAnalyser/actions/workflows/codeql.yml/badge.svg)](https://github.com/lookbusy1344/RecordValueAnalyser/actions/workflows/codeql.yml)
 [![Test](https://github.com/lookbusy1344/RecordValueAnalyser/actions/workflows/test.yml/badge.svg)](https://github.com/lookbusy1344/RecordValueAnalyser/actions/workflows/test.yml)
 
 ## TL;DR
@@ -94,7 +94,7 @@ Tests are in `RecordValueAnalyser.Test`. They are run in the CI pipeline.
 https://www.nuget.org/packages/lookbusy1344.RecordValueAnalyser
 
 ```
-<PackageReference Include="lookbusy1344.RecordValueAnalyser" Version="0.9.5">
+<PackageReference Include="lookbusy1344.RecordValueAnalyser" Version="0.9.9">
 	<PrivateAssets>all</PrivateAssets>
 	<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 </PackageReference>
