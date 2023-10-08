@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 
-namespace RecordValueAnalyser.Test;
+namespace RecordValueAnalyser.TestClasses;
 
 #pragma warning disable RCS1046 // Asynchronous method name should end with 'Async'.
 
