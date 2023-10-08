@@ -7,8 +7,8 @@
 </Target>
 
   <PropertyGroup>
-	<Version>0.9.7.0</Version> 
-	<PackageVersion>0.9.7.0</PackageVersion>
+	<Version>0.9.8.0</Version> 
+	<PackageVersion>0.9.8.0</PackageVersion>
   	<InformationalVersion>$(SourceRevisionId)</InformationalVersion> 
     <TargetFramework>netstandard2.0</TargetFramework>
     <IncludeBuildOutput>false</IncludeBuildOutput>
@@ -55,7 +55,6 @@
 
 
   <ItemGroup>
-    <ProjectReference Include="..\RecordValueAnalyser.CodeFixes\RecordValueAnalyser.CodeFixes.csproj" />
     <ProjectReference Include="..\RecordValueAnalyser\RecordValueAnalyser.csproj" />
   </ItemGroup>
 
@@ -66,7 +65,6 @@
   <Target Name="_AddAnalyzersToOutput">
     <ItemGroup>
       <TfmSpecificPackageFile Include="$(OutputPath)\RecordValueAnalyser.dll" PackagePath="analyzers/dotnet/cs" />
-      <TfmSpecificPackageFile Include="$(OutputPath)\RecordValueAnalyser.CodeFixes.dll" PackagePath="analyzers/dotnet/cs" />
     </ItemGroup>
   </Target>
 
