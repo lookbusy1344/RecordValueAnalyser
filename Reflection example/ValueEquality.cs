@@ -1,14 +1,4 @@
-﻿/*
-
-This was an initial attempt using reflection. It checks records at runtime, so its not ideal.
-
-To use call ValueEquality.CheckAssembly() at the start of your main() method
-
-The code only runs in DEBUG builds
-
-*/
-
-#if DEBUG
+﻿#if DEBUG
 using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -22,7 +12,7 @@ namespace JS_Tools;
 // warnings related to AOT compile, that doesnt support reflection. But this doesnt matter for Debug builds
 // and code is turned off in Release build
 
-// #pragma warning disable IDE0079, IL2070, IL2026, IL3050
+#pragma warning disable IDE0079, IL2070, IL2026, IL3050
 
 /// <summary>
 /// Debug-only class to check that all record for value semantics
