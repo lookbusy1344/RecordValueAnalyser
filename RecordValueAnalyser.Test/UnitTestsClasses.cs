@@ -235,4 +235,38 @@ namespace System.Runtime.CompilerServices { internal static class IsExternalInit
 
 		await VerifyCS.VerifyAnalyzerAsync(test, expected);
 	}
+
+	[TestMethod]
+	public async Task RecordWithDoubleNestedStructPass()
+	{
+		// A record containing a double-nested struct
+		const string test = coGeneral
+			+ """
+			public struct StructB { public string Str { get; set; } }
+			public struct StructA { public int? Number { get; set; } public StructB StB { get; set; } }
+
+			public record class Tester(int I, StructA Sa);
+			""";
+
+		await VerifyCS.VerifyAnalyzerAsync(test);
+	}
+
+	[TestMethod]
+	public async Task RecordWithDoubleNestedStructFail()
+	{
+		// A record containing a double-nested struct, should fail
+		const string test = coGeneral
+			+ """
+			public struct StructB { public string[] Str { get; set; } }
+			public struct StructA { public int? Number { get; set; } public StructB StB { get; set; } }
+
+			public record class Tester(int I, StructA Sa);
+			""";
+
+		var expected = VerifyCS.Diagnostic()
+			.WithSpan(9, 35, 9, 45)
+			.WithArguments("StructA Sa (StructB)");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
 }
