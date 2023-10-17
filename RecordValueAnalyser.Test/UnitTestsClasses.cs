@@ -199,4 +199,22 @@ namespace System.Runtime.CompilerServices { internal static class IsExternalInit
 
 		await VerifyCS.VerifyAnalyzerAsync(test, expected);
 	}
+
+	[TestMethod]
+	public async Task RecordWithDelegate()
+	{
+		// A record containing a delegate not ok
+		const string test = coGeneral
+			+ """
+			public delegate int ExampleDelegate(string str1, string str2);
+
+			public record class Tester(int I, ExampleDelegate Ex);
+			""";
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(8, 35, 8, 53)
+			.WithArguments("ExampleDelegate Ex");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
 }
