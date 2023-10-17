@@ -217,4 +217,22 @@ namespace System.Runtime.CompilerServices { internal static class IsExternalInit
 
 		await VerifyCS.VerifyAnalyzerAsync(test, expected);
 	}
+
+	[TestMethod]
+	public async Task RecordWithDynamic()
+	{
+		// A record containing a struct with a dynamic member. Not ok
+		const string test = coGeneral
+			+ """
+			public struct StructDynamic { public dynamic Dy { get; set; } }
+
+			public record struct Tester(int I, StructDynamic Dy);
+			""";
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(8, 36, 8, 52)
+			.WithArguments("StructDynamic Dy (dynamic)");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
 }
