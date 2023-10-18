@@ -3,6 +3,7 @@ using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System;
 using System.Collections.Immutable;
 using System.Composition;
 using System.Linq;
@@ -35,29 +36,21 @@ namespace RecordValueAnalyser
 			var recdeclaration = root?.FindToken(diagnosticSpan.Start).Parent?.AncestorsAndSelf().OfType<RecordDeclarationSyntax>().FirstOrDefault();
 			if (recdeclaration == null) return;
 
-			var isrecordclass = (recdeclaration.Kind() == SyntaxKind.RecordDeclaration);
-			var isrecordstruct = (recdeclaration.Kind() == SyntaxKind.RecordStructDeclaration);
+			// build the fixer lambda, for record class or record struct
+			Func<CancellationToken, Task<Solution>> fixer = recdeclaration.Kind() switch
+			{
+				SyntaxKind.RecordDeclaration => c => FixRecordClassAsync(context.Document, recdeclaration, c),
+				SyntaxKind.RecordStructDeclaration => c => FixRecordStructAsync(context.Document, recdeclaration, c),
+				_ => throw new NotImplementedException()
+			};
 
-			if (isrecordclass)
-			{
-				// Register a code action for record class
-				context.RegisterCodeFix(
-					CodeAction.Create(
-						title: CodeFixResources.CodeFixTitle,
-						createChangedSolution: c => FixRecordClassAsync(context.Document, recdeclaration, c),
-						equivalenceKey: nameof(CodeFixResources.CodeFixTitle)),
-					diagnostic);
-			}
-			else if (isrecordstruct)
-			{
-				// Register a code action for record struct
-				context.RegisterCodeFix(
-					CodeAction.Create(
-						title: CodeFixResources.CodeFixTitle,
-						createChangedSolution: c => FixRecordStructAsync(context.Document, recdeclaration, c),
-						equivalenceKey: nameof(CodeFixResources.CodeFixTitle)),
-					diagnostic);
-			}
+			// Register a code action for record class
+			context.RegisterCodeFix(
+				CodeAction.Create(
+					title: CodeFixResources.CodeFixTitle,
+					createChangedSolution: fixer,
+					equivalenceKey: nameof(CodeFixResources.CodeFixTitle)),
+				diagnostic);
 		}
 
 #pragma warning disable IDE0060 // Remove unused parameter
