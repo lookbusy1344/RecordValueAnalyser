@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 #pragma warning disable IDE0079 // Remove unnecessary suppression
 #pragma warning disable CS0618 // Type or member is obsolete
 #pragma warning disable CS0162 // Unreachable code detected
+#pragma warning disable IDE0022 // Use expression body for method
+#pragma warning disable VSTHRD111 // Use ConfigureAwait(bool)
 
 namespace RecordValueAnalyser
 {
@@ -21,9 +23,7 @@ namespace RecordValueAnalyser
 
 		public sealed override async Task RegisterCodeFixesAsync(CodeFixContext context)
 		{
-#pragma warning disable IDE0022 // Use expression body for method
 			await Task.CompletedTask;
-#pragma warning restore IDE0022 // Use expression body for method
 
 			/*var root = await context.Document.GetSyntaxRootAsync(context.CancellationToken).ConfigureAwait(false);
 
