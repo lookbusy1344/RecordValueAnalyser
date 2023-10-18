@@ -51,7 +51,8 @@ namespace RecordValueAnalyser
 			var newName = identifierToken.Text.ToUpperInvariant();
 
 			// Get the symbol representing the type to be renamed.
-			var semanticModel = await document.GetSemanticModelAsync(cancellationToken);
+			var semanticModel = await document.GetSemanticModelAsync(cancellationToken)
+				.ConfigureAwait(false);
 			var typeSymbol = semanticModel.GetDeclaredSymbol(typeDecl, cancellationToken);
 
 			// Produce a new solution that has all references to that type renamed, including the declaration.
