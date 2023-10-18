@@ -32,7 +32,7 @@ namespace RecordValueAnalyser
 			var diagnosticSpan = diagnostic.Location.SourceSpan;
 
 			// Find the record class declaration identified by the diagnostic.
-			var recdeclaration = root.FindToken(diagnosticSpan.Start).Parent.AncestorsAndSelf().OfType<RecordDeclarationSyntax>().FirstOrDefault();
+			var recdeclaration = root?.FindToken(diagnosticSpan.Start).Parent?.AncestorsAndSelf().OfType<RecordDeclarationSyntax>().FirstOrDefault();
 			if (recdeclaration == null) return;
 
 			var isrecordclass = (recdeclaration.Kind() == SyntaxKind.RecordDeclaration);
