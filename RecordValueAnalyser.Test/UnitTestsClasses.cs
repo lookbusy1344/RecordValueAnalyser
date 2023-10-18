@@ -5,8 +5,6 @@ using VerifyCS = RecordValueAnalyser.Test.CSharpCodeFixVerifier<RecordValueAnaly
 // if tests weirdly fail, try deleting files in:
 // C:\Users\ps\AppData\Local\Temp\test-packages
 
-#pragma warning disable RCS1046 // Asynchronous method name should end with 'Async'.
-
 namespace RecordValueAnalyser.TestClasses;
 
 // tests for record classes
