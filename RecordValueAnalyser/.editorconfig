@@ -394,12 +394,12 @@ dotnet_diagnostic.IDE0042.severity = none
 # Unless writing a library
 # https://github.com/microsoft/vs-threading/blob/main/doc/analyzers/editorconfigs/README.md
 # VSTHRD111: Use .ConfigureAwait(bool)
-dotnet_diagnostic.VSTHRD111.severity = silent
+# dotnet_diagnostic.VSTHRD111.severity = silent
 
 # These settings are appropriate for most projects that *never* run inside a process with a main thread and `SynchronizationContext`.
 # Examples of such applications are ASP.NET Core and console applications.
 # VSTHRD012: Provide JoinableTaskFactory where allowed
-dotnet_diagnostic.VSTHRD012.severity = none
+# dotnet_diagnostic.VSTHRD012.severity = none
 
 # VSTHRD003: Avoid awaiting foreign Tasks
 dotnet_diagnostic.VSTHRD003.severity = none
