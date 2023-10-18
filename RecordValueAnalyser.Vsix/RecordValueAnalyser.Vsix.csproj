@@ -42,6 +42,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\RecordValueAnalyser\RecordValueAnalyser.csproj" />
+    <ProjectReference Include="..\RecordValueAnalyser.CodeFixes\RecordValueAnalyser.CodeFixes.csproj" />
   </ItemGroup>
 
   <ItemGroup>
