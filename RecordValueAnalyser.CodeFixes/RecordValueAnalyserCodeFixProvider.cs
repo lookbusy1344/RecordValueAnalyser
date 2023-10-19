@@ -52,8 +52,6 @@ public class RecordValueAnalyserCodeFixProvider : CodeFixProvider
 			diagnostic);
 	}
 
-#pragma warning disable IDE0060 // Remove unused parameter
-
 	/// <summary>
 	/// Code fix for record class
 	/// </summary>
@@ -63,30 +61,20 @@ public class RecordValueAnalyserCodeFixProvider : CodeFixProvider
 			public override int GetHashCode() => 0;
 		 */
 
-		await Task.CompletedTask.ConfigureAwait(false);
-		return document.Project.Solution;
+		var recordname = typeDecl.Identifier.ValueText;
 
-		/*
-		// Compute new uppercase name.
-		var identifierToken = typeDecl.Identifier;
-		var newName = identifierToken.Text.ToUpperInvariant();
+		var equalsmethod = BuildEqualsClassMethod(recordname);
+		var gethashcodemethod = BuildGetHashCode();
 
-		// Get the symbol representing the type to be renamed.
-		var semanticModel = await document.GetSemanticModelAsync(cancellationToken)
+		var newRoot = await document.GetSyntaxRootAsync(cancellationToken)
 			.ConfigureAwait(false);
-		var typeSymbol = semanticModel.GetDeclaredSymbol(typeDecl, cancellationToken);
+		var _ = newRoot!.InsertNodesAfter(
+			newRoot!.DescendantNodes().OfType<RecordDeclarationSyntax>().First().Members.Last(),
+			new[] { equalsmethod, gethashcodemethod });
 
-		// Produce a new solution that has all references to that type renamed, including the declaration.
-		//var originalSolution = document.Project.Solution;
-		//var optionSet = originalSolution.Workspace.Options; // this is obsolete
+		var newDocument = document.WithSyntaxRoot(newRoot);
 
-		var newSolution = await Renamer.RenameSymbolAsync(document.Project.Solution, typeSymbol,
-			  new SymbolRenameOptions(), newName, cancellationToken)
-			.ConfigureAwait(false);
-
-		// Return the new solution with the now-uppercase type name.
-		return newSolution;
-		*/
+		return newDocument.Project.Solution;
 	}
 
 	/// <summary>
@@ -110,7 +98,6 @@ public class RecordValueAnalyserCodeFixProvider : CodeFixProvider
 			new[] { equalsmethod, gethashcodemethod });
 
 		var newDocument = document.WithSyntaxRoot(newRoot);
-		//var newSolution = newDocument.Project.Solution;
 
 		return newDocument.Project.Solution;
 	}
