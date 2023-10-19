@@ -3,7 +3,6 @@ using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using System;
 using System.Collections.Immutable;
 using System.Composition;
 using System.Linq;
@@ -35,60 +34,32 @@ public class RecordValueAnalyserCodeFixProvider : CodeFixProvider
 		var recdeclaration = root?.FindToken(diagnosticSpan.Start).Parent?.AncestorsAndSelf().OfType<RecordDeclarationSyntax>().FirstOrDefault();
 		if (recdeclaration == null) return;
 
-		// build the fixer lambda, for record class or record struct
-		Func<CancellationToken, Task<Solution>> fixer = recdeclaration.Kind() switch
-		{
-			SyntaxKind.RecordDeclaration => c => FixRecordClassAsync(context.Document, recdeclaration, c),
-			SyntaxKind.RecordStructDeclaration => c => FixRecordStructAsync(context.Document, recdeclaration, c),
-			_ => throw new NotImplementedException()
-		};
+		var isclass = recdeclaration.Kind() == SyntaxKind.RecordDeclaration;
 
 		// Register a code action for record class
 		context.RegisterCodeFix(
 			CodeAction.Create(
 				title: CodeFixResources.CodeFixTitle,
-				createChangedSolution: fixer,
+				createChangedSolution: c => FixRecordAsync(context.Document, recdeclaration, isclass, c),
 				equivalenceKey: nameof(CodeFixResources.CodeFixTitle)),
 			diagnostic);
 	}
 
 	/// <summary>
-	/// Code fix for record class
+	/// Code fix for record by adding Equals and GetHashCode
 	/// </summary>
-	private async Task<Solution> FixRecordClassAsync(Document document, TypeDeclarationSyntax typeDecl, CancellationToken cancellationToken)
+	private async Task<Solution> FixRecordAsync(Document document, TypeDeclarationSyntax typeDecl, bool isclass, CancellationToken cancellationToken)
 	{
 		/*	public virtual bool Equals(Self? other) => throw new NotSupported();
+		 	..or for record structs..
+		 	public readonly bool Equals(Self other) => throw new NotSupported();
+		 	
 			public override int GetHashCode() => 0;
 		 */
 
 		var recordname = typeDecl.Identifier.ValueText;
 
-		var equalsmethod = BuildEqualsClassMethod(recordname);
-		var gethashcodemethod = BuildGetHashCode();
-
-		var newRoot = await document.GetSyntaxRootAsync(cancellationToken)
-			.ConfigureAwait(false);
-		var _ = newRoot!.InsertNodesAfter(
-			newRoot!.DescendantNodes().OfType<RecordDeclarationSyntax>().First().Members.Last(),
-			new[] { equalsmethod, gethashcodemethod });
-
-		var newDocument = document.WithSyntaxRoot(newRoot);
-
-		return newDocument.Project.Solution;
-	}
-
-	/// <summary>
-	/// Code fix for record struct
-	/// </summary>
-	private async Task<Solution> FixRecordStructAsync(Document document, TypeDeclarationSyntax typeDecl, CancellationToken cancellationToken)
-	{
-		/*	public readonly bool Equals(Self other) => throw new NotSupported();
-			public override int GetHashCode() => 0;
-		 */
-
-		var recordname = typeDecl.Identifier.ValueText;
-
-		var equalsmethod = BuildEqualsStructMethod(recordname);
+		var equalsmethod = isclass ? BuildEqualsClassMethod(recordname) : BuildEqualsStructMethod(recordname);
 		var gethashcodemethod = BuildGetHashCode();
 
 		var newRoot = await document.GetSyntaxRootAsync(cancellationToken)
