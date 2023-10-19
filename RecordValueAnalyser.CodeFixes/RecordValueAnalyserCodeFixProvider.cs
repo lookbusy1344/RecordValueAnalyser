@@ -98,7 +98,51 @@ public class RecordValueAnalyserCodeFixProvider : CodeFixProvider
 			public override int GetHashCode() => 0;
 		 */
 
-		await Task.CompletedTask.ConfigureAwait(false);
-		return document.Project.Solution;
+		var recordname = typeDecl.Identifier.ValueText;
+
+		var equalsmethod = SyntaxFactory.MethodDeclaration(
+			SyntaxFactory.PredefinedType(
+				SyntaxFactory.Token(SyntaxKind.BoolKeyword)), "Equals")
+			.WithModifiers(
+				SyntaxFactory.TokenList(
+					SyntaxFactory.Token(SyntaxKind.PublicKeyword),
+					SyntaxFactory.Token(SyntaxKind.ReadOnlyKeyword)))
+			.WithParameterList(
+				SyntaxFactory.ParameterList(
+					SyntaxFactory.SingletonSeparatedList(
+						SyntaxFactory.Parameter(
+							SyntaxFactory.Identifier("other"))
+							.WithType(
+								SyntaxFactory.NullableType(
+									SyntaxFactory.ParseTypeName(recordname)))))) // Replace T with the record's own type
+			.WithBody(
+				SyntaxFactory.Block(
+					SyntaxFactory.SingletonList<StatementSyntax>(
+						SyntaxFactory.ReturnStatement(
+							SyntaxFactory.BinaryExpression(
+								SyntaxKind.EqualsExpression,
+								SyntaxFactory.ThisExpression(),
+								SyntaxFactory.IdentifierName("other"))))));
+
+		var gethashcodemethod = SyntaxFactory.MethodDeclaration(
+			SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.IntKeyword)), "GetHashCode")
+			.AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword), SyntaxFactory.Token(SyntaxKind.OverrideKeyword))
+			.WithBody(
+				SyntaxFactory.Block(
+					SyntaxFactory.ReturnStatement(
+						SyntaxFactory.LiteralExpression(
+							SyntaxKind.NumericLiteralExpression,
+							SyntaxFactory.Literal(0)))));
+
+		var newRoot = await document.GetSyntaxRootAsync(cancellationToken)
+			.ConfigureAwait(false);
+		var _ = newRoot!.InsertNodesAfter(
+			newRoot!.DescendantNodes().OfType<RecordDeclarationSyntax>().First().Members.Last(),
+			new[] { equalsmethod, gethashcodemethod });
+
+		var newDocument = document.WithSyntaxRoot(newRoot);
+		//var newSolution = newDocument.Project.Solution;
+
+		return newDocument.Project.Solution;
 	}
 }
