@@ -55,9 +55,9 @@ public class RecordValueAnalyserCodeFixProvider : CodeFixProvider
 	/// </summary>
 	private async Task<Solution> FixRecordAsync(Document document, TypeDeclarationSyntax typeDecl, bool isclass, CancellationToken cancellationToken)
 	{
-		/*	public virtual bool Equals(Self? other) => throw new NotSupported();
+		/*	public virtual bool Equals(Self? other) => throw new NotImplementedException();
 		 	..or for record structs..
-		 	public readonly bool Equals(Self other) => throw new NotSupported();
+		 	public readonly bool Equals(Self other) => throw new NotImplementedException();
 		 	
 			public override int GetHashCode() => 0;
 		 */
@@ -79,20 +79,16 @@ public class RecordValueAnalyserCodeFixProvider : CodeFixProvider
 	}
 
 	/// <summary>
-	/// Helper to build public override int GetHashCode()
+	/// Helper to build: public override int GetHashCode() => 0;
 	/// </summary>
 	private MethodDeclarationSyntax BuildGetHashCode() => SyntaxFactory.MethodDeclaration(
-			SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.IntKeyword)), "GetHashCode")
+		SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.IntKeyword)), "GetHashCode")
 		.AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword), SyntaxFactory.Token(SyntaxKind.OverrideKeyword))
-		.WithBody(
-			SyntaxFactory.Block(
-				SyntaxFactory.ReturnStatement(
-					SyntaxFactory.LiteralExpression(
-						SyntaxKind.NumericLiteralExpression,
-						SyntaxFactory.Literal(0)))));
+		.WithExpressionBody(SyntaxFactory.ArrowExpressionClause(SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(0))))
+		.WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken));
 
 	/// <summary>
-	/// Helper to build public readonly bool Equals(Self other)
+	/// Helper to build: public readonly bool Equals(Self other) => throw new NotImplmentedException();
 	/// </summary>
 	private MethodDeclarationSyntax BuildEqualsStructMethod(string recordname) => SyntaxFactory.MethodDeclaration(
 			SyntaxFactory.PredefinedType(
@@ -106,19 +102,13 @@ public class RecordValueAnalyserCodeFixProvider : CodeFixProvider
 				SyntaxFactory.SingletonSeparatedList(
 					SyntaxFactory.Parameter(
 						SyntaxFactory.Identifier("other"))
-						.WithType(
-								SyntaxFactory.ParseTypeName(recordname)))))
-		.WithBody(
-			SyntaxFactory.Block(
-				SyntaxFactory.SingletonList<StatementSyntax>(
-					SyntaxFactory.ReturnStatement(
-						SyntaxFactory.BinaryExpression(
-							SyntaxKind.EqualsExpression,
-							SyntaxFactory.ThisExpression(),
-							SyntaxFactory.IdentifierName("other"))))));
+						.WithType(SyntaxFactory.ParseTypeName(recordname)))))
+		.WithExpressionBody(SyntaxFactory.ArrowExpressionClause(
+			SyntaxFactory.ThrowExpression(SyntaxFactory.ObjectCreationExpression(SyntaxFactory.ParseTypeName("System.NotImplementedException")))))
+		.WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken));
 
 	/// <summary>
-	/// Helper to build public virtual bool Equals(Self? other)
+	/// Helper to build: public virtual bool Equals(Self? other) => throw new NotImplmentedException();
 	/// </summary>
 	private MethodDeclarationSyntax BuildEqualsClassMethod(string recordname) => SyntaxFactory.MethodDeclaration(
 			SyntaxFactory.PredefinedType(
@@ -135,12 +125,7 @@ public class RecordValueAnalyserCodeFixProvider : CodeFixProvider
 						.WithType(
 							SyntaxFactory.NullableType(
 								SyntaxFactory.ParseTypeName(recordname))))))
-		.WithBody(
-			SyntaxFactory.Block(
-				SyntaxFactory.SingletonList<StatementSyntax>(
-					SyntaxFactory.ReturnStatement(
-						SyntaxFactory.BinaryExpression(
-							SyntaxKind.EqualsExpression,
-							SyntaxFactory.ThisExpression(),
-							SyntaxFactory.IdentifierName("other"))))));
+		.WithExpressionBody(SyntaxFactory.ArrowExpressionClause(
+			SyntaxFactory.ThrowExpression(SyntaxFactory.ObjectCreationExpression(SyntaxFactory.ParseTypeName("System.NotImplementedException")))))
+		.WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken));
 }
