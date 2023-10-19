@@ -100,39 +100,8 @@ public class RecordValueAnalyserCodeFixProvider : CodeFixProvider
 
 		var recordname = typeDecl.Identifier.ValueText;
 
-		var equalsmethod = SyntaxFactory.MethodDeclaration(
-			SyntaxFactory.PredefinedType(
-				SyntaxFactory.Token(SyntaxKind.BoolKeyword)), "Equals")
-			.WithModifiers(
-				SyntaxFactory.TokenList(
-					SyntaxFactory.Token(SyntaxKind.PublicKeyword),
-					SyntaxFactory.Token(SyntaxKind.ReadOnlyKeyword)))
-			.WithParameterList(
-				SyntaxFactory.ParameterList(
-					SyntaxFactory.SingletonSeparatedList(
-						SyntaxFactory.Parameter(
-							SyntaxFactory.Identifier("other"))
-							.WithType(
-								SyntaxFactory.NullableType(
-									SyntaxFactory.ParseTypeName(recordname)))))) // Replace T with the record's own type
-			.WithBody(
-				SyntaxFactory.Block(
-					SyntaxFactory.SingletonList<StatementSyntax>(
-						SyntaxFactory.ReturnStatement(
-							SyntaxFactory.BinaryExpression(
-								SyntaxKind.EqualsExpression,
-								SyntaxFactory.ThisExpression(),
-								SyntaxFactory.IdentifierName("other"))))));
-
-		var gethashcodemethod = SyntaxFactory.MethodDeclaration(
-			SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.IntKeyword)), "GetHashCode")
-			.AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword), SyntaxFactory.Token(SyntaxKind.OverrideKeyword))
-			.WithBody(
-				SyntaxFactory.Block(
-					SyntaxFactory.ReturnStatement(
-						SyntaxFactory.LiteralExpression(
-							SyntaxKind.NumericLiteralExpression,
-							SyntaxFactory.Literal(0)))));
+		var equalsmethod = BuildEqualsStructMethod(recordname);
+		var gethashcodemethod = BuildGetHashCode();
 
 		var newRoot = await document.GetSyntaxRootAsync(cancellationToken)
 			.ConfigureAwait(false);
@@ -145,4 +114,70 @@ public class RecordValueAnalyserCodeFixProvider : CodeFixProvider
 
 		return newDocument.Project.Solution;
 	}
+
+	/// <summary>
+	/// Helper to build public override int GetHashCode()
+	/// </summary>
+	private MethodDeclarationSyntax BuildGetHashCode() => SyntaxFactory.MethodDeclaration(
+			SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.IntKeyword)), "GetHashCode")
+		.AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword), SyntaxFactory.Token(SyntaxKind.OverrideKeyword))
+		.WithBody(
+			SyntaxFactory.Block(
+				SyntaxFactory.ReturnStatement(
+					SyntaxFactory.LiteralExpression(
+						SyntaxKind.NumericLiteralExpression,
+						SyntaxFactory.Literal(0)))));
+
+	/// <summary>
+	/// Helper to build public readonly bool Equals(Self other)
+	/// </summary>
+	private MethodDeclarationSyntax BuildEqualsStructMethod(string recordname) => SyntaxFactory.MethodDeclaration(
+			SyntaxFactory.PredefinedType(
+				SyntaxFactory.Token(SyntaxKind.BoolKeyword)), "Equals")
+		.WithModifiers(
+			SyntaxFactory.TokenList(
+				SyntaxFactory.Token(SyntaxKind.PublicKeyword),
+				SyntaxFactory.Token(SyntaxKind.ReadOnlyKeyword)))
+		.WithParameterList(
+			SyntaxFactory.ParameterList(
+				SyntaxFactory.SingletonSeparatedList(
+					SyntaxFactory.Parameter(
+						SyntaxFactory.Identifier("other"))
+						.WithType(
+								SyntaxFactory.ParseTypeName(recordname)))))
+		.WithBody(
+			SyntaxFactory.Block(
+				SyntaxFactory.SingletonList<StatementSyntax>(
+					SyntaxFactory.ReturnStatement(
+						SyntaxFactory.BinaryExpression(
+							SyntaxKind.EqualsExpression,
+							SyntaxFactory.ThisExpression(),
+							SyntaxFactory.IdentifierName("other"))))));
+
+	/// <summary>
+	/// Helper to build public virtual bool Equals(Self? other)
+	/// </summary>
+	private MethodDeclarationSyntax BuildEqualsClassMethod(string recordname) => SyntaxFactory.MethodDeclaration(
+			SyntaxFactory.PredefinedType(
+				SyntaxFactory.Token(SyntaxKind.BoolKeyword)), "Equals")
+		.WithModifiers(
+			SyntaxFactory.TokenList(
+				SyntaxFactory.Token(SyntaxKind.PublicKeyword),
+				SyntaxFactory.Token(SyntaxKind.VirtualKeyword)))
+		.WithParameterList(
+			SyntaxFactory.ParameterList(
+				SyntaxFactory.SingletonSeparatedList(
+					SyntaxFactory.Parameter(
+						SyntaxFactory.Identifier("other"))
+						.WithType(
+							SyntaxFactory.NullableType(
+								SyntaxFactory.ParseTypeName(recordname))))))
+		.WithBody(
+			SyntaxFactory.Block(
+				SyntaxFactory.SingletonList<StatementSyntax>(
+					SyntaxFactory.ReturnStatement(
+						SyntaxFactory.BinaryExpression(
+							SyntaxKind.EqualsExpression,
+							SyntaxFactory.ThisExpression(),
+							SyntaxFactory.IdentifierName("other"))))));
 }
