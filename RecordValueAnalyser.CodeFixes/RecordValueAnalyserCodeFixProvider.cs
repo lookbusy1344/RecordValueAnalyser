@@ -25,25 +25,25 @@ public class RecordValueAnalyserCodeFixProvider : CodeFixProvider
 	/// </summary>
 	public sealed override async Task RegisterCodeFixesAsync(CodeFixContext context)
 	{
-		var root = await context.Document.GetSyntaxRootAsync(context.CancellationToken).ConfigureAwait(false);
+		//var root = await context.Document.GetSyntaxRootAsync(context.CancellationToken).ConfigureAwait(false);
 
-		context.CancellationToken.ThrowIfCancellationRequested();
+		//context.CancellationToken.ThrowIfCancellationRequested();
 
 		var diagnostic = context.Diagnostics[0];
 
 		// Find the record class declaration identified by the diagnostic.
-		var diagnosticNode = root!.FindNode(diagnostic.Location.SourceSpan);
-		var recdeclaration = diagnosticNode.FirstAncestorOrSelf<RecordDeclarationSyntax>();
-		if (recdeclaration == null) return;
+		//var diagnosticNode = root!.FindNode(diagnostic.Location.SourceSpan);
+		//var recdeclaration = diagnosticNode.FirstAncestorOrSelf<RecordDeclarationSyntax>();
+		//if (recdeclaration == null) return;
 
 		// is it 'record class' or 'record struct'
-		var isclass = recdeclaration.Kind() == SyntaxKind.RecordDeclaration;
+		//var isclass = recdeclaration.Kind() == SyntaxKind.RecordDeclaration;
 
 		// Register a code action for record class
 		context.RegisterCodeFix(
 			CodeAction.Create(
 				title: CodeFixResources.CodeFixTitle,
-				createChangedSolution: c => FixRecordAsync(context.Document, recdeclaration, isclass, c),
+				createChangedSolution: c => FixRecordAsync(context.Document, null, true, c),
 				equivalenceKey: nameof(CodeFixResources.CodeFixTitle)),
 			diagnostic);
 	}
