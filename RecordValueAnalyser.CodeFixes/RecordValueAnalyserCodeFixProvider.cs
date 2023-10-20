@@ -27,15 +27,13 @@ public class RecordValueAnalyserCodeFixProvider : CodeFixProvider
 	{
 		var root = await context.Document.GetSyntaxRootAsync(context.CancellationToken).ConfigureAwait(false);
 
-		if (root == null || context.Diagnostics.IsEmpty) return;
+		context.CancellationToken.ThrowIfCancellationRequested();
 
 		var diagnostic = context.Diagnostics[0];
-		if (diagnostic == null) return;
-
-		var diagnosticSpan = diagnostic.Location.SourceSpan;
 
 		// Find the record class declaration identified by the diagnostic.
-		var recdeclaration = root?.FindToken(diagnosticSpan.Start).Parent?.AncestorsAndSelf().OfType<RecordDeclarationSyntax>().FirstOrDefault();
+		var diagnosticNode = root!.FindNode(diagnostic.Location.SourceSpan);
+		var recdeclaration = diagnosticNode.FirstAncestorOrSelf<RecordDeclarationSyntax>();
 		if (recdeclaration == null) return;
 
 		// is it 'record class' or 'record struct'
