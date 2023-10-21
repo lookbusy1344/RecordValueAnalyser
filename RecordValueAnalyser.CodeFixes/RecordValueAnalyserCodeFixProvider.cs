@@ -53,22 +53,40 @@ namespace RecordValueAnalyser
 				public override int GetHashCode() => 0;
 			 */
 
-			var isclassrecord = typeDecl is RecordDeclarationSyntax;
-			var recordname = typeDecl.Identifier.ValueText;
+			// get the type we're working on
+			var semanticModel = await document.GetSemanticModelAsync(cancellationToken);
+			var typeSymbol = semanticModel.GetDeclaredSymbol(typeDecl, cancellationToken);
 
+			// determine if it's a class or struct, and the name
+			var isclassrecord = typeDecl is RecordDeclarationSyntax;
+			var recordname = typeDecl.Identifier.Text;
+
+			// build new Equals and GetHashCode methods
 			var equalsmethod = isclassrecord ? BuildEqualsClassMethod(recordname) : BuildEqualsStructMethod(recordname);
 			var gethashcodemethod = BuildGetHashCode();
 
-			var newRoot = await document.GetSyntaxRootAsync(cancellationToken)
-				.ConfigureAwait(false);
-			var _ = newRoot.InsertNodesAfter(
-				newRoot.DescendantNodes().OfType<RecordDeclarationSyntax>().First().Members.Last(),
-				new[] { equalsmethod, gethashcodemethod });
+			// add methods to typeSymbol class declaration
+			var classDeclaration = (ClassDeclarationSyntax)typeSymbol.DeclaringSyntaxReferences[0].GetSyntax();
+			var updatedClassDeclaration = classDeclaration.AddMembers(equalsmethod, gethashcodemethod);
 
+			// replace the class in the syntax tree
+			var oldRoot = await document.GetSyntaxRootAsync().ConfigureAwait(false);
+			var newRoot = oldRoot.ReplaceNode(classDeclaration, updatedClassDeclaration);
+
+			// To get a new document with the updated syntax tree
 			var newDocument = document.WithSyntaxRoot(newRoot);
+
+			//var newRoot = await document.GetSyntaxRootAsync(cancellationToken)
+			//	.ConfigureAwait(false);
+			//var _ = newRoot.InsertNodesAfter(
+			//	newRoot.DescendantNodes().OfType<RecordDeclarationSyntax>().First().Members.Last(),
+			//	new[] { equalsmethod, gethashcodemethod });
+
+			//var newDocument = document.WithSyntaxRoot(newRoot);
 
 			return newDocument.Project.Solution;
 
+			// ===============================================
 			// Compute new uppercase name.
 			/*var identifierToken = typeDecl.Identifier;
 			var newName = identifierToken.Text.ToUpperInvariant();
