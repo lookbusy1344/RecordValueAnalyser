@@ -71,7 +71,14 @@ namespace RecordValueAnalyser
 				.GetSyntaxAsync()
 				.ConfigureAwait(false);
 
-			// add the methods
+			// check if record already has members
+			//var hasmembers = recordDeclaration.Members.Any();
+
+			// create a new record declaration with empty members list
+			recordDeclaration = recordDeclaration
+				.WithMembers(SyntaxFactory.List<MemberDeclarationSyntax>());
+
+			// add the Equals and GetHashCode methods
 			var updatedDeclaration = recordDeclaration.AddMembers(equalsmethod, gethashcodemethod);
 
 			// replace the record in the syntax tree
