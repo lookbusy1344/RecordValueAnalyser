@@ -1,9 +1,11 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
   <Metadata>
-    <Identity Id="RecordValueAnalyser.37494fca-dd57-4b76-a925-c7957659bbba" Version="1.0" Language="en-US" Publisher="JohnT"/>
+    <Identity Id="lookbusy1344.RecordValueAnalyser.37494fca-dd57-4b76-a925-c7957659bbba" Version="1.0.89" Language="en-US" Publisher="lookbusy1344"/>
     <DisplayName>RecordValueAnalyser</DisplayName>
-    <Description xml:space="preserve">This is a sample diagnostic extension for the .NET Compiler Platform ("Roslyn").</Description>
+    <Description xml:space="preserve">Roslyn analyser to check if records have value semantics.</Description>
+    <Url>https://github.com/lookbusy1344/RecordValueAnalyser</Url>
+    <Tags>Roslyn;CodeAnalysis;Analyzers;ValueSemantics;Semantics;IEquatable</Tags>    
   </Metadata>
   <Installation>
     <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[17.0,)" />
