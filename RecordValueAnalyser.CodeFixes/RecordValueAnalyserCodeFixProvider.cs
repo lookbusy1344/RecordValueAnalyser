@@ -1,7 +1,12 @@
 ﻿using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeFixes;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Rename;
 using System.Collections.Immutable;
 using System.Composition;
+using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 #pragma warning disable IDE0079 // Remove unnecessary suppression
@@ -13,7 +18,7 @@ namespace RecordValueAnalyser
 	[ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(RecordValueAnalyserCodeFixProvider)), Shared]
 	public class RecordValueAnalyserCodeFixProvider : CodeFixProvider
 	{
-		public sealed override ImmutableArray<string> FixableDiagnosticIds => ImmutableArray.Create(RecordValueAnalyser.DiagnosticId + "X");
+		public sealed override ImmutableArray<string> FixableDiagnosticIds => ImmutableArray.Create(RecordValueAnalyser.DiagnosticId);
 
 		public sealed override FixAllProvider GetFixAllProvider() =>
 			// See https://github.com/dotnet/roslyn/blob/main/docs/analyzers/FixAllProvider.md for more information on Fix All Providers
@@ -21,11 +26,7 @@ namespace RecordValueAnalyser
 
 		public sealed override async Task RegisterCodeFixesAsync(CodeFixContext context)
 		{
-#pragma warning disable IDE0022 // Use expression body for method
-			await Task.CompletedTask;
-#pragma warning restore IDE0022 // Use expression body for method
-
-			/*var root = await context.Document.GetSyntaxRootAsync(context.CancellationToken).ConfigureAwait(false);
+			var root = await context.Document.GetSyntaxRootAsync(context.CancellationToken).ConfigureAwait(false);
 
 			// TODO: Replace the following code with your own analysis, generating a CodeAction for each fix to suggest
 			var diagnostic = context.Diagnostics[0];
@@ -40,10 +41,10 @@ namespace RecordValueAnalyser
 					title: CodeFixResources.CodeFixTitle,
 					createChangedSolution: c => MakeUppercaseAsync(context.Document, declaration, c),
 					equivalenceKey: nameof(CodeFixResources.CodeFixTitle)),
-				diagnostic);*/
+				diagnostic);
 		}
 
-		/*private async Task<Solution> MakeUppercaseAsync(Document document, TypeDeclarationSyntax typeDecl, CancellationToken cancellationToken)
+		private async Task<Solution> MakeUppercaseAsync(Document document, TypeDeclarationSyntax typeDecl, CancellationToken cancellationToken)
 		{
 			// Compute new uppercase name.
 			var identifierToken = typeDecl.Identifier;
@@ -60,6 +61,6 @@ namespace RecordValueAnalyser
 
 			// Return the new solution with the now-uppercase type name.
 			return newSolution;
-		}*/
+		}
 	}
 }
