@@ -1,8 +1,15 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project>
   <Import Sdk="Microsoft.NET.Sdk" Project="Sdk.props" />
 
+<Target Name="SetSourceRevisionId" BeforeTargets="InitializeSourceControlInformation">
+    <Exec Command="git describe --long --always --dirty=+ --broken --exclude=* --abbrev=40" ConsoleToMSBuild="True" IgnoreExitCode="False">
+      <Output PropertyName="SourceRevisionId" TaskParameter="ConsoleOutput" />
+    </Exec>
+</Target>
+
   <PropertyGroup>
+	<InformationalVersion>$(SourceRevisionId)</InformationalVersion> 
     <TargetFramework>net472</TargetFramework>
     <RootNamespace>RecordValueAnalyser.Vsix</RootNamespace>
     <AssemblyName>RecordValueAnalyser.Vsix</AssemblyName>
@@ -23,6 +30,7 @@
   </ItemGroup>
 
   <PropertyGroup>
+  	<Version>1.0.89.0</Version> 
     <StartAction>Program</StartAction>
     <StartProgram>$(DevEnvDir)devenv.exe</StartProgram>
     <StartArguments>/rootsuffix $(VSSDKTargetPlatformRegRootSuffix)</StartArguments>
