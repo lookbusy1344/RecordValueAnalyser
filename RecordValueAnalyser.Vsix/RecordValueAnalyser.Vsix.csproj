@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project>
   <Import Sdk="Microsoft.NET.Sdk" Project="Sdk.props" />
 
@@ -41,8 +41,8 @@
   <Import Project="$(VSToolsPath)\VSSDK\Microsoft.VsSDK.targets" Condition="Exists('$(VSToolsPath)\VSSDK\Microsoft.VsSDK.targets')" />
 
   <ItemGroup>
-    <ProjectReference Include="..\RecordValueAnalyser\RecordValueAnalyser.csproj" />
     <ProjectReference Include="..\RecordValueAnalyser.CodeFixes\RecordValueAnalyser.CodeFixes.csproj" />
+    <ProjectReference Include="..\RecordValueAnalyser\RecordValueAnalyser.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -52,15 +52,5 @@
     <!-- https://github.com/Microsoft/extendvs/issues/57 -->
     <ProjectReference Update="@(ProjectReference)" Name="%(Filename)" />
   </ItemGroup>
-
-	<PropertyGroup>
-		<EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
-	
-		<AnalysisModeDesign>All</AnalysisModeDesign>
-		<AnalysisModeSecurity>All</AnalysisModeSecurity>
-		<AnalysisModePerformance>All</AnalysisModePerformance>
-		<AnalysisModeReliability>All</AnalysisModeReliability>
-		<AnalysisModeUsage>All</AnalysisModeUsage>
-	</PropertyGroup>
 
 </Project>

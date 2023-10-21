@@ -4,8 +4,6 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <IsPackable>false</IsPackable>
     <RootNamespace>RecordValueAnalyser</RootNamespace>
-	<LangVersion>preview</LangVersion>
-	<Nullable>enable</Nullable>
 	<EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
   </PropertyGroup>
 

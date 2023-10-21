@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
 <Target Name="SetSourceRevisionId" BeforeTargets="InitializeSourceControlInformation">
     <Exec Command="git describe --long --always --dirty=+ --broken --exclude=* --abbrev=40" ConsoleToMSBuild="True" IgnoreExitCode="False">

@@ -61,7 +61,7 @@ namespace RecordValueAnalyser {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Add Equals method.
+        ///   Looks up a localized string similar to Value semantics warning - dummy.
         /// </summary>
         internal static string CodeFixTitle {
             get {
