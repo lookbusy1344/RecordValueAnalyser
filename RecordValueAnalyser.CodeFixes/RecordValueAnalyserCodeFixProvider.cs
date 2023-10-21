@@ -65,14 +65,16 @@ namespace RecordValueAnalyser
 			var equalsmethod = isclassrecord ? BuildEqualsClassMethod(recordname) : BuildEqualsStructMethod(recordname);
 			var gethashcodemethod = BuildGetHashCode();
 
-			// add methods to typeSymbol class declaration
+			// find the record declaration in the syntax tree
 			var recordDeclaration = (RecordDeclarationSyntax)await typeSymbol
 				.DeclaringSyntaxReferences[0]
 				.GetSyntaxAsync()
 				.ConfigureAwait(false);
+
+			// add the methods
 			var updatedDeclaration = recordDeclaration.AddMembers(equalsmethod, gethashcodemethod);
 
-			// replace the class in the syntax tree
+			// replace the record in the syntax tree
 			var oldRoot = await document.GetSyntaxRootAsync().ConfigureAwait(false);
 			var newRoot = oldRoot.ReplaceNode(recordDeclaration, updatedDeclaration);
 
