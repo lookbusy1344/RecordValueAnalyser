@@ -1,8 +1,8 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeFixes;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Rename;
 using System.Collections.Immutable;
 using System.Composition;
 using System.Linq;
@@ -46,8 +46,31 @@ namespace RecordValueAnalyser
 
 		private async Task<Solution> MakeUppercaseAsync(Document document, TypeDeclarationSyntax typeDecl, CancellationToken cancellationToken)
 		{
+			/*	public virtual bool Equals(Self? other) => throw new NotImplementedException();
+				..or for record structs..
+				public readonly bool Equals(Self other) => throw new NotImplementedException();
+
+				public override int GetHashCode() => 0;
+			 */
+
+			var isclassrecord = typeDecl is RecordDeclarationSyntax;
+			var recordname = typeDecl.Identifier.ValueText;
+
+			var equalsmethod = isclassrecord ? BuildEqualsClassMethod(recordname) : BuildEqualsStructMethod(recordname);
+			var gethashcodemethod = BuildGetHashCode();
+
+			var newRoot = await document.GetSyntaxRootAsync(cancellationToken)
+				.ConfigureAwait(false);
+			var _ = newRoot.InsertNodesAfter(
+				newRoot.DescendantNodes().OfType<RecordDeclarationSyntax>().First().Members.Last(),
+				new[] { equalsmethod, gethashcodemethod });
+
+			var newDocument = document.WithSyntaxRoot(newRoot);
+
+			return newDocument.Project.Solution;
+
 			// Compute new uppercase name.
-			var identifierToken = typeDecl.Identifier;
+			/*var identifierToken = typeDecl.Identifier;
 			var newName = identifierToken.Text.ToUpperInvariant();
 
 			// Get the symbol representing the type to be renamed.
@@ -60,7 +83,58 @@ namespace RecordValueAnalyser
 			var newSolution = await Renamer.RenameSymbolAsync(document.Project.Solution, typeSymbol, newName, optionSet, cancellationToken).ConfigureAwait(false);
 
 			// Return the new solution with the now-uppercase type name.
-			return newSolution;
+			return newSolution; */
 		}
+
+		/// <summary>
+		/// Helper to build: public override int GetHashCode() => 0;
+		/// </summary>
+		private MethodDeclarationSyntax BuildGetHashCode() => SyntaxFactory.MethodDeclaration(
+			SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.IntKeyword)), "GetHashCode")
+			.AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword), SyntaxFactory.Token(SyntaxKind.OverrideKeyword))
+			.WithExpressionBody(SyntaxFactory.ArrowExpressionClause(SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(0))))
+			.WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken));
+
+		/// <summary>
+		/// Helper to build: public readonly bool Equals(Self other) => throw new NotImplmentedException();
+		/// </summary>
+		private MethodDeclarationSyntax BuildEqualsStructMethod(string recordname) => SyntaxFactory.MethodDeclaration(
+				SyntaxFactory.PredefinedType(
+					SyntaxFactory.Token(SyntaxKind.BoolKeyword)), "Equals")
+			.WithModifiers(
+				SyntaxFactory.TokenList(
+					SyntaxFactory.Token(SyntaxKind.PublicKeyword),
+					SyntaxFactory.Token(SyntaxKind.ReadOnlyKeyword)))
+			.WithParameterList(
+				SyntaxFactory.ParameterList(
+					SyntaxFactory.SingletonSeparatedList(
+						SyntaxFactory.Parameter(
+							SyntaxFactory.Identifier("other"))
+							.WithType(SyntaxFactory.ParseTypeName(recordname)))))
+			.WithExpressionBody(SyntaxFactory.ArrowExpressionClause(
+				SyntaxFactory.ThrowExpression(SyntaxFactory.ObjectCreationExpression(SyntaxFactory.ParseTypeName("System.NotImplementedException")))))
+			.WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken));
+
+		/// <summary>
+		/// Helper to build: public virtual bool Equals(Self? other) => throw new NotImplmentedException();
+		/// </summary>
+		private MethodDeclarationSyntax BuildEqualsClassMethod(string recordname) => SyntaxFactory.MethodDeclaration(
+				SyntaxFactory.PredefinedType(
+					SyntaxFactory.Token(SyntaxKind.BoolKeyword)), "Equals")
+			.WithModifiers(
+				SyntaxFactory.TokenList(
+					SyntaxFactory.Token(SyntaxKind.PublicKeyword),
+					SyntaxFactory.Token(SyntaxKind.VirtualKeyword)))
+			.WithParameterList(
+				SyntaxFactory.ParameterList(
+					SyntaxFactory.SingletonSeparatedList(
+						SyntaxFactory.Parameter(
+							SyntaxFactory.Identifier("other"))
+							.WithType(
+								SyntaxFactory.NullableType(
+									SyntaxFactory.ParseTypeName(recordname))))))
+			.WithExpressionBody(SyntaxFactory.ArrowExpressionClause(
+				SyntaxFactory.ThrowExpression(SyntaxFactory.ObjectCreationExpression(SyntaxFactory.ParseTypeName("System.NotImplementedException")))))
+			.WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken));
 	}
 }
