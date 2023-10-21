@@ -63,7 +63,7 @@ namespace RecordValueAnalyser
 
 			// build new Equals and GetHashCode methods
 			var equalsmethod = isclassrecord ? BuildEqualsClassMethod(recordname) : BuildEqualsStructMethod(recordname);
-			var gethashcodemethod = BuildGetHashCode();
+			var gethashcodemethod = BuildGetHashCode(!isclassrecord);
 
 			// find the record declaration in the syntax tree
 			var recordDeclaration = (RecordDeclarationSyntax)await typeSymbol
@@ -89,11 +89,12 @@ namespace RecordValueAnalyser
 		}
 
 		/// <summary>
-		/// Helper to build: public override int GetHashCode() => 0;
+		/// Helper to build: public override [readonly] int GetHashCode() => 0;
 		/// </summary>
-		private MethodDeclarationSyntax BuildGetHashCode() => SyntaxFactory.MethodDeclaration(
+		private MethodDeclarationSyntax BuildGetHashCode(bool readonlymethod) => SyntaxFactory.MethodDeclaration(
 			SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.IntKeyword)), "GetHashCode")
-			.AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword), SyntaxFactory.Token(SyntaxKind.OverrideKeyword))
+			.AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword), SyntaxFactory.Token(SyntaxKind.OverrideKeyword),
+				readonlymethod ? SyntaxFactory.Token(SyntaxKind.ReadOnlyKeyword) : SyntaxFactory.Token(SyntaxKind.None))
 			.WithExpressionBody(SyntaxFactory.ArrowExpressionClause(SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(0))))
 			.WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken));
 
