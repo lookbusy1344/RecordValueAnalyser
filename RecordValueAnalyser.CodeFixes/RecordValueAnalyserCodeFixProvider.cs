@@ -66,12 +66,12 @@ namespace RecordValueAnalyser
 			var gethashcodemethod = BuildGetHashCode();
 
 			// add methods to typeSymbol class declaration
-			var classDeclaration = (ClassDeclarationSyntax)typeSymbol.DeclaringSyntaxReferences[0].GetSyntax();
-			var updatedClassDeclaration = classDeclaration.AddMembers(equalsmethod, gethashcodemethod);
+			var recordDeclaration = (RecordDeclarationSyntax)typeSymbol.DeclaringSyntaxReferences[0].GetSyntax();
+			var updatedDeclaration = recordDeclaration.AddMembers(equalsmethod, gethashcodemethod);
 
 			// replace the class in the syntax tree
 			var oldRoot = await document.GetSyntaxRootAsync().ConfigureAwait(false);
-			var newRoot = oldRoot.ReplaceNode(classDeclaration, updatedClassDeclaration);
+			var newRoot = oldRoot.ReplaceNode(recordDeclaration, updatedDeclaration);
 
 			// To get a new document with the updated syntax tree
 			var newDocument = document.WithSyntaxRoot(newRoot);
