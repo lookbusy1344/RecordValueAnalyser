@@ -63,7 +63,7 @@ namespace RecordValueAnalyser
 
 			// build new Equals and GetHashCode methods
 			var equalsmethod = isclassrecord ? BuildEqualsClassMethod(recordname) : BuildEqualsStructMethod(recordname);
-			var gethashcodemethod = BuildGetHashCode(!isclassrecord);
+			var gethashcodemethod = isclassrecord ? BuildClassGetHashCode() : BuildStructGetHashCode();
 
 			// find the record declaration in the syntax tree
 			var recordDeclaration = (RecordDeclarationSyntax)await typeSymbol
@@ -89,12 +89,20 @@ namespace RecordValueAnalyser
 		}
 
 		/// <summary>
-		/// Helper to build: public override [readonly] int GetHashCode() => 0;
+		/// Helper to build: public override readonly int GetHashCode() => 0;
 		/// </summary>
-		private MethodDeclarationSyntax BuildGetHashCode(bool readonlymethod) => SyntaxFactory.MethodDeclaration(
+		private MethodDeclarationSyntax BuildStructGetHashCode() => SyntaxFactory.MethodDeclaration(
 			SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.IntKeyword)), "GetHashCode")
-			.AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword), SyntaxFactory.Token(SyntaxKind.OverrideKeyword),
-				readonlymethod ? SyntaxFactory.Token(SyntaxKind.ReadOnlyKeyword) : SyntaxFactory.Token(SyntaxKind.None))
+			.AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword), SyntaxFactory.Token(SyntaxKind.OverrideKeyword), SyntaxFactory.Token(SyntaxKind.ReadOnlyKeyword))
+			.WithExpressionBody(SyntaxFactory.ArrowExpressionClause(SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(0))))
+			.WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken));
+
+		/// <summary>
+		/// Helper to build: public override int GetHashCode() => 0;
+		/// </summary>
+		private MethodDeclarationSyntax BuildClassGetHashCode() => SyntaxFactory.MethodDeclaration(
+			SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.IntKeyword)), "GetHashCode")
+			.AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword), SyntaxFactory.Token(SyntaxKind.OverrideKeyword))
 			.WithExpressionBody(SyntaxFactory.ArrowExpressionClause(SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(0))))
 			.WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken));
 
