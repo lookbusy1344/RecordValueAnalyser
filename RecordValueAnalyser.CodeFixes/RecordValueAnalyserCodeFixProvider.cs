@@ -71,14 +71,23 @@ namespace RecordValueAnalyser
 				.GetSyntaxAsync()
 				.ConfigureAwait(false);
 
-			// check if record already has members
-			//var hasmembers = recordDeclaration.Members.Any();
+			// check if recordDeclaration ends in a semi-colon
+			var hassemicolon = recordDeclaration.SemicolonToken.IsKind(SyntaxKind.SemicolonToken);
 
-			// add the new methods to the record
-			var updatedDeclaration = recordDeclaration
-				.WithOpenBraceToken(SyntaxFactory.Token(SyntaxKind.OpenBraceToken))
-				.WithCloseBraceToken(SyntaxFactory.Token(SyntaxKind.CloseBracketToken))
-				.AddMembers(equalsmethod, gethashcodemethod);
+			// check if the recordDeclaration has OpenBraceToken and CloseBraceToken
+			var hasbraces = recordDeclaration.OpenBraceToken.IsKind(SyntaxKind.OpenBraceToken) && recordDeclaration.CloseBraceToken.IsKind(SyntaxKind.CloseBraceToken);
+
+			RecordDeclarationSyntax updatedDeclaration;
+			if (hasbraces)
+				// just add the members
+				updatedDeclaration = recordDeclaration.AddMembers(equalsmethod, gethashcodemethod);
+			else
+				// remove the semi-colon and add the members, inside braces
+				updatedDeclaration = recordDeclaration
+					.WithSemicolonToken(default) // remove the semi-colon
+					.WithOpenBraceToken(SyntaxFactory.Token(SyntaxKind.OpenBraceToken))
+					.AddMembers(equalsmethod, gethashcodemethod)
+					.WithCloseBraceToken(SyntaxFactory.Token(SyntaxKind.CloseBracketToken));
 
 			// replace the record in the syntax tree
 			var oldRoot = await document.GetSyntaxRootAsync().ConfigureAwait(false);
