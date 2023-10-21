@@ -39,12 +39,12 @@ namespace RecordValueAnalyser
 			context.RegisterCodeFix(
 				CodeAction.Create(
 					title: CodeFixResources.CodeFixTitle,
-					createChangedSolution: c => MakeUppercaseAsync(context.Document, declaration, c),
+					createChangedSolution: c => FixEqualsAsync(context.Document, declaration, c),
 					equivalenceKey: nameof(CodeFixResources.CodeFixTitle)),
 				diagnostic);
 		}
 
-		private async Task<Solution> MakeUppercaseAsync(Document document, TypeDeclarationSyntax typeDecl, CancellationToken cancellationToken)
+		private async Task<Solution> FixEqualsAsync(Document document, TypeDeclarationSyntax typeDecl, CancellationToken cancellationToken)
 		{
 			/*	public virtual bool Equals(Self? other) => throw new NotImplementedException();
 				..or for record structs..
@@ -54,7 +54,7 @@ namespace RecordValueAnalyser
 			 */
 
 			// get the type we're working on
-			var semanticModel = await document.GetSemanticModelAsync(cancellationToken);
+			var semanticModel = await document.GetSemanticModelAsync(cancellationToken).ConfigureAwait(false);
 			var typeSymbol = semanticModel.GetDeclaredSymbol(typeDecl, cancellationToken);
 
 			// determine if it's a class or struct, and the name
@@ -76,18 +76,10 @@ namespace RecordValueAnalyser
 			// To get a new document with the updated syntax tree
 			var newDocument = document.WithSyntaxRoot(newRoot);
 
-			//var newRoot = await document.GetSyntaxRootAsync(cancellationToken)
-			//	.ConfigureAwait(false);
-			//var _ = newRoot.InsertNodesAfter(
-			//	newRoot.DescendantNodes().OfType<RecordDeclarationSyntax>().First().Members.Last(),
-			//	new[] { equalsmethod, gethashcodemethod });
-
-			//var newDocument = document.WithSyntaxRoot(newRoot);
-
 			return newDocument.Project.Solution;
 
 			// ===============================================
-			// Compute new uppercase name.
+
 			/*var identifierToken = typeDecl.Identifier;
 			var newName = identifierToken.Text.ToUpperInvariant();
 
