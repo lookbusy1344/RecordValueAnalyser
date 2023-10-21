@@ -74,12 +74,9 @@ namespace RecordValueAnalyser
 			// check if record already has members
 			//var hasmembers = recordDeclaration.Members.Any();
 
-			// create a new record declaration with empty members list
-			recordDeclaration = recordDeclaration
-				.WithMembers(SyntaxFactory.List<MemberDeclarationSyntax>());
-
-			// add the Equals and GetHashCode methods
-			var updatedDeclaration = recordDeclaration.AddMembers(equalsmethod, gethashcodemethod);
+			// add the new methods to the record
+			var methods = SyntaxFactory.List<MemberDeclarationSyntax>(nodes: new MemberDeclarationSyntax[] { equalsmethod, gethashcodemethod });
+			var updatedDeclaration = recordDeclaration.WithMembers(methods);
 
 			// replace the record in the syntax tree
 			var oldRoot = await document.GetSyntaxRootAsync().ConfigureAwait(false);
