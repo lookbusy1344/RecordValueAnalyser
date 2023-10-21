@@ -35,16 +35,18 @@ namespace RecordValueAnalyser
 			// Find the type declaration identified by the diagnostic.
 			var declaration = root.FindToken(diagnosticSpan.Start).Parent.AncestorsAndSelf().OfType<TypeDeclarationSyntax>().First();
 
+			var isclass = declaration.Kind() == SyntaxKind.RecordDeclaration;
+
 			// Register a code action that will invoke the fix.
 			context.RegisterCodeFix(
 				CodeAction.Create(
 					title: CodeFixResources.CodeFixTitle,
-					createChangedSolution: c => FixEqualsAsync(context.Document, declaration, c),
+					createChangedSolution: c => FixEqualsAsync(context.Document, declaration, isclass, c),
 					equivalenceKey: nameof(CodeFixResources.CodeFixTitle)),
 				diagnostic);
 		}
 
-		private async Task<Solution> FixEqualsAsync(Document document, TypeDeclarationSyntax typeDecl, CancellationToken cancellationToken)
+		private async Task<Solution> FixEqualsAsync(Document document, TypeDeclarationSyntax typeDecl, bool isclassrecord, CancellationToken cancellationToken)
 		{
 			/*	public virtual bool Equals(Self? other) => throw new NotImplementedException();
 				..or for record structs..
@@ -57,8 +59,6 @@ namespace RecordValueAnalyser
 			var semanticModel = await document.GetSemanticModelAsync(cancellationToken).ConfigureAwait(false);
 			var typeSymbol = semanticModel.GetDeclaredSymbol(typeDecl, cancellationToken);
 
-			// determine if it's a class or struct, and the name
-			var isclassrecord = typeDecl is RecordDeclarationSyntax;
 			var recordname = typeDecl.Identifier.Text;
 
 			// build new Equals and GetHashCode methods
