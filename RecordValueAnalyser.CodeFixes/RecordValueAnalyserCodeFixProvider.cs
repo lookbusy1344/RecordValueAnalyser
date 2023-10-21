@@ -109,8 +109,7 @@ namespace RecordValueAnalyser
 						SyntaxFactory.Parameter(
 							SyntaxFactory.Identifier("other"))
 							.WithType(SyntaxFactory.ParseTypeName(recordname)))))
-			.WithExpressionBody(SyntaxFactory.ArrowExpressionClause(
-				SyntaxFactory.ThrowExpression(SyntaxFactory.ObjectCreationExpression(SyntaxFactory.ParseTypeName("System.NotImplementedException")))))
+			.WithExpressionBody(SyntaxFactory.ArrowExpressionClause(SyntaxFactory.LiteralExpression(SyntaxKind.FalseLiteralExpression)))
 			.WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken));
 
 		/// <summary>
@@ -131,8 +130,7 @@ namespace RecordValueAnalyser
 							.WithType(
 								SyntaxFactory.NullableType(
 									SyntaxFactory.ParseTypeName(recordname))))))
-			.WithExpressionBody(SyntaxFactory.ArrowExpressionClause(
-				SyntaxFactory.ThrowExpression(SyntaxFactory.ObjectCreationExpression(SyntaxFactory.ParseTypeName("System.NotImplementedException")))))
+			.WithExpressionBody(SyntaxFactory.ArrowExpressionClause(SyntaxFactory.LiteralExpression(SyntaxKind.FalseLiteralExpression)))
 			.WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken));
 	}
 }
