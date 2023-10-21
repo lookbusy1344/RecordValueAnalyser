@@ -75,8 +75,10 @@ namespace RecordValueAnalyser
 			//var hasmembers = recordDeclaration.Members.Any();
 
 			// add the new methods to the record
-			var methods = SyntaxFactory.List<MemberDeclarationSyntax>(nodes: new MemberDeclarationSyntax[] { equalsmethod, gethashcodemethod });
-			var updatedDeclaration = recordDeclaration.WithMembers(methods);
+			var updatedDeclaration = recordDeclaration
+				.WithOpenBraceToken(SyntaxFactory.Token(SyntaxKind.OpenBraceToken))
+				.WithCloseBraceToken(SyntaxFactory.Token(SyntaxKind.CloseBracketToken))
+				.AddMembers(equalsmethod, gethashcodemethod);
 
 			// replace the record in the syntax tree
 			var oldRoot = await document.GetSyntaxRootAsync().ConfigureAwait(false);
