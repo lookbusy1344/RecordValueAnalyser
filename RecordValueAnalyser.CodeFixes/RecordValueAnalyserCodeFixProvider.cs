@@ -9,9 +9,8 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-#pragma warning disable IDE0079 // Remove unnecessary suppression
-#pragma warning disable CS0618 // Type or member is obsolete
-#pragma warning disable CS0162 // Unreachable code detected
+//#pragma warning disable IDE0079 // Remove unnecessary suppression
+//#pragma warning disable CS0618 // Type or member is obsolete
 
 namespace RecordValueAnalyser
 {
@@ -35,6 +34,7 @@ namespace RecordValueAnalyser
 			// Find the type declaration identified by the diagnostic.
 			var declaration = root.FindToken(diagnosticSpan.Start).Parent.AncestorsAndSelf().OfType<TypeDeclarationSyntax>().First();
 
+			// a record class or struct?
 			var isclass = declaration.Kind() == SyntaxKind.RecordDeclaration;
 
 			// Register a code action that will invoke the fix.
@@ -75,19 +75,30 @@ namespace RecordValueAnalyser
 			var hassemicolon = recordDeclaration.SemicolonToken.IsKind(SyntaxKind.SemicolonToken);
 
 			// check if the recordDeclaration has OpenBraceToken and CloseBraceToken
-			var hasbraces = recordDeclaration.OpenBraceToken.IsKind(SyntaxKind.OpenBraceToken) && recordDeclaration.CloseBraceToken.IsKind(SyntaxKind.CloseBraceToken);
+			var hasbraces = recordDeclaration.OpenBraceToken.IsKind(SyntaxKind.OpenBraceToken); // && recordDeclaration.CloseBraceToken.IsKind(SyntaxKind.CloseBraceToken);
 
 			RecordDeclarationSyntax updatedDeclaration;
 			if (hasbraces)
 				// just add the members
 				updatedDeclaration = recordDeclaration.AddMembers(equalsmethod, gethashcodemethod);
 			else
-				// remove the semi-colon and add the members, inside braces
-				updatedDeclaration = recordDeclaration
-					.WithSemicolonToken(default) // remove the semi-colon
+			{
+				// remove any trailing semi-colon
+				if (hassemicolon)
+					updatedDeclaration = recordDeclaration.WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.None));
+				else
+					updatedDeclaration = recordDeclaration;
+
+				// add the members, inside braces
+				updatedDeclaration = updatedDeclaration
 					.WithOpenBraceToken(SyntaxFactory.Token(SyntaxKind.OpenBraceToken))
-					.AddMembers(equalsmethod, gethashcodemethod)
-					.WithCloseBraceToken(SyntaxFactory.Token(SyntaxKind.CloseBracketToken));
+					.WithMembers(SyntaxFactory.List<MemberDeclarationSyntax>(new MemberDeclarationSyntax[] { equalsmethod, gethashcodemethod }))
+					.WithCloseBraceToken(SyntaxFactory.Token(SyntaxKind.CloseBraceToken));
+
+				//.WithOpenBraceToken(SyntaxFactory.Token(SyntaxKind.OpenBraceToken))
+				//.AddMembers(equalsmethod, gethashcodemethod)
+				//.WithCloseBraceToken(SyntaxFactory.Token(SyntaxKind.CloseBracketToken));
+			}
 
 			// replace the record in the syntax tree
 			var oldRoot = await document.GetSyntaxRootAsync().ConfigureAwait(false);
