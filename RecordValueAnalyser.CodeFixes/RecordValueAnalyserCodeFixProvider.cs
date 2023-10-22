@@ -17,6 +17,8 @@ namespace RecordValueAnalyser
 	[ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(RecordValueAnalyserCodeFixProvider)), Shared]
 	public class RecordValueAnalyserCodeFixProvider : CodeFixProvider
 	{
+		private const string ToDoString = " // TODO";
+
 		public sealed override ImmutableArray<string> FixableDiagnosticIds => ImmutableArray.Create(RecordValueAnalyser.DiagnosticId);
 
 		public sealed override FixAllProvider GetFixAllProvider() =>
@@ -48,12 +50,12 @@ namespace RecordValueAnalyser
 
 		private async Task<Solution> FixEqualsAsync(Document document, TypeDeclarationSyntax typeDecl, bool isclassrecord, CancellationToken cancellationToken)
 		{
-			/*	public virtual bool Equals(Self? other) => throw new NotImplementedException();
+			/*	public virtual bool Equals(Self? other) => true;
 				public override int GetHashCode() => 0;
 
 				..or for record structs..
 
-				public readonly bool Equals(Self other) => throw new NotImplementedException();
+				public readonly bool Equals(Self other) => true;
 				public override readonly int GetHashCode() => 0;
 			 */
 
@@ -90,7 +92,7 @@ namespace RecordValueAnalyser
 				updatedDeclaration = recordDeclaration
 					.WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.None))
 					.WithOpenBraceToken(SyntaxFactory.Token(SyntaxKind.OpenBraceToken))
-					.WithMembers(SyntaxFactory.List<MemberDeclarationSyntax>(new MemberDeclarationSyntax[] { equalsmethod, gethashcodemethod }))
+					.WithMembers(SyntaxFactory.List(new MemberDeclarationSyntax[] { equalsmethod, gethashcodemethod }))
 					.WithCloseBraceToken(SyntaxFactory.Token(SyntaxKind.CloseBraceToken));
 			}
 
@@ -111,7 +113,8 @@ namespace RecordValueAnalyser
 			SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.IntKeyword)), "GetHashCode")
 			.AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword), SyntaxFactory.Token(SyntaxKind.OverrideKeyword), SyntaxFactory.Token(SyntaxKind.ReadOnlyKeyword))
 			.WithExpressionBody(SyntaxFactory.ArrowExpressionClause(SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(0))))
-			.WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken));
+			.WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken))
+			.WithTrailingTrivia(SyntaxFactory.TriviaList(SyntaxFactory.Comment(ToDoString), SyntaxFactory.CarriageReturnLineFeed));
 
 		/// <summary>
 		/// Helper to build: public override int GetHashCode() => 0;
@@ -120,10 +123,11 @@ namespace RecordValueAnalyser
 			SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.IntKeyword)), "GetHashCode")
 			.AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword), SyntaxFactory.Token(SyntaxKind.OverrideKeyword))
 			.WithExpressionBody(SyntaxFactory.ArrowExpressionClause(SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(0))))
-			.WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken));
+			.WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken))
+			.WithTrailingTrivia(SyntaxFactory.TriviaList(SyntaxFactory.Comment(ToDoString), SyntaxFactory.CarriageReturnLineFeed));
 
 		/// <summary>
-		/// Helper to build: public readonly bool Equals(Self other) => throw new NotImplmentedException();
+		/// Helper to build: public readonly bool Equals(Self other) => true;
 		/// </summary>
 		private MethodDeclarationSyntax BuildEqualsStructMethod(string recordname) => SyntaxFactory.MethodDeclaration(
 				SyntaxFactory.PredefinedType(
@@ -138,11 +142,12 @@ namespace RecordValueAnalyser
 						SyntaxFactory.Parameter(
 							SyntaxFactory.Identifier("other"))
 							.WithType(SyntaxFactory.ParseTypeName(recordname)))))
-			.WithExpressionBody(SyntaxFactory.ArrowExpressionClause(SyntaxFactory.LiteralExpression(SyntaxKind.FalseLiteralExpression)))
-			.WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken));
+			.WithExpressionBody(SyntaxFactory.ArrowExpressionClause(SyntaxFactory.LiteralExpression(SyntaxKind.TrueLiteralExpression)))
+			.WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken))
+			.WithTrailingTrivia(SyntaxFactory.TriviaList(SyntaxFactory.Comment(ToDoString), SyntaxFactory.CarriageReturnLineFeed));
 
 		/// <summary>
-		/// Helper to build: public virtual bool Equals(Self? other) => throw new NotImplmentedException();
+		/// Helper to build: public virtual bool Equals(Self? other) => true;
 		/// </summary>
 		private MethodDeclarationSyntax BuildEqualsClassMethod(string recordname) => SyntaxFactory.MethodDeclaration(
 				SyntaxFactory.PredefinedType(
@@ -159,7 +164,8 @@ namespace RecordValueAnalyser
 							.WithType(
 								SyntaxFactory.NullableType(
 									SyntaxFactory.ParseTypeName(recordname))))))
-			.WithExpressionBody(SyntaxFactory.ArrowExpressionClause(SyntaxFactory.LiteralExpression(SyntaxKind.FalseLiteralExpression)))
-			.WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken));
+			.WithExpressionBody(SyntaxFactory.ArrowExpressionClause(SyntaxFactory.LiteralExpression(SyntaxKind.TrueLiteralExpression)))
+			.WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken))
+			.WithTrailingTrivia(SyntaxFactory.TriviaList(SyntaxFactory.Comment(ToDoString), SyntaxFactory.CarriageReturnLineFeed));
 	}
 }
