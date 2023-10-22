@@ -72,7 +72,7 @@ namespace RecordValueAnalyser
 				.ConfigureAwait(false);
 
 			// check if recordDeclaration ends in a semi-colon
-			var hassemicolon = recordDeclaration.SemicolonToken.IsKind(SyntaxKind.SemicolonToken);
+			//var hassemicolon = recordDeclaration.SemicolonToken.IsKind(SyntaxKind.SemicolonToken);
 
 			// check if the recordDeclaration has OpenBraceToken and CloseBraceToken
 			var hasbraces = recordDeclaration.OpenBraceToken.IsKind(SyntaxKind.OpenBraceToken); // && recordDeclaration.CloseBraceToken.IsKind(SyntaxKind.CloseBraceToken);
@@ -84,20 +84,14 @@ namespace RecordValueAnalyser
 			else
 			{
 				// remove any trailing semi-colon
-				if (hassemicolon)
-					updatedDeclaration = recordDeclaration.WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.None));
-				else
-					updatedDeclaration = recordDeclaration;
+				//updatedDeclaration = recordDeclaration.WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.None));
 
 				// add the members, inside braces
-				updatedDeclaration = updatedDeclaration
+				updatedDeclaration = recordDeclaration
+					.WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.None))
 					.WithOpenBraceToken(SyntaxFactory.Token(SyntaxKind.OpenBraceToken))
 					.WithMembers(SyntaxFactory.List<MemberDeclarationSyntax>(new MemberDeclarationSyntax[] { equalsmethod, gethashcodemethod }))
 					.WithCloseBraceToken(SyntaxFactory.Token(SyntaxKind.CloseBraceToken));
-
-				//.WithOpenBraceToken(SyntaxFactory.Token(SyntaxKind.OpenBraceToken))
-				//.AddMembers(equalsmethod, gethashcodemethod)
-				//.WithCloseBraceToken(SyntaxFactory.Token(SyntaxKind.CloseBracketToken));
 			}
 
 			// replace the record in the syntax tree
