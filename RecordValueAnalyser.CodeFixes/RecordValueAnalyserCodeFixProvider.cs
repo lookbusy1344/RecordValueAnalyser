@@ -49,16 +49,19 @@ namespace RecordValueAnalyser
 		private async Task<Solution> FixEqualsAsync(Document document, TypeDeclarationSyntax typeDecl, bool isclassrecord, CancellationToken cancellationToken)
 		{
 			/*	public virtual bool Equals(Self? other) => throw new NotImplementedException();
-				..or for record structs..
-				public readonly bool Equals(Self other) => throw new NotImplementedException();
-
 				public override int GetHashCode() => 0;
+
+				..or for record structs..
+
+				public readonly bool Equals(Self other) => throw new NotImplementedException();
+				public override readonly int GetHashCode() => 0;
 			 */
 
 			// get the type we're working on
 			var semanticModel = await document.GetSemanticModelAsync(cancellationToken).ConfigureAwait(false);
 			var typeSymbol = semanticModel.GetDeclaredSymbol(typeDecl, cancellationToken);
 
+			// name of the record, for use in Equals(T)
 			var recordname = typeDecl.Identifier.Text;
 
 			// build new Equals and GetHashCode methods
@@ -71,22 +74,19 @@ namespace RecordValueAnalyser
 				.GetSyntaxAsync()
 				.ConfigureAwait(false);
 
-			// check if recordDeclaration ends in a semi-colon
-			//var hassemicolon = recordDeclaration.SemicolonToken.IsKind(SyntaxKind.SemicolonToken);
-
-			// check if the recordDeclaration has OpenBraceToken and CloseBraceToken
-			var hasbraces = recordDeclaration.OpenBraceToken.IsKind(SyntaxKind.OpenBraceToken); // && recordDeclaration.CloseBraceToken.IsKind(SyntaxKind.CloseBraceToken);
+			// check if the recordDeclaration has OpenBraceToken '{'
+			var hasbraces = recordDeclaration.OpenBraceToken.IsKind(SyntaxKind.OpenBraceToken);
 
 			RecordDeclarationSyntax updatedDeclaration;
 			if (hasbraces)
-				// just add the members
+			{
+				// We already have braces '{ }', so just add the members
 				updatedDeclaration = recordDeclaration.AddMembers(equalsmethod, gethashcodemethod);
+			}
 			else
 			{
-				// remove any trailing semi-colon
-				//updatedDeclaration = recordDeclaration.WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.None));
-
-				// add the members, inside braces
+				// no braces, so we need to add them
+				// remove any semi-colon, and add the members inside braces '{ }'
 				updatedDeclaration = recordDeclaration
 					.WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.None))
 					.WithOpenBraceToken(SyntaxFactory.Token(SyntaxKind.OpenBraceToken))
