@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
 <Target Name="SetSourceRevisionId" BeforeTargets="InitializeSourceControlInformation">
     <Exec Command="git describe --long --always --dirty=+ --broken --exclude=* --abbrev=40" ConsoleToMSBuild="True" IgnoreExitCode="False">
@@ -7,7 +7,7 @@
 </Target>
 
   <PropertyGroup>
-  	<Version>1.0.0.0</Version> 
+  	<Version>1.0.99.0</Version> 
 	<InformationalVersion>$(SourceRevisionId)</InformationalVersion> 
     <TargetFramework>netstandard2.0</TargetFramework>
     <IsPackable>false</IsPackable>

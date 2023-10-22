@@ -3,15 +3,21 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.7.34031.279
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RecordValueAnalyser", "RecordValueAnalyser\RecordValueAnalyser.csproj", "{25143B1E-D649-4EC1-B8D3-428CD8AD64C0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RecordValueAnalyser", "RecordValueAnalyser\RecordValueAnalyser.csproj", "{25143B1E-D649-4EC1-B8D3-428CD8AD64C0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RecordValueAnalyser.CodeFixes", "RecordValueAnalyser.CodeFixes\RecordValueAnalyser.CodeFixes.csproj", "{235DAD83-07F5-4DB2-A898-A69230FF4817}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RecordValueAnalyser.CodeFixes", "RecordValueAnalyser.CodeFixes\RecordValueAnalyser.CodeFixes.csproj", "{235DAD83-07F5-4DB2-A898-A69230FF4817}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RecordValueAnalyser.Package", "RecordValueAnalyser.Package\RecordValueAnalyser.Package.csproj", "{0706A3C8-D94F-4FFB-8CC0-559164071EE6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RecordValueAnalyser.Package", "RecordValueAnalyser.Package\RecordValueAnalyser.Package.csproj", "{0706A3C8-D94F-4FFB-8CC0-559164071EE6}"
+	ProjectSection(ProjectDependencies) = postProject
+		{235DAD83-07F5-4DB2-A898-A69230FF4817} = {235DAD83-07F5-4DB2-A898-A69230FF4817}
+	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RecordValueAnalyser.Test", "RecordValueAnalyser.Test\RecordValueAnalyser.Test.csproj", "{E8D1E0AD-3DE5-4C04-B61C-0A416090B602}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RecordValueAnalyser.Test", "RecordValueAnalyser.Test\RecordValueAnalyser.Test.csproj", "{E8D1E0AD-3DE5-4C04-B61C-0A416090B602}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RecordValueAnalyser.Vsix", "RecordValueAnalyser.Vsix\RecordValueAnalyser.Vsix.csproj", "{8CF3AD61-5156-4052-BC28-3B200F68C4EB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RecordValueAnalyser.Vsix", "RecordValueAnalyser.Vsix\RecordValueAnalyser.Vsix.csproj", "{8CF3AD61-5156-4052-BC28-3B200F68C4EB}"
+	ProjectSection(ProjectDependencies) = postProject
+		{235DAD83-07F5-4DB2-A898-A69230FF4817} = {235DAD83-07F5-4DB2-A898-A69230FF4817}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
