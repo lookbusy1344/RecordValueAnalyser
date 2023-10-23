@@ -26,7 +26,7 @@ public class RecordValueAnalyserCodeFixProvider : CodeFixProvider
 	{
 		var root = await context.Document.GetSyntaxRootAsync(context.CancellationToken).ConfigureAwait(false);
 
-		// TODO: Replace the following code with your own analysis, generating a CodeAction for each fix to suggest
+		// get the location of the diagnostic
 		var diagnostic = context.Diagnostics[0];
 		var diagnosticSpan = diagnostic.Location.SourceSpan;
 
