@@ -47,12 +47,12 @@ public class RecordValueAnalyserCodeFixProvider : CodeFixProvider
 
 	private async Task<Solution> FixEqualsAsync(Document document, TypeDeclarationSyntax typeDecl, bool isclassrecord, CancellationToken cancellationToken)
 	{
-		/*	public virtual bool Equals(Self? other) => true;
+		/*	public virtual bool Equals(Self? other) => false;
 			public override int GetHashCode() => 0;
 
 			..or for record structs..
 
-			public readonly bool Equals(Self other) => true;
+			public readonly bool Equals(Self other) => false;
 			public override readonly int GetHashCode() => 0;
 		 */
 
@@ -138,7 +138,7 @@ public class RecordValueAnalyserCodeFixProvider : CodeFixProvider
 					SyntaxFactory.Parameter(
 						SyntaxFactory.Identifier("other"))
 						.WithType(SyntaxFactory.ParseTypeName(recordname)))))
-		.WithExpressionBody(SyntaxFactory.ArrowExpressionClause(SyntaxFactory.LiteralExpression(SyntaxKind.TrueLiteralExpression)))
+		.WithExpressionBody(SyntaxFactory.ArrowExpressionClause(SyntaxFactory.LiteralExpression(SyntaxKind.FalseLiteralExpression)))
 		.WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken))
 		.WithTrailingTrivia(SyntaxFactory.TriviaList(SyntaxFactory.Comment(ToDoString), SyntaxFactory.CarriageReturnLineFeed));
 
@@ -160,7 +160,7 @@ public class RecordValueAnalyserCodeFixProvider : CodeFixProvider
 						.WithType(
 							SyntaxFactory.NullableType(
 								SyntaxFactory.ParseTypeName(recordname))))))
-		.WithExpressionBody(SyntaxFactory.ArrowExpressionClause(SyntaxFactory.LiteralExpression(SyntaxKind.TrueLiteralExpression)))
+		.WithExpressionBody(SyntaxFactory.ArrowExpressionClause(SyntaxFactory.LiteralExpression(SyntaxKind.FalseLiteralExpression)))
 		.WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken))
 		.WithTrailingTrivia(SyntaxFactory.TriviaList(SyntaxFactory.Comment(ToDoString), SyntaxFactory.CarriageReturnLineFeed));
 }

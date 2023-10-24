@@ -50,7 +50,7 @@ public class RecordValueAnalyser : DiagnosticAnalyzer
 				// otherwise, we have a problem. show a diagnostic
 				var typestr = type?.ToDisplayString(NullableFlowState.None) ?? "";
 				var memberstr = recparam.Identifier.ValueText;
-				var args = errormember == null ? $"{typestr} {memberstr}" : $"{typestr} {memberstr} ({errormember})";
+				var args = errormember == null ? $"{typestr} {memberstr}" : $"{typestr} {memberstr} (field {errormember})";
 
 				var diagnostic = Diagnostic.Create(ParamValueSemanticsRule, recparam.GetLocation(), args);
 				context.ReportDiagnostic(diagnostic);

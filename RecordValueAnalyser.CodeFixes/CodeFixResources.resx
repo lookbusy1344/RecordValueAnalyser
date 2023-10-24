@@ -118,7 +118,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="CodeFixTitle" xml:space="preserve">
-    <value>Add Equals method</value>
+    <value>Add Equals and GetHashCode</value>
     <comment>Add Equals and GetHashCode methods</comment>
   </data>
 </root>

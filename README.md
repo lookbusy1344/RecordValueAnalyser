@@ -98,7 +98,7 @@ The analyser provides a simple code fix. It will add template `Equals` and `GetH
 ```
 public record class Test(IReadOnlyList<int> Numbers)
 {
-	public virtual bool Equals(Test? other) => true; // TODO
+	public virtual bool Equals(Test? other) => false; // TODO
 	public override int GetHashCode() => 0; // TODO
 }
 ```
@@ -108,16 +108,27 @@ public record class Test(IReadOnlyList<int> Numbers)
 ```
 public record struct Test(IReadOnlyList<int> Numbers)
 {
-	public readonly bool Equals(Test other) => true; // TODO
+	public readonly bool Equals(Test other) => false; // TODO
 	public override readonly int GetHashCode() => 0; // TODO
 }
 ```
 
-It is not necessary for records to implement `IEquatable<T>`. When you write your implementations `SequenceEqual` is very useful for comparing  collections, eg:
+It is not necessary for records to implement `IEquatable<T>`. When you write your implementations `SequenceEqual` is very useful for comparing  collections.
+
+Note that GetHashCode for collections is tricky!
 
 ```
-public readonly bool Equals(Test other) => Numbers.SequenceEqual(other.Numbers);
-public override readonly int GetHashCode() => Numbers.GetHashCode();
+public override int GetHashCode() => Numbers.GetHashCode(); // BROKEN!
+public override int GetHashCode() => HashCode.Combine(Numbers); // BROKEN!
+
+public override int GetHashCode() // CORRECT IMPLEMENTATION
+{
+	var hash = new HashCode();
+	foreach (var n in Numbers) hash.Add(n);
+	return hash.ToHashCode();
+}
+
+public readonly bool Equals(Test other) => Numbers.SequenceEqual(other.Numbers); // CORRECT IMPLEMENTATION
 ```
 
 ## Testing
