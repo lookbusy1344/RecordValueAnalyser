@@ -68,7 +68,7 @@ namespace System.Runtime.CompilerServices { internal static class IsExternalInit
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(8, 53, 8, 63)
-			.WithArguments("StructA Sa (int[])");
+			.WithArguments("StructA Sa (field int[])");
 
 		await VerifyCS.VerifyAnalyzerAsync(test, expected);
 	}
@@ -120,7 +120,7 @@ namespace System.Runtime.CompilerServices { internal static class IsExternalInit
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(10, 53, 10, 62)
-			.WithArguments("ClassA Ca (int[])");
+			.WithArguments("ClassA Ca (field int[])");
 
 		await VerifyCS.VerifyAnalyzerAsync(test, expected);
 	}
@@ -193,7 +193,7 @@ namespace System.Runtime.CompilerServices { internal static class IsExternalInit
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(6, 36, 6, 60)
-			.WithArguments("(int a, int[] b) TupFail (int[])");
+			.WithArguments("(int a, int[] b) TupFail (field int[])");
 
 		await VerifyCS.VerifyAnalyzerAsync(test, expected);
 	}
@@ -229,7 +229,7 @@ namespace System.Runtime.CompilerServices { internal static class IsExternalInit
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(8, 35, 8, 51)
-			.WithArguments("StructDynamic Dy (dynamic)");
+			.WithArguments("StructDynamic Dy (field dynamic)");
 
 		await VerifyCS.VerifyAnalyzerAsync(test, expected);
 	}
@@ -263,7 +263,7 @@ namespace System.Runtime.CompilerServices { internal static class IsExternalInit
 
 		var expected = VerifyCS.Diagnostic()
 			.WithSpan(9, 35, 9, 45)
-			.WithArguments("StructA Sa (StructB)");
+			.WithArguments("StructA Sa (field StructB)");
 
 		await VerifyCS.VerifyAnalyzerAsync(test, expected);
 	}
