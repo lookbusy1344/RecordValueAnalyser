@@ -106,18 +106,14 @@ public record class Test(IReadOnlyList<int> Numbers)
 ..or for record structs..
 
 ```
-public record class Test(IReadOnlyList<int> Numbers)
+public record struct Test(IReadOnlyList<int> Numbers)
 {
 	public readonly bool Equals(Test other) => true; // TODO
 	public override readonly int GetHashCode() => 0; // TODO
 }
 ```
 
-`GetHashCode` __must__ return the same number for equal instances. It __should__ return different values for different instances, but it doesn't have do. Returning 0 for everything hence works, but its not a good solution.
-
-It is not necessary for records to implement `IEquatable<T>`.
-
-`SequenceEqual` is very useful for comparing  collections:
+It is not necessary for records to implement `IEquatable<T>`. When you write your implementations `SequenceEqual` is very useful for comparing  collections, eg:
 
 ```
 public readonly bool Equals(Test other) => Numbers.SequenceEqual(other.Numbers);
