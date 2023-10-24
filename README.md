@@ -91,6 +91,35 @@ It works in Visual Studio 2022 and Visual Studio Code, and also on the command l
 
 - JSV01 - a record member lacks value semantics eg `record Test(IList<int> Fail)`
 
+## Code fix
+
+The analyser provides a simple code fix. It will add template `Equals` and `GetHashCode` methods to the member. For example:
+
+```
+public record class Test(IReadOnlyList<int> Numbers)
+{
+	public virtual bool Equals(Test? other) => true; // TODO
+	public override int GetHashCode() => 0; // TODO
+}
+```
+
+..or for record structs..
+
+```
+public record struct Test(IReadOnlyList<int> Numbers)
+{
+	public readonly bool Equals(Test other) => true; // TODO
+	public override readonly int GetHashCode() => 0; // TODO
+}
+```
+
+It is not necessary for records to implement `IEquatable<T>`. When you write your implementations `SequenceEqual` is very useful for comparing  collections, eg:
+
+```
+public readonly bool Equals(Test other) => Numbers.SequenceEqual(other.Numbers);
+public override readonly int GetHashCode() => Numbers.GetHashCode();
+```
+
 ## Testing
 
 [![Test](https://github.com/lookbusy1344/RecordValueAnalyser/actions/workflows/test.yml/badge.svg)](https://github.com/lookbusy1344/RecordValueAnalyser/actions/workflows/test.yml)
