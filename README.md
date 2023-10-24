@@ -98,7 +98,7 @@ The analyser provides a simple code fix. It will add template `Equals` and `GetH
 ```
 public record class Test(IReadOnlyList<int> Numbers)
 {
-	public virtual bool Equals(Test? other) => true; // TODO
+	public virtual bool Equals(Test? other) => false; // TODO
 	public override int GetHashCode() => 0; // TODO
 }
 ```
@@ -108,7 +108,7 @@ public record class Test(IReadOnlyList<int> Numbers)
 ```
 public record struct Test(IReadOnlyList<int> Numbers)
 {
-	public readonly bool Equals(Test other) => true; // TODO
+	public readonly bool Equals(Test other) => false; // TODO
 	public override readonly int GetHashCode() => 0; // TODO
 }
 ```
