@@ -2,10 +2,10 @@ name: Test
 
 on:
   push:
-    branches: [ "main", "codefix" ]
+    branches: [ "main" ]
 
   pull_request:
-    branches: [ "main", "codefix" ]
+    branches: [ "main" ]
 
 jobs:
   build:
