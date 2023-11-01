@@ -115,7 +115,7 @@ public record class RecFields(int IPass, string SPass, object OFail)
     //uncomment, and the failures will disappear
 	//public virtual bool Equals(RecFields? other) => true;
 
-	public override int GetHashCode() => 1;
+	public override int GetHashCode() => 0; // TODO
 }
 
 // the record class has an Equals method, so its assumed to be ok
@@ -123,7 +123,7 @@ public record class HasEqualsRecordClass(IReadOnlyList<int> NumsPass)
 {
 	public virtual bool Equals(HasEqualsRecordClass? other) => other != null && NumsPass.SequenceEqual(other.NumsPass);
 
-	public override int GetHashCode() => NumsPass.GetHashCode();
+	public override int GetHashCode() => 0; // TODO
 }
 
 // the record struct has an Equals method, so its assumed to be ok
@@ -131,7 +131,7 @@ public record struct HasEqualsRecordStruct(IReadOnlyList<int> NumsPass)
 {
 	public readonly bool Equals(HasEqualsRecordStruct other) => NumsPass.SequenceEqual(other.NumsPass);
 
-	public override readonly int GetHashCode() => NumsPass.GetHashCode();
+	public override readonly int GetHashCode() => 0; // TODO
 }
 
 // ============= Supporting types =============
