@@ -80,7 +80,7 @@ It was built for C# 12 and .NET 8. It checks `record class` and `record struct` 
 - Otherwise all members are checked for:
     - the member is a primitive type, enum or string (these are ok)
     - it is a object or dynamic (these are never ok)
-	- it is an inline array (these are never ok) - new in version 1.2 for .NET 8
+	- it is an inline array (these are never ok) - **new in version 1.2 for .NET 8**
     - it has Equals(T) or Equals(object) method overriden directly in the type (these are ok)
     - it is a record (these will be checked elsewhere, so are assumed ok here)
     - it is a class (without Equals method, these are not ok)
