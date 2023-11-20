@@ -306,4 +306,24 @@ namespace System.Runtime.CompilerServices {
 
 		await VerifyCS.VerifyAnalyzerAsync(test, unsupported, expected);
 	}
+
+	[TestMethod]
+	public async Task MissingInlineArrayAttrib()
+	{
+		// A record containing a .NET 8 inline array, but lacking the attribute
+		// should pass because it is therefore a normal struct
+		const string test = coGeneral
+			+ """
+			public struct MyInlineArray { public byte _element0; }
+			
+			public record class Tester(int I, MyInlineArray Ar);
+			""";
+
+		// bodge for "Target runtime doesn't support inline array types."
+		//var unsupported = Microsoft.CodeAnalysis.Testing.DiagnosticResult
+		//	.CompilerError("CS9171")
+		//	.WithSpan(14, 15, 14, 28);
+
+		await VerifyCS.VerifyAnalyzerAsync(test);
+	}
 }
