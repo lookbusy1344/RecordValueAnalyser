@@ -17,6 +17,8 @@ https://github.com/lookbusy1344/RecordValueAnalyser
 
 ## Why?
 
+This project is a C# Roslyn code analyser to check records for correct value semantics.
+
 Records are a feature in modern C#. They are intended to be used for immutable data with value semantics. This means that two instances of the same record type should be considered equal if all their members are equal. This is the same as the behaviour of `struct` and tuple types.
 
 Internally records are regular classes (or structs), but they have a synthesized `Equals` method that compares all their members. Without this Equals method, different instances would never be equal:
@@ -67,12 +69,13 @@ record TestRecord(int A, string B, IReadOnlyList<int> C);
                                    ~~~~~~~~~~~~~~~~~~~~  JSV01: member lacks value semantics
 ```
 
-It was built for C# 11 and .NET 7. It checks `record class` and `record struct` types for the following:
+It was built for C# 12 and .NET 8. It checks `record class` and `record struct` types for the following:
 
 - if the record has a Equals(T) method, it is ok and no more checks are performed
 - Otherwise all members are checked for:
     - the member is a primitive type, enum or string (these are ok)
     - it is a object or dynamic (these are never ok)
+	- it is an inline array (these are never ok) - new in version 1.2 for .NET 8
     - it has Equals(T) or Equals(object) method overriden directly in the type (these are ok)
     - it is a record (these will be checked elsewhere, so are assumed ok here)
     - it is a class (without Equals method, these are not ok)
@@ -83,6 +86,46 @@ It works in Visual Studio 2022 and Visual Studio Code, and also on the command l
 ## Warnings
 
 - JSV01 - a record member lacks value semantics eg `record Test(IList<int> Fail)`
+
+## Code fix
+
+The analyser provides a simple code fix. It will add template `Equals` and `GetHashCode` methods to the member. For example:
+
+```
+public record class Test(IReadOnlyList<int> Numbers)
+{
+	public virtual bool Equals(Test? other) => false; // TODO
+	public override int GetHashCode() => 0; // TODO
+}
+```
+
+..or for record structs..
+
+```
+public record struct Test(IReadOnlyList<int> Numbers)
+{
+	public readonly bool Equals(Test other) => false; // TODO
+	public override readonly int GetHashCode() => 0; // TODO
+}
+```
+
+It is not necessary for records to implement `IEquatable<T>`. When you write your implementations `SequenceEqual` is very useful for comparing  collections.
+
+Note that GetHashCode for collections is tricky!
+
+```
+public override int GetHashCode() => Numbers.GetHashCode(); // BROKEN!
+public override int GetHashCode() => HashCode.Combine(Numbers); // BROKEN!
+
+public override int GetHashCode() // CORRECT IMPLEMENTATION
+{
+	var hash = new HashCode();
+	foreach (var n in Numbers) hash.Add(n);
+	return hash.ToHashCode();
+}
+
+public readonly bool Equals(Test other) => Numbers.SequenceEqual(other.Numbers); // CORRECT IMPLEMENTATION
+```
 
 ## Examples
 
@@ -154,7 +197,7 @@ public class H
 
 	//public override bool Equals(object? obj) => Equals(obj as H);
 
-	public override int GetHashCode() => i.GetHashCode();
+	public override int GetHashCode() => 0; // TODO
 }
 
 // when used in a record, this fails because no Equals method
