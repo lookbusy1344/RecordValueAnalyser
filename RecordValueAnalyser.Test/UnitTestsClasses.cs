@@ -267,4 +267,23 @@ namespace System.Runtime.CompilerServices { internal static class IsExternalInit
 
 		await VerifyCS.VerifyAnalyzerAsync(test, expected);
 	}
+
+	[TestMethod]
+	public async Task RecordWithInlineArray()
+	{
+		// A record containing a .NET 8 inline array, should fail
+		const string test = coGeneral
+			+ """
+			[System.Runtime.CompilerServices.InlineArray(3)]
+			public struct MyInlineArray { public byte _element0; }
+			
+			public record class Tester(int I, MyInlineArray Ar);
+			""";
+
+		var expected = VerifyCS.Diagnostic()
+			.WithSpan(9, 35, 9, 45)
+			.WithArguments("StructA Sa (field StructB)");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
 }
