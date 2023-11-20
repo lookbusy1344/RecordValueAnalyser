@@ -26,8 +26,9 @@ internal static class NodeHelpers
 		if (type == null) return (ValueEqualityResult.Ok, null);
 
 		if (IsStrictlyInvalid(type)) return (ValueEqualityResult.Failed, null);      // object and dynamic
-
 		if (HasSimpleEquality(type)) return (ValueEqualityResult.Ok, null);       // primitive types, string, enum
+		if (IsInlineArray(type)) return (ValueEqualityResult.Failed, null);      // Inline array structs lack value semantics
+
 		if (!type.IsTupleType)
 		{
 			// for tuples we ignore Equals(T) and Equals(object)
@@ -147,7 +148,7 @@ internal static class NodeHelpers
 	private static bool IsObjectType(ITypeSymbol? type) => type?.SpecialType == SpecialType.System_Object;
 
 	/// <summary>
-	/// Record class or Record struct. *** CONFIRM THIS BEHAVIOUR
+	/// Record class or Record struct
 	/// </summary>
 	private static bool IsRecordType(ITypeSymbol? type) => type != null && (type.IsRecord || (type.TypeKind == TypeKind.Struct && type.IsReadOnly));
 
@@ -155,6 +156,15 @@ internal static class NodeHelpers
 	/// True if this is a struct
 	/// </summary>
 	private static bool IsStruct(ITypeSymbol? type) => type != null && type.TypeKind == TypeKind.Struct;
+
+	/// <summary>
+	/// True if this is an inline array (new in .NET8). These lack value semantics
+	/// </summary>
+	private static bool IsInlineArray(ITypeSymbol? type) =>
+		type != null
+			&& type.TypeKind == TypeKind.Struct
+			&& type.GetAttributes().Any(attribute =>
+				attribute.AttributeClass?.ToDisplayString() == "System.Runtime.CompilerServices.InlineArrayAttribute");
 
 	/// <summary>
 	/// Is this always invalid? (object, dynamic, etc)
