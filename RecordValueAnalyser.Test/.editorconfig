@@ -403,3 +403,7 @@ dotnet_diagnostic.VSTHRD012.severity = none
 
 # VSTHRD003: Avoid awaiting foreign Tasks
 dotnet_diagnostic.VSTHRD003.severity = none
+
+
+# for test project
+dotnet_diagnostic.IDE0300.severity = none
