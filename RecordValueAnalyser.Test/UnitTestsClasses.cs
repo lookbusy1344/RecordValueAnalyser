@@ -19,6 +19,19 @@ using System.Collections.Generic;
 namespace System.Runtime.CompilerServices { internal static class IsExternalInit { } }
 ";
 
+	// This is needed for testing inline arrays, which are .NET 8 only
+	// Its a stub for the real attribute
+	// https://github.com/dotnet/runtime/issues/61135
+	// https://learn.microsoft.com/en-us/dotnet/api/system.runtime.compilerservices.inlinearrayattribute?view=net-8.0
+	private const string coInlineArrayAttribute = @"
+namespace System.Runtime.CompilerServices {
+    [AttributeUsage(AttributeTargets.Struct, AllowMultiple = false)]
+    public sealed class InlineArrayAttribute : Attribute {
+        public InlineArrayAttribute (int length) { Length = length; }
+        public int Length { get; }
+    } }
+";
+
 	[TestMethod]
 	public async Task ValueTypesOnly()
 	{
@@ -266,5 +279,51 @@ namespace System.Runtime.CompilerServices { internal static class IsExternalInit
 			.WithArguments("StructA Sa (field StructB)");
 
 		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task RecordWithInlineArray()
+	{
+		// A record containing a .NET 8 inline array, should fail
+		const string test = coGeneral
+			+ coInlineArrayAttribute
+			+ """
+			[System.Runtime.CompilerServices.InlineArray(3)]
+			public struct MyInlineArray { public byte _element0; }
+			
+			public record class Tester(int I, MyInlineArray Ar);
+			""";
+
+		// bodge for "Target runtime doesn't support inline array types."
+		var unsupported = Microsoft.CodeAnalysis.Testing.DiagnosticResult
+			.CompilerError("CS9171")
+			.WithSpan(14, 15, 14, 28);
+
+		// the expected error
+		var expected = VerifyCS.Diagnostic()
+			.WithSpan(16, 35, 16, 51)
+			.WithArguments("MyInlineArray Ar");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, unsupported, expected);
+	}
+
+	[TestMethod]
+	public async Task MissingInlineArrayAttrib()
+	{
+		// A record containing a .NET 8 inline array, but lacking the attribute
+		// should pass because it is therefore a normal struct
+		const string test = coGeneral
+			+ """
+			public struct MyInlineArray { public byte _element0; }
+			
+			public record class Tester(int I, MyInlineArray Ar);
+			""";
+
+		// bodge for "Target runtime doesn't support inline array types."
+		//var unsupported = Microsoft.CodeAnalysis.Testing.DiagnosticResult
+		//	.CompilerError("CS9171")
+		//	.WithSpan(14, 15, 14, 28);
+
+		await VerifyCS.VerifyAnalyzerAsync(test);
 	}
 }
