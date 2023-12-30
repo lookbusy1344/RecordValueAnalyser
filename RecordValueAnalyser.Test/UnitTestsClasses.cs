@@ -326,4 +326,22 @@ namespace System.Runtime.CompilerServices {
 
 		await VerifyCS.VerifyAnalyzerAsync(test);
 	}
+
+	[TestMethod]
+	public async Task RecordWithImmutableArray()
+	{
+		// A record containing ImmutableArray, should fail. They seem to lack value semantics
+		const string test = coGeneral
+			+ """
+			public record class Tester(int I, System.Collections.Immutable.ImmutableArray<int> Numbers);
+			""";
+
+		// the expected error
+		var expected = VerifyCS
+			.Diagnostic()
+			.WithSpan(6, 35, 6, 91)
+			.WithArguments("System.Collections.Immutable.ImmutableArray<int> Numbers");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
 }
