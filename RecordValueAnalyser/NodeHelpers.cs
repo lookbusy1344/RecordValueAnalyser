@@ -8,6 +8,10 @@ using System.Linq;
 
 namespace RecordValueAnalyser;
 
+// Tuples for return values
+using CheckResultTuple = (ValueEqualityResult, string? membername);
+using MemberStatusTuple = (ITypeSymbol? membertype, string? membername, bool isproperty);
+
 internal enum ValueEqualityResult
 {
 	Ok,
@@ -20,7 +24,7 @@ internal static class NodeHelpers
 	/// <summary>
 	/// Wrapper around the various equality checks
 	/// </summary>
-	internal static (ValueEqualityResult, string? membername) ValueEqualityWrapper(ITypeSymbol? type)
+	internal static CheckResultTuple ValueEqualityWrapper(ITypeSymbol? type)
 	{
 		type = NodeHelpers.GetUnderlyingType(type); // unwrap any nullable
 		if (type == null) return (ValueEqualityResult.Ok, null);
@@ -104,7 +108,7 @@ internal static class NodeHelpers
 	/// <summary>
 	/// Get the type and name of the property or field
 	/// </summary>
-	internal static (ITypeSymbol? membertype, string? membername, bool isproperty) GetPropertyOrFieldUnderlyingType(SyntaxNodeAnalysisContext context, MemberDeclarationSyntax member)
+	internal static MemberStatusTuple GetPropertyOrFieldUnderlyingType(SyntaxNodeAnalysisContext context, MemberDeclarationSyntax member)
 	{
 		// get the field / property type and name
 		ITypeSymbol? type;
