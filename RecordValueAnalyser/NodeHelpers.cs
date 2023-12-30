@@ -27,7 +27,10 @@ internal static class NodeHelpers
 
 		if (IsStrictlyInvalid(type)) return (ValueEqualityResult.Failed, null);      // object and dynamic
 		if (HasSimpleEquality(type)) return (ValueEqualityResult.Ok, null);       // primitive types, string, enum
+
+		// special cases
 		if (IsInlineArray(type)) return (ValueEqualityResult.Failed, null);      // Inline array structs lack value semantics
+		if (IsImmutableArrayType(type)) return (ValueEqualityResult.Failed, null); // ImmutableArray<T> lacks value semantics
 
 		if (!type.IsTupleType)
 		{
@@ -213,4 +216,15 @@ internal static class NodeHelpers
 				&& !m.IsStatic
 				&& m.IsOverride
 				&& m.ContainingType.Equals(type, SymbolEqualityComparer.Default)) == true;
+
+	/// <summary>
+	/// Gets the generic name of type System.Collections.Immutable.ImmutableArray<T>
+	/// </summary>
+	private static string? GetGenericName(ITypeSymbol? typeSymbol) => typeSymbol?.OriginalDefinition?.ToDisplayString();
+
+	/// <summary>
+	/// Is this an immutable array? They lack value semantics
+	/// </summary>
+	private static bool IsImmutableArrayType(ITypeSymbol? typeSymbol) =>
+		GetGenericName(typeSymbol) == "System.Collections.Immutable.ImmutableArray<T>";
 }
