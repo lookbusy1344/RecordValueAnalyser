@@ -9,8 +9,8 @@ using System.Linq;
 namespace RecordValueAnalyser;
 
 // Tuples for return values
-using CheckResultTuple = (ValueEqualityResult, string? membername);
-using MemberStatusTuple = (ITypeSymbol? membertype, string? membername, bool isproperty);
+using CheckResultTuple = (ValueEqualityResult, string? memberName);
+using MemberStatusTuple = (ITypeSymbol? memberType, string? memberName, bool isProperty);
 
 internal enum ValueEqualityResult
 {
@@ -115,25 +115,25 @@ internal static class NodeHelpers
 	{
 		// get the field / property type and name
 		ITypeSymbol? type;
-		string? memberstr;
-		bool isproperty;
+		string? memberName;
+		bool isProperty;
 		if (member is PropertyDeclarationSyntax propertyDeclaration)
 		{
 			type = context.SemanticModel.GetTypeInfo(propertyDeclaration.Type).Type;
-			memberstr = propertyDeclaration.Identifier.ValueText;
-			isproperty = true;
+			memberName = propertyDeclaration.Identifier.ValueText;
+			isProperty = true;
 		}
 		else if (member is FieldDeclarationSyntax fieldDeclaration)
 		{
 			type = context.SemanticModel.GetTypeInfo(fieldDeclaration.Declaration.Type).Type;
-			memberstr = fieldDeclaration.Declaration.Variables[0].Identifier.ValueText;
-			isproperty = false;
+			memberName = fieldDeclaration.Declaration.Variables[0].Identifier.ValueText;
+			isProperty = false;
 		}
 		else
 			return (null, null, false);
 
 		// get the type of the member, and unwrap it if it's nullable
-		return (NodeHelpers.GetUnderlyingType(type), memberstr, isproperty);
+		return (NodeHelpers.GetUnderlyingType(type), memberName, isProperty);
 	}
 
 	/// <summary>
@@ -144,11 +144,17 @@ internal static class NodeHelpers
 		if (type == null) return null;
 		if (!IsNullableValueType(type)) return type;
 
-		var namedtype = type as INamedTypeSymbol;
-		return namedtype?.TypeArguments[0];
+		var namedType = type as INamedTypeSymbol;
+		return namedType?.TypeArguments[0];
 	}
 
-	private static bool IsNullableValueType(ITypeSymbol? type) => type?.IsValueType == true && type.NullableAnnotation == NullableAnnotation.Annotated;
+	/// <summary>
+	/// Gets the generic name of type eg System.Collections.Immutable.ImmutableArray<T>
+	/// </summary>
+	private static string? GetGenericName(ITypeSymbol? typeSymbol) => typeSymbol?.OriginalDefinition?.ToDisplayString();
+
+	private static bool IsNullableValueType(ITypeSymbol? type) =>
+		type?.IsValueType == true && type.NullableAnnotation == NullableAnnotation.Annotated;
 
 	private static bool IsClassType(ITypeSymbol? type) => type?.TypeKind == TypeKind.Class;
 
@@ -157,7 +163,8 @@ internal static class NodeHelpers
 	/// <summary>
 	/// Record class or Record struct
 	/// </summary>
-	private static bool IsRecordType(ITypeSymbol? type) => type != null && (type.IsRecord || (type.TypeKind == TypeKind.Struct && type.IsReadOnly));
+	private static bool IsRecordType(ITypeSymbol? type) =>
+		type != null && (type.IsRecord || (type.TypeKind == TypeKind.Struct && type.IsReadOnly));
 
 	/// <summary>
 	/// True if this is a struct
@@ -220,11 +227,6 @@ internal static class NodeHelpers
 				&& !m.IsStatic
 				&& m.IsOverride
 				&& m.ContainingType.Equals(type, SymbolEqualityComparer.Default)) == true;
-
-	/// <summary>
-	/// Gets the generic name of type System.Collections.Immutable.ImmutableArray<T>
-	/// </summary>
-	private static string? GetGenericName(ITypeSymbol? typeSymbol) => typeSymbol?.OriginalDefinition?.ToDisplayString();
 
 	/// <summary>
 	/// Is this an immutable array? They lack value semantics
