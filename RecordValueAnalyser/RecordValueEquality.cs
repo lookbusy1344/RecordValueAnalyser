@@ -19,14 +19,14 @@ internal enum ValueEqualityResult
 	NestedFailed
 }
 
-internal static class NodeHelpers
+internal static class RecordValueEquality
 {
 	/// <summary>
-	/// Wrapper around the various equality checks
+	/// Check if this record member type has value semantics
 	/// </summary>
-	internal static CheckResultTuple ValueEqualityWrapper(ITypeSymbol? type)
+	internal static CheckResultTuple CheckMember(ITypeSymbol? type)
 	{
-		type = NodeHelpers.GetUnderlyingType(type); // unwrap any nullable
+		type = RecordValueEquality.GetUnderlyingType(type); // unwrap any nullable
 		if (type == null) return (ValueEqualityResult.Ok, null);
 
 		if (IsStrictlyInvalid(type)) return (ValueEqualityResult.Failed, null);      // object and dynamic
@@ -66,7 +66,7 @@ internal static class NodeHelpers
 				};
 
 				if (memberType == null) continue;
-				var (result, _) = ValueEqualityWrapper(memberType);
+				var (result, _) = CheckMember(memberType);
 
 				if (result != ValueEqualityResult.Ok)
 				{
@@ -133,13 +133,13 @@ internal static class NodeHelpers
 			return (null, null, false);
 
 		// get the type of the member, and unwrap it if it's nullable
-		return (NodeHelpers.GetUnderlyingType(type), memberName, isProperty);
+		return (GetUnderlyingType(type), memberName, isProperty);
 	}
 
 	/// <summary>
-	/// Given Nullable type, return the underlying type. If not nullable, return the type itself.
+	/// Given Nullable value type, return the underlying type. If not nullable, return the type itself.
 	/// </summary>
-	internal static ITypeSymbol? GetUnderlyingType(ITypeSymbol? type)
+	private static ITypeSymbol? GetUnderlyingType(ITypeSymbol? type)
 	{
 		if (type == null) return null;
 		if (!IsNullableValueType(type)) return type;
@@ -153,11 +153,20 @@ internal static class NodeHelpers
 	/// </summary>
 	private static string? GetGenericName(ITypeSymbol? typeSymbol) => typeSymbol?.OriginalDefinition?.ToDisplayString();
 
+	/// <summary>
+	/// Is this a nullable value type, like 'int?'
+	/// </summary>
 	private static bool IsNullableValueType(ITypeSymbol? type) =>
 		type?.IsValueType == true && type.NullableAnnotation == NullableAnnotation.Annotated;
 
+	/// <summary>
+	/// Check for a class
+	/// </summary>
 	private static bool IsClassType(ITypeSymbol? type) => type?.TypeKind == TypeKind.Class;
 
+	/// <summary>
+	/// Check for System.Object
+	/// </summary>
 	private static bool IsObjectType(ITypeSymbol? type) => type?.SpecialType == SpecialType.System_Object;
 
 	/// <summary>

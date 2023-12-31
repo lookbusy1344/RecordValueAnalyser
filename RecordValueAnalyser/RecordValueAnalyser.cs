@@ -31,45 +31,45 @@ public class RecordValueAnalyser : DiagnosticAnalyzer
 		//var recordTypeSymbol = context.SemanticModel.GetDeclaredSymbol(recordDeclaration);
 
 		// if the record has an Equals(T) method, then we're ok. No need to check further
-		if (NodeHelpers.RecordHasEquals(context)) return;
+		if (RecordValueEquality.RecordHasEquals(context)) return;
 
 		// check the parameter list eg record A(int i, int j)
-		var recordparams = recordDeclaration.ParameterList?.Parameters;
-		if (recordparams != null)
-			foreach (var recparam in recordparams)
+		var recordParams = recordDeclaration.ParameterList?.Parameters;
+		if (recordParams != null)
+			foreach (var recParam in recordParams)
 			{
 				// get the type of the member, and unwrap it if it's nullable
-				var parameterSymbol = context.SemanticModel.GetDeclaredSymbol(recparam);
+				var parameterSymbol = context.SemanticModel.GetDeclaredSymbol(recParam);
 				var type = parameterSymbol?.Type;
 				if (type == null) continue;
 
 				// if the property has value semantics, then we're ok
-				var (result, errormember) = NodeHelpers.ValueEqualityWrapper(type);
+				var (result, errorMember) = RecordValueEquality.CheckMember(type);
 				if (result == ValueEqualityResult.Ok) continue;
 
 				// otherwise, we have a problem. show a diagnostic
-				var typestr = type?.ToDisplayString(NullableFlowState.None) ?? "";
-				var memberstr = recparam.Identifier.ValueText;
-				var args = errormember == null ? $"{typestr} {memberstr}" : $"{typestr} {memberstr} (field {errormember})";
+				var typeName = type?.ToDisplayString(NullableFlowState.None) ?? "";
+				var memberName = recParam.Identifier.ValueText;
+				var args = errorMember == null ? $"{typeName} {memberName}" : $"{typeName} {memberName} (field {errorMember})";
 
-				var diagnostic = Diagnostic.Create(ParamValueSemanticsRule, recparam.GetLocation(), args);
+				var diagnostic = Diagnostic.Create(ParamValueSemanticsRule, recParam.GetLocation(), args);
 				context.ReportDiagnostic(diagnostic);
 			}
 
-		// check fields and properties
+		// check any fields and properties
 		foreach (var member in recordDeclaration.Members)
 		{
-			var (unwrappedtype, memberstr, _) = NodeHelpers.GetPropertyOrFieldUnderlyingType(context, member);
-			if (unwrappedtype == null) continue;
+			var (unwrappedType, memberName, _) = RecordValueEquality.GetPropertyOrFieldUnderlyingType(context, member);
+			if (unwrappedType == null) continue;
 
 			// if the property has value semantics, then we're ok
-			var (result, errormember) = NodeHelpers.ValueEqualityWrapper(unwrappedtype);
+			var (result, errorMember) = RecordValueEquality.CheckMember(unwrappedType);
 			if (result == ValueEqualityResult.Ok) continue;
 
 			// otherwise, we have a problem. show a diagnostic
-			var typestr = unwrappedtype?.ToDisplayString(NullableFlowState.None) ?? "";
-			memberstr ??= "?";
-			var args = errormember == null ? $"{typestr} {memberstr}" : $"{typestr} {memberstr} ({errormember})";
+			var typeName = unwrappedType?.ToDisplayString(NullableFlowState.None) ?? "";
+			memberName ??= "?";
+			var args = errorMember == null ? $"{typeName} {memberName}" : $"{typeName} {memberName} ({errorMember})";
 
 			var diagnostic = Diagnostic.Create(ParamValueSemanticsRule, member.GetLocation(), args);
 			context.ReportDiagnostic(diagnostic);
