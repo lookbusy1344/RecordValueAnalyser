@@ -31,7 +31,7 @@ public class RecordValueAnalyser : DiagnosticAnalyzer
 		//var recordTypeSymbol = context.SemanticModel.GetDeclaredSymbol(recordDeclaration);
 
 		// if the record has an Equals(T) method, then we're ok. No need to check further
-		if (RecordValueEquality.RecordHasEquals(context)) return;
+		if (RecordValueSemantics.RecordHasEquals(context)) return;
 
 		// check the parameter list eg record A(int i, int j)
 		var recordParams = recordDeclaration.ParameterList?.Parameters;
@@ -44,7 +44,7 @@ public class RecordValueAnalyser : DiagnosticAnalyzer
 				if (type == null) continue;
 
 				// if the property has value semantics, then we're ok
-				var (result, errorMember) = RecordValueEquality.CheckMember(type);
+				var (result, errorMember) = RecordValueSemantics.CheckMember(type);
 				if (result == ValueEqualityResult.Ok) continue;
 
 				// otherwise, we have a problem. show a diagnostic
@@ -59,11 +59,11 @@ public class RecordValueAnalyser : DiagnosticAnalyzer
 		// check any fields and properties
 		foreach (var member in recordDeclaration.Members)
 		{
-			var (unwrappedType, memberName, _) = RecordValueEquality.GetPropertyOrFieldUnderlyingType(context, member);
+			var (unwrappedType, memberName, _) = RecordValueSemantics.GetPropertyOrFieldUnderlyingType(context, member);
 			if (unwrappedType == null) continue;
 
 			// if the property has value semantics, then we're ok
-			var (result, errorMember) = RecordValueEquality.CheckMember(unwrappedType);
+			var (result, errorMember) = RecordValueSemantics.CheckMember(unwrappedType);
 			if (result == ValueEqualityResult.Ok) continue;
 
 			// otherwise, we have a problem. show a diagnostic

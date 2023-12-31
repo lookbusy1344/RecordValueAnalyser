@@ -19,14 +19,14 @@ internal enum ValueEqualityResult
 	NestedFailed
 }
 
-internal static class RecordValueEquality
+internal static class RecordValueSemantics
 {
 	/// <summary>
 	/// Check if this record member type has value semantics
 	/// </summary>
 	internal static CheckResultTuple CheckMember(ITypeSymbol? type)
 	{
-		type = RecordValueEquality.GetUnderlyingType(type); // unwrap any nullable
+		type = GetUnderlyingType(type); // unwrap any nullable
 		if (type == null) return (ValueEqualityResult.Ok, null);
 
 		if (IsStrictlyInvalid(type)) return (ValueEqualityResult.Failed, null);      // object and dynamic
