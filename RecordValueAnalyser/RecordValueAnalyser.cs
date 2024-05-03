@@ -15,7 +15,7 @@ public class RecordValueAnalyser : DiagnosticAnalyzer
 		"Member '{0}' does not have value semantics", "Design", DiagnosticSeverity.Warning, isEnabledByDefault: true,
 		description: "Member '{0}' does not have value semantics.");
 
-	public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(ParamValueSemanticsRule);
+	public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => [ParamValueSemanticsRule];
 
 	public override void Initialize(AnalysisContext context)
 	{

@@ -16,7 +16,7 @@ public class RecordValueAnalyserCodeFixProvider : CodeFixProvider
 {
 	private const string ToDoString = " // TODO";
 
-	public sealed override ImmutableArray<string> FixableDiagnosticIds => ImmutableArray.Create(RecordValueAnalyser.DiagnosticId);
+	public sealed override ImmutableArray<string> FixableDiagnosticIds => [RecordValueAnalyser.DiagnosticId];
 
 	public sealed override FixAllProvider GetFixAllProvider() =>
 		// See https://github.com/dotnet/roslyn/blob/main/docs/analyzers/FixAllProvider.md for more information on Fix All Providers
@@ -88,7 +88,7 @@ public class RecordValueAnalyserCodeFixProvider : CodeFixProvider
 			updatedDeclaration = recordDeclaration
 				.WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.None))
 				.WithOpenBraceToken(SyntaxFactory.Token(SyntaxKind.OpenBraceToken))
-				.WithMembers(SyntaxFactory.List(new MemberDeclarationSyntax[] { equalsmethod, gethashcodemethod }))
+				.WithMembers([equalsmethod, gethashcodemethod])
 				.WithCloseBraceToken(SyntaxFactory.Token(SyntaxKind.CloseBraceToken));
 		}
 
