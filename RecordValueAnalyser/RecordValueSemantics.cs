@@ -27,49 +27,70 @@ internal static class RecordValueSemantics
 	internal static CheckResultTuple CheckMember(ITypeSymbol? type)
 	{
 		type = GetUnderlyingType(type); // unwrap any nullable
-		if (type == null) return (ValueEqualityResult.Ok, null);
+		if (type == null) {
+			return (ValueEqualityResult.Ok, null);
+		}
 
-		if (IsStrictlyInvalid(type)) return (ValueEqualityResult.Failed, null);      // object and dynamic
-		if (HasSimpleEquality(type)) return (ValueEqualityResult.Ok, null);       // primitive types, string, enum
+		if (IsStrictlyInvalid(type)) {
+			return (ValueEqualityResult.Failed, null);      // object and dynamic
+		}
+
+		if (HasSimpleEquality(type)) {
+			return (ValueEqualityResult.Ok, null);       // primitive types, string, enum
+		}
 
 		// special cases
-		if (IsInlineArray(type)) return (ValueEqualityResult.Failed, null);      // Inline array structs lack value semantics
-		if (IsImmutableArrayType(type)) return (ValueEqualityResult.Failed, null); // ImmutableArray<T> lacks value semantics
+		if (IsInlineArray(type)) {
+			return (ValueEqualityResult.Failed, null);      // Inline array structs lack value semantics
+		}
 
-		if (!type.IsTupleType)
-		{
+		if (IsImmutableArrayType(type)) {
+			return (ValueEqualityResult.Failed, null); // ImmutableArray<T> lacks value semantics
+		}
+
+		if (!type.IsTupleType) {
 			// for tuples we ignore Equals(T) and Equals(object)
-			if (HasEqualsTMethod(type)) return (ValueEqualityResult.Ok, null);        // Equals(T) not inherited
-			if (HasEqualsObjectMethod(type)) return (ValueEqualityResult.Ok, null);   // Equals(object) overridden and not inherited
+			if (HasEqualsTMethod(type)) {
+				return (ValueEqualityResult.Ok, null);        // Equals(T) not inherited
+			}
 
-			if (IsRecordType(type)) return (ValueEqualityResult.Ok, null);            // a record is ok
-			if (IsClassType(type)) return (ValueEqualityResult.Failed, null);         // a class is not ok
+			if (HasEqualsObjectMethod(type)) {
+				return (ValueEqualityResult.Ok, null);   // Equals(object) overridden and not inherited
+			}
+
+			if (IsRecordType(type)) {
+				return (ValueEqualityResult.Ok, null);            // a record is ok
+			}
+
+			if (IsClassType(type)) {
+				return (ValueEqualityResult.Failed, null);         // a class is not ok
+			}
 		}
 
 		// get the members of the tuple or struct
 		IEnumerable<ISymbol>? members = null;
-		if (type is INamedTypeSymbol namedTypeSymbol && namedTypeSymbol.IsTupleType)
+		if (type is INamedTypeSymbol namedTypeSymbol && namedTypeSymbol.IsTupleType) {
 			members = namedTypeSymbol.TupleElements;
-		else if (IsStruct(type))
+		} else if (IsStruct(type)) {
 			members = type.GetMembers();
+		}
 
-		if (members != null)
-		{
+		if (members != null) {
 			// this compound type has members. Check each one
-			foreach (var member in members)
-			{
-				var memberType = member switch
-				{
+			foreach (var member in members) {
+				var memberType = member switch {
 					IPropertySymbol property => property.Type,
 					IFieldSymbol field => field.Type,
 					_ => null,
 				};
 
-				if (memberType == null) continue;
+				if (memberType == null) {
+					continue;
+				}
+
 				var (result, _) = CheckMember(memberType);
 
-				if (result != ValueEqualityResult.Ok)
-				{
+				if (result != ValueEqualityResult.Ok) {
 					// if the nested type fails, return the type name
 					var nestedtypefail = memberType?.ToDisplayString(NullableFlowState.None) ?? "UNKNOWN";
 					return (ValueEqualityResult.NestedFailed, nestedtypefail);
@@ -91,17 +112,17 @@ internal static class RecordValueSemantics
 		var recordDeclaration = (RecordDeclarationSyntax)context.Node;
 		var recordTypeSymbol = context.SemanticModel.GetDeclaredSymbol(recordDeclaration);
 
-		foreach (var member in recordDeclaration.Members)
-		{
+		foreach (var member in recordDeclaration.Members) {
 			var memberSymbol = context.SemanticModel.GetDeclaredSymbol(member);
 
-			if (memberSymbol is IMethodSymbol methodSymbol)
-			{
+			if (memberSymbol is IMethodSymbol methodSymbol) {
 				// this is a method member. Check if its Equals(T), and if so no further checks are needed
 				if (methodSymbol.Name == "Equals"
 					&& methodSymbol.ReturnType.SpecialType == SpecialType.System_Boolean
 					&& methodSymbol.Parameters.Length == 1
-					&& methodSymbol.Parameters[0].Type.Equals(recordTypeSymbol, SymbolEqualityComparer.Default)) return true;
+					&& methodSymbol.Parameters[0].Type.Equals(recordTypeSymbol, SymbolEqualityComparer.Default)) {
+					return true;
+				}
 			}
 		}
 
@@ -117,20 +138,17 @@ internal static class RecordValueSemantics
 		ITypeSymbol? type;
 		string? memberName;
 		bool isProperty;
-		if (member is PropertyDeclarationSyntax propertyDeclaration)
-		{
+		if (member is PropertyDeclarationSyntax propertyDeclaration) {
 			type = context.SemanticModel.GetTypeInfo(propertyDeclaration.Type).Type;
 			memberName = propertyDeclaration.Identifier.ValueText;
 			isProperty = true;
-		}
-		else if (member is FieldDeclarationSyntax fieldDeclaration)
-		{
+		} else if (member is FieldDeclarationSyntax fieldDeclaration) {
 			type = context.SemanticModel.GetTypeInfo(fieldDeclaration.Declaration.Type).Type;
 			memberName = fieldDeclaration.Declaration.Variables[0].Identifier.ValueText;
 			isProperty = false;
-		}
-		else
+		} else {
 			return (null, null, false);
+		}
 
 		// get the type of the member, and unwrap it if it's nullable
 		return (GetUnderlyingType(type), memberName, isProperty);
@@ -141,8 +159,13 @@ internal static class RecordValueSemantics
 	/// </summary>
 	private static ITypeSymbol? GetUnderlyingType(ITypeSymbol? type)
 	{
-		if (type == null) return null;
-		if (!IsNullableValueType(type)) return type;
+		if (type == null) {
+			return null;
+		}
+
+		if (!IsNullableValueType(type)) {
+			return type;
+		}
 
 		var namedType = type as INamedTypeSymbol;
 		return namedType?.TypeArguments[0];
@@ -205,8 +228,7 @@ internal static class RecordValueSemantics
 	/// </summary>
 	private static bool IsPrimitiveType(ITypeSymbol? type) =>
 		type != null
-			&& type.SpecialType switch
-			{
+			&& type.SpecialType switch {
 				SpecialType.System_Boolean or SpecialType.System_SByte or SpecialType.System_Int16 or SpecialType.System_Int32 or SpecialType.System_Int64 or SpecialType.System_Byte or SpecialType.System_UInt16 or SpecialType.System_UInt32 or SpecialType.System_UInt64 or SpecialType.System_Single or SpecialType.System_Double or SpecialType.System_Char or SpecialType.System_String
 				=> true,
 				_ => false,

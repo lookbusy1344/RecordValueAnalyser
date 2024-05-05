@@ -76,13 +76,10 @@ public class RecordValueAnalyserCodeFixProvider : CodeFixProvider
 		var hasbraces = recordDeclaration!.OpenBraceToken.IsKind(SyntaxKind.OpenBraceToken);
 
 		RecordDeclarationSyntax updatedDeclaration;
-		if (hasbraces)
-		{
+		if (hasbraces) {
 			// We already have braces '{ }', so just add the members
 			updatedDeclaration = recordDeclaration.AddMembers(equalsmethod, gethashcodemethod);
-		}
-		else
-		{
+		} else {
 			// no braces, so we need to add them
 			// remove any semi-colon, and add the members inside braces '{ }'
 			updatedDeclaration = recordDeclaration
