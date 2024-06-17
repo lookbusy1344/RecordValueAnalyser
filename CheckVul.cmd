@@ -1,0 +1,3 @@
+@echo off
+echo Checking vulnerabilities...
+dotnet list package --vulnerable --include-transitive
