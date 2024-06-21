@@ -34,7 +34,7 @@
   </ItemGroup>
 
   <PropertyGroup>
-  	<Version>1.2.1.0</Version> 
+  	<Version>1.2.2.0</Version> 
     <StartAction>Program</StartAction>
     <StartProgram>$(DevEnvDir)devenv.exe</StartProgram>
     <StartArguments>/rootsuffix $(VSSDKTargetPlatformRegRootSuffix)</StartArguments>
