@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using VerifyCS = RecordValueAnalyser.Test.CSharpCodeFixVerifier<RecordValueAnalyser.RecordValueAnalyser, RecordValueAnalyser.RecordValueAnalyserCodeFixProvider>;
 
 // if tests weirdly fail, try deleting files in:
-// C:\Users\ps\AppData\Local\Temp\test-packages
+// C:\Users\USERNAME\AppData\Local\Temp\test-packages
 
 namespace RecordValueAnalyser.Test.Classes;
 
