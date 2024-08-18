@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 
-namespace RecordValueAnalyser.TestClasses;
+namespace RecordValueAnalyser.Test.Classes;
 
 internal static class Program
 {

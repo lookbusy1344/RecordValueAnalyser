@@ -5,7 +5,7 @@ using VerifyCS = RecordValueAnalyser.Test.CSharpCodeFixVerifier<RecordValueAnaly
 // if tests weirdly fail, try deleting files in:
 // C:\Users\ps\AppData\Local\Temp\test-packages
 
-namespace RecordValueAnalyser.TestStructs;
+namespace RecordValueAnalyser.Test.Structs;
 
 // tests for record structs
 
