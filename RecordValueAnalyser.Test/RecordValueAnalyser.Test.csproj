@@ -34,6 +34,10 @@
     <PackageReference Include="NuGet.Common" Version="6.11.1" />
     <PackageReference Include="NuGet.Packaging" Version="6.11.1" />
     <PackageReference Include="NuGet.Protocol" Version="6.11.1" />
+    <PackageReference Include="Roslynator.Analyzers" Version="4.12.8">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
     <PackageReference Include="System.Formats.Asn1" Version="8.0.1" />
     <PackageReference Include="System.Net.Http" Version="4.3.4" />
     <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
