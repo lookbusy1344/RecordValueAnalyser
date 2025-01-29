@@ -1,2 +1,15 @@
-*.yml eol=lf
-*.toml eol=lf
+# Rust
+*.rs text eol=lf
+*.toml text eol=lf
+*.lock text eol=lf
+
+# Github
+*.yml text eol=lf
+*.md text eol=lf
+
+# Python 
+*.py text eol=lf
+*.ipynb text eol=lf
+
+# Others, leave as-is (dont treat them as text)
+* -text
