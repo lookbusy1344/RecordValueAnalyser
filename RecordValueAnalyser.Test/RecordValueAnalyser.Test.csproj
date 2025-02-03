@@ -34,7 +34,7 @@
     <PackageReference Include="NuGet.Common" Version="6.12.1" />
     <PackageReference Include="NuGet.Packaging" Version="6.12.1" />
     <PackageReference Include="NuGet.Protocol" Version="6.12.1" />
-    <PackageReference Include="Roslynator.Analyzers" Version="4.12.10">
+    <PackageReference Include="Roslynator.Analyzers" Version="4.12.11">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
