@@ -1,6 +1,6 @@
 # New config, for command-line and ASP.NET apps
 # This keeps open-braces on same line for code blocks
-# 04 May 2024
+# 09 Feb 2025
 
 # Remove the line below if you want to inherit .editorconfig settings from higher directories
 root = true
@@ -380,15 +380,111 @@ dotnet_diagnostic.IDE0042.severity = none
 # Unless writing a library
 # https://github.com/microsoft/vs-threading/blob/main/doc/analyzers/editorconfigs/README.md
 # VSTHRD111: Use .ConfigureAwait(bool)
-# dotnet_diagnostic.VSTHRD111.severity = silent
+dotnet_diagnostic.VSTHRD111.severity = silent
 
 # These settings are appropriate for most projects that *never* run inside a process with a main thread and `SynchronizationContext`.
 # Examples of such applications are ASP.NET Core and console applications.
 # VSTHRD012: Provide JoinableTaskFactory where allowed
-# dotnet_diagnostic.VSTHRD012.severity = none
+dotnet_diagnostic.VSTHRD012.severity = none
 
 # VSTHRD003: Avoid awaiting foreign Tasks
 dotnet_diagnostic.VSTHRD003.severity = none
 
 # VSTHRD103: Call async methods when in an async method, duplicate of CA1849
 dotnet_diagnostic.VSTHRD103.severity = none
+
+# New Feb 2025, some borrowed from .roslynatorconfig
+
+# TURNING OFF SOME ANNOYING WARNINGS
+
+dotnet_diagnostic.RCS1001.severity = none
+dotnet_diagnostic.RCS1003.severity = none
+
+# Duplicated in VS2022
+dotnet_diagnostic.rcs1213.severity = none	# same as IDE0051
+dotnet_diagnostic.rcs1163.severity = none	# same as IDE0060
+dotnet_diagnostic.rcs1169.severity = none	# same as IDE0044
+dotnet_diagnostic.rcs1021.severity = none	# same as IDE0053
+dotnet_diagnostic.rcs1085.severity = none	# same as IDE0032
+dotnet_diagnostic.rcs1046.severity = none	# same as VSTHRD200
+
+# TURNING ON SOME USEFUL MESSAGES
+
+# Put auto-accessors on a single line
+dotnet_diagnostic.rcs0042.severity = suggestion
+
+# Remove braces from if-else
+dotnet_diagnostic.rcs1004.severity = none
+
+# Asynchronous method name should end with 'Async'
+#dotnet_diagnostic.rcs1046.severity = suggestion
+
+# Remove redundant Dispose/Close call
+dotnet_diagnostic.rcs1133.severity = suggestion
+
+# Remove redundant statement
+dotnet_diagnostic.rcs1134.severity = suggestion
+
+# Remove redundant 'as' operator
+dotnet_diagnostic.rcs1145.severity = suggestion
+
+# Remove redundant cast
+dotnet_diagnostic.rcs1151.severity = suggestion
+
+# Remove redundant async/await
+dotnet_diagnostic.rcs1174.severity = suggestion
+
+# Simplify argument null check
+dotnet_diagnostic.rcs1255.severity = suggestion
+
+# Remove redundant default switch section
+dotnet_diagnostic.rcs1070.severity = suggestion
+
+# Merge switch sections with equivalent content
+dotnet_diagnostic.rcs1136.severity = suggestion
+
+# Avoid nested ?: operators
+dotnet_diagnostic.rcs1238.severity = suggestion
+
+# Fix formatting of a list
+# dotnet_diagnostic.rcs0053.severity = suggestion
+
+# Fix formatting of a call chain
+dotnet_diagnostic.rcs0054.severity = suggestion
+
+# Fix formatting of a binary expression chain
+dotnet_diagnostic.rcs0055.severity = suggestion
+
+# Use method chaining
+dotnet_diagnostic.rcs1201.severity = suggestion
+
+# Use carriage return + linefeed as new line
+dotnet_diagnostic.rcs0044.severity = suggestion
+
+# Use 'Count/Length' property instead of 'Any' method
+dotnet_diagnostic.rcs1080.severity = suggestion
+
+# Avoid chain of assignments
+dotnet_diagnostic.rcs1162.severity = suggestion
+
+# Unconstrained type parameter checked for null
+dotnet_diagnostic.rcs1165.severity = suggestion
+
+# Remove redundant base interface
+dotnet_diagnostic.rcs1182.severity = suggestion
+
+# Avoid unnecessary boxing of value type
+dotnet_diagnostic.rcs1198.severity = suggestion
+
+# Remove unnecessary 'else'
+dotnet_diagnostic.rcs1211.severity = suggestion
+
+# Implement non-generic counterpart
+dotnet_diagnostic.rcs1241.severity = suggestion
+
+# Normalize usage of infinite loop
+dotnet_diagnostic.rcs1252.severity = suggestion
+roslynator_infinite_loop_style = while # for|while
+
+# Use pattern matching
+dotnet_diagnostic.rcs9001.severity = suggestion

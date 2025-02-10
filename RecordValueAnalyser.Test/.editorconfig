@@ -1,7 +1,17 @@
+# New config, for command-line and ASP.NET apps
+# This keeps open-braces on same line for code blocks
+# 09 Feb 2025
+
 # Remove the line below if you want to inherit .editorconfig settings from higher directories
 root = true
 
-# C# files
+# Razor specific stuff Jan 2024
+[*.{cshtml,razor}]
+charset = utf-8
+trim_trailing_whitespace = true
+
+
+# C# files and Razor pages
 [*.{cs,cshtml,razor}]
 
 #### Core EditorConfig Options ####
@@ -107,31 +117,6 @@ csharp_preferred_modifier_order = public,private,protected,internal,file,static,
 csharp_style_prefer_readonly_struct = true
 csharp_style_prefer_readonly_struct_member = true
 
-# Code-block preferences
-csharp_prefer_braces = false
-csharp_prefer_simple_using_statement = true
-csharp_style_namespace_declarations = block_scoped
-csharp_style_prefer_method_group_conversion = true
-csharp_style_prefer_top_level_statements = true
-
-# Expression-level preferences
-csharp_prefer_simple_default_expression = true
-csharp_style_deconstructed_variable_declaration = true
-csharp_style_implicit_object_creation_when_type_is_apparent = true
-csharp_style_inlined_variable_declaration = true
-csharp_style_prefer_index_operator = true
-csharp_style_prefer_local_over_anonymous_function = true
-csharp_style_prefer_null_check_over_type_check = true
-csharp_style_prefer_range_operator = true
-csharp_style_prefer_tuple_swap = true
-csharp_style_prefer_utf8_string_literals = true
-csharp_style_throw_expression = true
-csharp_style_unused_value_assignment_preference = discard_variable
-csharp_style_unused_value_expression_statement_preference = discard_variable
-
-# 'using' directive preferences
-csharp_using_directive_placement = outside_namespace
-
 # New line preferences
 csharp_style_allow_blank_line_after_colon_in_constructor_initializer_experimental = true
 csharp_style_allow_blank_line_after_token_in_arrow_expression_clause_experimental = true
@@ -143,11 +128,12 @@ csharp_style_allow_embedded_statements_on_same_line_experimental = true
 
 # New line preferences
 csharp_new_line_before_catch = true
-csharp_new_line_before_else = true
+csharp_new_line_before_else = false
 csharp_new_line_before_finally = true
 csharp_new_line_before_members_in_anonymous_types = true
 csharp_new_line_before_members_in_object_initializers = true
-csharp_new_line_before_open_brace = all
+csharp_new_line_before_open_brace = methods, types, events, local_functions, anonymous_methods, anonymous_types, properties, indexers, accessors
+  # OTHER OPTS: lambdas, control_blocks, all, none
 csharp_new_line_between_query_expression_clauses = true
 
 # Indentation preferences
@@ -271,7 +257,7 @@ dotnet_style_qualification_for_event = false:silent
 [*.{cs,cshtml,razor}]
 csharp_using_directive_placement = outside_namespace:silent
 csharp_prefer_simple_using_statement = true:warning
-csharp_prefer_braces = false:suggestion
+csharp_prefer_braces = true:suggestion
 csharp_style_namespace_declarations = file_scoped:warning
 csharp_style_prefer_method_group_conversion = true:suggestion
 csharp_style_prefer_top_level_statements = false:warning
@@ -404,6 +390,101 @@ dotnet_diagnostic.VSTHRD012.severity = none
 # VSTHRD003: Avoid awaiting foreign Tasks
 dotnet_diagnostic.VSTHRD003.severity = none
 
+# VSTHRD103: Call async methods when in an async method, duplicate of CA1849
+dotnet_diagnostic.VSTHRD103.severity = none
 
-# for test project
-dotnet_diagnostic.IDE0300.severity = none
+# New Feb 2025, some borrowed from .roslynatorconfig
+
+# TURNING OFF SOME ANNOYING WARNINGS
+
+dotnet_diagnostic.RCS1001.severity = none
+dotnet_diagnostic.RCS1003.severity = none
+
+# Duplicated in VS2022
+dotnet_diagnostic.rcs1213.severity = none	# same as IDE0051
+dotnet_diagnostic.rcs1163.severity = none	# same as IDE0060
+dotnet_diagnostic.rcs1169.severity = none	# same as IDE0044
+dotnet_diagnostic.rcs1021.severity = none	# same as IDE0053
+dotnet_diagnostic.rcs1085.severity = none	# same as IDE0032
+dotnet_diagnostic.rcs1046.severity = none	# same as VSTHRD200
+
+# TURNING ON SOME USEFUL MESSAGES
+
+# Put auto-accessors on a single line
+dotnet_diagnostic.rcs0042.severity = suggestion
+
+# Remove braces from if-else
+dotnet_diagnostic.rcs1004.severity = none
+
+# Asynchronous method name should end with 'Async'
+#dotnet_diagnostic.rcs1046.severity = suggestion
+
+# Remove redundant Dispose/Close call
+dotnet_diagnostic.rcs1133.severity = suggestion
+
+# Remove redundant statement
+dotnet_diagnostic.rcs1134.severity = suggestion
+
+# Remove redundant 'as' operator
+dotnet_diagnostic.rcs1145.severity = suggestion
+
+# Remove redundant cast
+dotnet_diagnostic.rcs1151.severity = suggestion
+
+# Remove redundant async/await
+dotnet_diagnostic.rcs1174.severity = suggestion
+
+# Simplify argument null check
+dotnet_diagnostic.rcs1255.severity = suggestion
+
+# Remove redundant default switch section
+dotnet_diagnostic.rcs1070.severity = suggestion
+
+# Merge switch sections with equivalent content
+dotnet_diagnostic.rcs1136.severity = suggestion
+
+# Avoid nested ?: operators
+dotnet_diagnostic.rcs1238.severity = suggestion
+
+# Fix formatting of a list
+# dotnet_diagnostic.rcs0053.severity = suggestion
+
+# Fix formatting of a call chain
+dotnet_diagnostic.rcs0054.severity = suggestion
+
+# Fix formatting of a binary expression chain
+dotnet_diagnostic.rcs0055.severity = suggestion
+
+# Use method chaining
+dotnet_diagnostic.rcs1201.severity = suggestion
+
+# Use carriage return + linefeed as new line
+dotnet_diagnostic.rcs0044.severity = suggestion
+
+# Use 'Count/Length' property instead of 'Any' method
+dotnet_diagnostic.rcs1080.severity = suggestion
+
+# Avoid chain of assignments
+dotnet_diagnostic.rcs1162.severity = suggestion
+
+# Unconstrained type parameter checked for null
+dotnet_diagnostic.rcs1165.severity = suggestion
+
+# Remove redundant base interface
+dotnet_diagnostic.rcs1182.severity = suggestion
+
+# Avoid unnecessary boxing of value type
+dotnet_diagnostic.rcs1198.severity = suggestion
+
+# Remove unnecessary 'else'
+dotnet_diagnostic.rcs1211.severity = suggestion
+
+# Implement non-generic counterpart
+dotnet_diagnostic.rcs1241.severity = suggestion
+
+# Normalize usage of infinite loop
+dotnet_diagnostic.rcs1252.severity = suggestion
+roslynator_infinite_loop_style = while # for|while
+
+# Use pattern matching
+dotnet_diagnostic.rcs9001.severity = suggestion
