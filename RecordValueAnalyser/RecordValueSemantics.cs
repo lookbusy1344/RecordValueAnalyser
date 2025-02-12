@@ -1,16 +1,16 @@
-﻿using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Diagnostics;
+﻿namespace RecordValueAnalyser;
+
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Diagnostics;
 
 // https://learn.microsoft.com/en-us/dotnet/api/microsoft.codeanalysis.itypesymbol?view=roslyn-dotnet-4.6.0
 
-namespace RecordValueAnalyser;
-
 // Tuples for return values
 using CheckResultTuple = (ValueEqualityResult, string? memberName);
-using MemberStatusTuple = (ITypeSymbol? memberType, string? memberName, bool isProperty);
+using MemberStatusTuple = (Microsoft.CodeAnalysis.ITypeSymbol? memberType, string? memberName, bool isProperty);
 
 internal enum ValueEqualityResult
 {

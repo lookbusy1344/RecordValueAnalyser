@@ -1,11 +1,11 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿namespace RecordValueAnalyser.Test.Structs;
+
 using System.Threading.Tasks;
-using VerifyCS = RecordValueAnalyser.Test.CSharpCodeFixVerifier<RecordValueAnalyser.RecordValueAnalyser, RecordValueAnalyser.RecordValueAnalyserCodeFixProvider>;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using VerifyCS = CSharpCodeFixVerifier<RecordValueAnalyser, RecordValueAnalyserCodeFixProvider>;
 
 // if tests weirdly fail, try deleting files in:
 // C:\Users\USERNAME\AppData\Local\Temp\test-packages
-
-namespace RecordValueAnalyser.Test.Structs;
 
 // tests for record structs
 
