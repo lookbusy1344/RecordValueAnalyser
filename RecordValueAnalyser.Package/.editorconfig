@@ -1,6 +1,6 @@
-# New config, for command-line and ASP.NET apps
+# New config, for command-line and ASP.NET apps, and UI combined
 # This keeps open-braces on same line for code blocks
-# 13 Feb 2025
+# 18 Feb 2025
 
 # Remove the line below if you want to inherit .editorconfig settings from higher directories
 root = true
@@ -243,21 +243,8 @@ dotnet_diagnostic.CA2100.severity = none
 dotnet_diagnostic.CA5394.severity = none
 dotnet_diagnostic.IDE0042.severity = none
 
-
-# For Microsoft.VisualStudio.Threading.Analyzers
-
-# Unless writing a library
-# https://github.com/microsoft/vs-threading/blob/main/doc/analyzers/editorconfigs/README.md
 # VSTHRD111: Use .ConfigureAwait(bool)
 dotnet_diagnostic.VSTHRD111.severity = silent
-
-# These settings are appropriate for most projects that *never* run inside a process with a main thread and `SynchronizationContext`.
-# Examples of such applications are ASP.NET Core and console applications.
-# VSTHRD012: Provide JoinableTaskFactory where allowed
-dotnet_diagnostic.VSTHRD012.severity = none
-
-# VSTHRD003: Avoid awaiting foreign Tasks
-dotnet_diagnostic.VSTHRD003.severity = none
 
 # VSTHRD103: Call async methods when in an async method, duplicate of CA1849
 dotnet_diagnostic.VSTHRD103.severity = none
