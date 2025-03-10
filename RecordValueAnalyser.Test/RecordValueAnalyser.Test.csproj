@@ -32,7 +32,7 @@
     <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic.CodeFix.Testing.MSTest" Version="1.1.2" />
     <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic.CodeRefactoring.Testing.MSTest" Version="1.1.2" />
     <PackageReference Include="NuGet.Common" Version="6.13.2" />
-    <PackageReference Include="NuGet.Packaging" Version="6.13.1" />
+    <PackageReference Include="NuGet.Packaging" Version="6.13.2" />
     <PackageReference Include="NuGet.Protocol" Version="6.13.1" />
     <PackageReference Include="Roslynator.Analyzers" Version="4.13.1">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
