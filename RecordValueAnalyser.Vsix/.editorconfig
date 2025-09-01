@@ -1,14 +1,9 @@
-# New config, for command-line and ASP.NET apps, and UI combined
+# New config, for libraries, with VSTHRD111: Use .ConfigureAwait(bool)
 # This keeps open-braces on same line for code blocks
-# 18 Feb 2025
+# 28 Aug 2025
 
 # Remove the line below if you want to inherit .editorconfig settings from higher directories
 root = true
-
-# Razor specific stuff Jan 2024
-[*.{cshtml,razor}]
-charset = utf-8
-trim_trailing_whitespace = true
 
 # C# files and Razor pages
 [*.{cs,cshtml,razor}]
@@ -16,7 +11,8 @@ trim_trailing_whitespace = true
 #### Core EditorConfig Options ####
 
 # New line preferences
-insert_final_newline = false
+insert_final_newline = true
+charset = utf-8 # On Windows by default it includes a byte order marker, utf-8-bom
 
 #### .NET Coding Conventions ####
 
@@ -102,26 +98,26 @@ dotnet_naming_rule.non_field_members_should_be_pascal_case.style = pascal_case
 
 dotnet_naming_symbols.interface.applicable_kinds = interface
 dotnet_naming_symbols.interface.applicable_accessibilities = public, internal, private, protected, protected_internal, private_protected
-dotnet_naming_symbols.interface.required_modifiers = 
+dotnet_naming_symbols.interface.required_modifiers =
 
 dotnet_naming_symbols.types.applicable_kinds = class, struct, interface, enum
 dotnet_naming_symbols.types.applicable_accessibilities = public, internal, private, protected, protected_internal, private_protected
-dotnet_naming_symbols.types.required_modifiers = 
+dotnet_naming_symbols.types.required_modifiers =
 
 dotnet_naming_symbols.non_field_members.applicable_kinds = property, event, method
 dotnet_naming_symbols.non_field_members.applicable_accessibilities = public, internal, private, protected, protected_internal, private_protected
-dotnet_naming_symbols.non_field_members.required_modifiers = 
+dotnet_naming_symbols.non_field_members.required_modifiers =
 
 # Naming styles
 
 dotnet_naming_style.begins_with_i.required_prefix = I
-dotnet_naming_style.begins_with_i.required_suffix = 
-dotnet_naming_style.begins_with_i.word_separator = 
+dotnet_naming_style.begins_with_i.required_suffix =
+dotnet_naming_style.begins_with_i.word_separator =
 dotnet_naming_style.begins_with_i.capitalization = pascal_case
 
-dotnet_naming_style.pascal_case.required_prefix = 
-dotnet_naming_style.pascal_case.required_suffix = 
-dotnet_naming_style.pascal_case.word_separator = 
+dotnet_naming_style.pascal_case.required_prefix =
+dotnet_naming_style.pascal_case.required_suffix =
+dotnet_naming_style.pascal_case.word_separator =
 dotnet_naming_style.pascal_case.capitalization = pascal_case
 
 [*.{cs,cshtml,razor}]
@@ -160,11 +156,11 @@ csharp_style_unused_value_expression_statement_preference = discard_variable:sug
 csharp_prefer_static_local_function = true:suggestion
 csharp_style_prefer_readonly_struct = true:suggestion
 csharp_style_prefer_readonly_struct_member = true:suggestion
-csharp_style_allow_embedded_statements_on_same_line_experimental = true:silent
-csharp_style_allow_blank_lines_between_consecutive_braces_experimental = true:silent
-csharp_style_allow_blank_line_after_colon_in_constructor_initializer_experimental = true:silent
-csharp_style_allow_blank_line_after_token_in_conditional_expression_experimental = true:silent
-csharp_style_allow_blank_line_after_token_in_arrow_expression_clause_experimental = true:silent
+csharp_style_allow_embedded_statements_on_same_line_experimental = false:silent
+csharp_style_allow_blank_lines_between_consecutive_braces_experimental = false:silent
+csharp_style_allow_blank_line_after_colon_in_constructor_initializer_experimental = false:silent
+csharp_style_allow_blank_line_after_token_in_conditional_expression_experimental = false:silent
+csharp_style_allow_blank_line_after_token_in_arrow_expression_clause_experimental = false:silent
 csharp_style_conditional_delegate_call = true:suggestion
 csharp_style_prefer_switch_expression = true:suggestion
 csharp_style_prefer_pattern_matching = true:suggestion
@@ -197,15 +193,15 @@ dotnet_style_readonly_field = true:suggestion
 dotnet_style_predefined_type_for_locals_parameters_members = true:suggestion
 dotnet_style_predefined_type_for_member_access = true:suggestion
 dotnet_style_require_accessibility_modifiers = for_non_interface_members:suggestion
-dotnet_style_allow_multiple_blank_lines_experimental = true:silent
-dotnet_style_allow_statement_immediately_after_block_experimental = true:silent
+dotnet_style_allow_multiple_blank_lines_experimental = false:silent
+dotnet_style_allow_statement_immediately_after_block_experimental = false:silent
 dotnet_code_quality_unused_parameters = all:suggestion
 dotnet_style_parentheses_in_arithmetic_binary_operators = always_for_clarity:silent
 dotnet_style_parentheses_in_other_binary_operators = always_for_clarity:suggestion
 dotnet_style_parentheses_in_relational_binary_operators = always_for_clarity:suggestion
 dotnet_style_parentheses_in_other_operators = never_if_unnecessary:silent
-dotnet_style_qualification_for_field = true:silent
-dotnet_style_qualification_for_property = true:silent
+dotnet_style_qualification_for_field = false:silent
+dotnet_style_qualification_for_property = false:silent
 dotnet_style_qualification_for_method = false:silent
 dotnet_style_qualification_for_event = false:silent
 
@@ -244,7 +240,8 @@ dotnet_diagnostic.CA5394.severity = none
 dotnet_diagnostic.IDE0042.severity = none
 
 # VSTHRD111: Use .ConfigureAwait(bool)
-dotnet_diagnostic.VSTHRD111.severity = silent
+# THIS IS A LIBRARY/PLUGIN SO DISPLAY THIS WARNING
+dotnet_diagnostic.VSTHRD111.severity = warning
 
 # VSTHRD103: Call async methods when in an async method, duplicate of CA1849
 dotnet_diagnostic.VSTHRD103.severity = none
