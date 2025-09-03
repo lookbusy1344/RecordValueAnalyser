@@ -73,4 +73,5 @@ The analyzer performs these checks:
 - Uses extensive static analysis rules (Roslynator, Visual Studio analyzers)
 - Enforces code style in build with `EnforceCodeStyleInBuild`
 - Multiple `.editorconfig` files for consistent formatting across projects
+- CRLF line endings for CS files. Other files like markdown use LF.
 - **Important**: Always run `dotnet format` after making code changes

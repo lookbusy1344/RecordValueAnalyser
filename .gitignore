@@ -3,3 +3,4 @@ obj/
 .vs/
 TestResults/
 .DS_Store
+*.bak
