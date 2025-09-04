@@ -1,6 +1,6 @@
 # New config, for libraries, with VSTHRD111: Use .ConfigureAwait(bool)
 # This keeps open-braces on same line for code blocks
-# 28 Aug 2025
+# 03 Sep 2025
 
 # Remove the line below if you want to inherit .editorconfig settings from higher directories
 root = true
@@ -156,8 +156,8 @@ csharp_style_unused_value_expression_statement_preference = discard_variable:sug
 csharp_prefer_static_local_function = true:suggestion
 csharp_style_prefer_readonly_struct = true:suggestion
 csharp_style_prefer_readonly_struct_member = true:suggestion
-csharp_style_allow_embedded_statements_on_same_line_experimental = false:silent
-csharp_style_allow_blank_lines_between_consecutive_braces_experimental = false:silent
+csharp_style_allow_embedded_statements_on_same_line_experimental = true
+csharp_style_allow_blank_lines_between_consecutive_braces_experimental = false
 csharp_style_allow_blank_line_after_colon_in_constructor_initializer_experimental = false:silent
 csharp_style_allow_blank_line_after_token_in_conditional_expression_experimental = false:silent
 csharp_style_allow_blank_line_after_token_in_arrow_expression_clause_experimental = false:silent
