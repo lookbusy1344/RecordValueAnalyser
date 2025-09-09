@@ -1,4 +1,4 @@
-# New config, for libraries, with VSTHRD111: Use .ConfigureAwait(bool)
+# New config, for command-line and ASP.NET apps, and UI combined
 # This keeps open-braces on same line for code blocks
 # 03 Sep 2025
 
@@ -240,8 +240,7 @@ dotnet_diagnostic.CA5394.severity = none
 dotnet_diagnostic.IDE0042.severity = none
 
 # VSTHRD111: Use .ConfigureAwait(bool)
-# THIS IS A LIBRARY/PLUGIN SO DISPLAY THIS WARNING
-dotnet_diagnostic.VSTHRD111.severity = warning
+dotnet_diagnostic.VSTHRD111.severity = silent
 
 # VSTHRD103: Call async methods when in an async method, duplicate of CA1849
 dotnet_diagnostic.VSTHRD103.severity = none
