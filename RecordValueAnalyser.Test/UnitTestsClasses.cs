@@ -1,4 +1,4 @@
-﻿namespace RecordValueAnalyser.Test.Classes;
+namespace RecordValueAnalyser.Test.Classes;
 
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;

@@ -1,4 +1,4 @@
-﻿namespace RecordValueAnalyser;
+namespace RecordValueAnalyser;
 
 using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
