@@ -1,6 +1,6 @@
 # New config, for command-line and ASP.NET apps, and UI combined
 # This keeps open-braces on same line for code blocks
-# 03 Sep 2025
+# 14 Sep 2025
 
 # Remove the line below if you want to inherit .editorconfig settings from higher directories
 root = true
@@ -215,6 +215,7 @@ dotnet_analyzer_diagnostic.category-Usage.severity = warning
 # Spell checking
 
 [*.md]
+end_of_line = lf
 spelling_languages = en-GB
 spelling_checkable_types = strings,identifiers,comments
 spelling_error_severity = information
