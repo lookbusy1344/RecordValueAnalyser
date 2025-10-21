@@ -7,9 +7,9 @@
 </Target>
 
   <PropertyGroup>
-	<Version>1.2.2.0</Version> 
-	<PackageVersion>1.2.2.0</PackageVersion>
-  	<InformationalVersion>$(SourceRevisionId)</InformationalVersion> 
+	<Version>1.2.3.0</Version>
+	<PackageVersion>1.2.3.0</PackageVersion>
+  	<InformationalVersion>$(SourceRevisionId)</InformationalVersion>
     <TargetFramework>netstandard2.0</TargetFramework>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
@@ -36,7 +36,7 @@
 	<GenerateAssemblyDescriptionAttribute>false</GenerateAssemblyDescriptionAttribute>
 	<GenerateAssemblyCopyrightAttribute>false</GenerateAssemblyCopyrightAttribute>
 	<DevelopmentDependency>true</DevelopmentDependency>
-  
+
     <DevelopmentDependency>true</DevelopmentDependency>
     <NoPackageAnalysis>true</NoPackageAnalysis>
 
@@ -45,7 +45,7 @@
 
 	<PropertyGroup>
 		<EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
-	
+
 		<AnalysisModeDesign>All</AnalysisModeDesign>
 		<AnalysisModeSecurity>All</AnalysisModeSecurity>
 		<AnalysisModePerformance>All</AnalysisModePerformance>
