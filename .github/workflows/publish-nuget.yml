@@ -1,0 +1,83 @@
+name: Publish NuGet Package
+
+permissions:
+  contents: write
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "9.0.x"
+
+      - name: Extract version from tag
+        id: get_version
+        run: |
+          # Remove 'v' prefix from tag (e.g., v1.2.3 -> 1.2.3)
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Building version: $VERSION"
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build Release
+        run: dotnet build --configuration Release --no-restore RecordValueAnalyser.Package
+
+      - name: Pack NuGet package
+        run: dotnet pack RecordValueAnalyser.Package/RecordValueAnalyser.Package.csproj --configuration Release --no-build --output ./nuget-output
+
+      - name: List package files
+        run: ls -lh ./nuget-output/
+
+      - name: Generate SHA256 checksum
+        id: checksum
+        run: |
+          cd ./nuget-output
+          PACKAGE_FILE=$(ls *.nupkg)
+          sha256sum "$PACKAGE_FILE" > "$PACKAGE_FILE.sha256"
+          echo "Package: $PACKAGE_FILE"
+          echo "Checksum:"
+          cat "$PACKAGE_FILE.sha256"
+          echo "package_file=$PACKAGE_FILE" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ./nuget-output/*.nupkg
+            ./nuget-output/*.sha256
+          body: |
+            ## NuGet Package Release ${{ steps.get_version.outputs.version }}
+
+            ### Installation
+            ```bash
+            dotnet add package lookbusy1344.RecordValueAnalyser --version ${{ steps.get_version.outputs.version }}
+            ```
+
+            ### Files
+            - 📦 `${{ steps.checksum.outputs.package_file }}` - NuGet package
+            - 🔐 `${{ steps.checksum.outputs.package_file }}.sha256` - SHA256 checksum
+
+            ### Verify Checksum
+            ```bash
+            sha256sum -c ${{ steps.checksum.outputs.package_file }}.sha256
+            ```
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Uncomment to publish to NuGet.org automatically
+      # - name: Publish to NuGet.org
+      #   run: dotnet nuget push ./nuget-output/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
