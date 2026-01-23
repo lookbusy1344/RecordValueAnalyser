@@ -1,51 +1,273 @@
-# 01 Apr 2025
+# 16 Jan 2026
 # Others, leave as-is (dont treat them as text)
 * -text
 
-# General
-*.yml text eol=lf
+# General text files
+*.txt text eol=lf
 *.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
 *.json text eol=lf
+*.json5 text eol=lf
+*.jsonc text eol=lf
+*.xml text eol=lf
+*.xsd text eol=lf
+*.xslt text eol=lf
+*.toml text eol=lf
+*.ini text eol=lf
+*.cfg text eol=lf
+LICENSE text eol=lf
+README text eol=lf
+AUTHORS text eol=lf
+CHANGELOG text eol=lf
+
+# Shell scripts
+*.sh text eol=lf
+*.bash text eol=lf
+*.zsh text eol=lf
+*.fish text eol=lf
+Makefile text eol=lf
+
+# Docker
+Dockerfile text eol=lf
+*.dockerfile text eol=lf
+.dockerignore text eol=lf
+
+# Git files
+.gitignore text eol=lf
+.gitattributes text eol=lf
+.gitmodules text eol=lf
+.gitkeep text eol=lf
+
+# Editor config
+.editorconfig text eol=lf
+
+# Environment files
+.env text eol=lf
+.env.* text eol=lf
+*.env text eol=lf
+
+# CI/CD configs
+.travis.yml text eol=lf
+.gitlab-ci.yml text eol=lf
+.circleci/config.yml text eol=lf
+azure-pipelines.yml text eol=lf
+*.jenkinsfile text eol=lf
+Jenkinsfile text eol=lf
+.github/workflows/*.yml text eol=lf
+.github/workflows/*.yaml text eol=lf
+appveyor.yml text eol=lf
+bitbucket-pipelines.yml text eol=lf
 
 # Rust
 *.rs text eol=lf
-*.toml text eol=lf
-*.lock text eol=lf
+Cargo.lock text eol=lf
 
 # Go
 *.go text eol=lf
-*.mod text eol=lf
+go.mod text eol=lf
+go.sum text eol=lf
 
-# Python 
+# Python
 *.py text eol=lf
+*.pyi text eol=lf
+*.pyx text eol=lf
+*.pxd text eol=lf
 *.ipynb text eol=lf
+Pipfile text eol=lf
+Pipfile.lock text eol=lf
+poetry.lock text eol=lf
+MANIFEST.in text eol=lf
+*.whl binary
 
-# Web
-*.html text eol=lf
-*.htm text eol=lf
-*.css text eol=lf
+# C/C++
+*.c text eol=lf
+*.h text eol=lf
+*.cpp text eol=lf
+*.hpp text eol=lf
+*.cc text eol=lf
+*.hh text eol=lf
+*.cxx text eol=lf
+*.hxx text eol=lf
+*.c++ text eol=lf
+*.h++ text eol=lf
+CMakeLists.txt text eol=lf
+*.cmake text eol=lf
+*.o binary
+*.obj binary
+
+# Zig
+*.zig text eol=lf
+build.zig text eol=lf
+build.zig.zon text eol=lf
+
+# Haskell
+*.hs text eol=lf
+*.lhs text eol=lf
+*.cabal text eol=lf
+stack.yaml text eol=lf
+stack.yaml.lock text eol=lf
+*.hi binary
+
+# Swift/Xcode
+*.swift text eol=lf
+*.pbxproj text eol=lf
+*.xcconfig text eol=lf
+*.plist text eol=lf
+*.strings text eol=lf
+*.storyboard text eol=lf
+*.xib text eol=lf
+*.entitlements text eol=lf
+
+# Web - JavaScript/TypeScript
 *.js text eol=lf
 *.jsx text eol=lf
 *.mjs text eol=lf
+*.cjs text eol=lf
 *.ts text eol=lf
 *.tsx text eol=lf
-*.svelte text eol=lf
+yarn.lock text eol=lf
+.npmrc text eol=lf
+.yarnrc text eol=lf
+.nvmrc text eol=lf
+.babelrc text eol=lf
+.eslintrc* text eol=lf
+.prettierrc* text eol=lf
+
+# Web - HTML/CSS
+*.html text eol=lf
+*.htm text eol=lf
+*.css text eol=lf
+*.scss text eol=lf
+*.sass text eol=lf
+*.less text eol=lf
+*.styl text eol=lf
+*.postcss text eol=lf
+
+# Web - Frameworks
 *.vue text eol=lf
+*.svelte text eol=lf
+*.graphql text eol=lf
+*.gql text eol=lf
 
-# Windows line endings
-*.cs text eol=crlf
-# *.csproj text eol=crlf # dependabot issues with line endings?
-# *.csproj.user text eol=crlf
-*.sln text eol=crlf
-*.resx text eol=crlf
+# .NET
+*.cs text eol=lf
+*.csx text eol=lf
+*.csproj text eol=lf
+# *.vbproj text eol=lf
+*.dbproj text eol=lf
+*.fsproj text eol=lf
+*.sln text eol=lf
+*.slnf text eol=lf
+*.fs text eol=lf
+*.fsi text eol=lf
+*.fsx text eol=lf
+*.fsscript text eol=lf
+# *.vb text eol=lf
+*.props text eol=lf
+*.targets text eol=lf
+*.config text eol=lf
+*.nuspec text eol=lf
+*.ruleset text eol=lf
+*.manifest text eol=lf
+*.appxmanifest text eol=lf
+*.resx text eol=lf
+
+# .NET - ASP.NET & Web
+*.xaml text eol=lf
+*.cshtml text eol=lf
+*.razor text eol=lf
+*.vbhtml text eol=lf
+*.asax text eol=lf
+*.ascx text eol=lf
+*.aspx text eol=lf
+*.master text eol=lf
+*.asmx text eol=lf
+*.ashx text eol=lf
+
+# .NET - Entity Framework & T4
+*.edmx text eol=lf
+*.tt text eol=lf
+*.ttinclude text eol=lf
+
+# Windows-specific scripts (require CRLF)
 *.cmd text eol=crlf
+*.bat text eol=crlf
 *.ps1 text eol=crlf
+*.psm1 text eol=crlf
+*.psd1 text eol=crlf
 
-# Binary
+# Images
 *.png binary
 *.jpg binary
 *.jpeg binary
+*.gif binary
+*.ico binary
+*.svg binary
+*.bmp binary
+*.tif binary
+*.tiff binary
+*.webp binary
+*.avif binary
+
+# Fonts
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.eot binary
+
+# Documents
+*.pdf binary
+*.doc binary
 *.docx binary
+*.xls binary
 *.xlsx binary
+*.ppt binary
+*.pptx binary
+*.odt binary
+*.ods binary
+*.odp binary
+
+# Media
+*.mp3 binary
+*.mp4 binary
+*.wav binary
+*.flac binary
+*.ogg binary
+*.mov binary
+*.avi binary
+*.mkv binary
+*.webm binary
+
+# Archives
 *.zip binary
-*.cr2 binary
+*.tar binary
+*.gz binary
+*.bz2 binary
+*.7z binary
+*.rar binary
+
+# Compiled binaries & libraries
+*.dll binary
+*.exe binary
+*.so binary
+*.dylib binary
+*.a binary
+*.lib binary
+*.pdb binary
+*.nupkg binary
+*.snupkg binary
+*.pyc binary
+*.pyo binary
+*.rlib binary
+*.wasm binary
+
+# Database
+*.db binary
+*.sqlite binary
+*.sqlite3 binary
+*.mdb binary
+
+# to normalise line endings:
+# git add . --renormalize

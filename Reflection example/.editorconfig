@@ -1,6 +1,6 @@
 # New config, for command-line and ASP.NET apps, and UI combined
 # This keeps open-braces on same line for code blocks
-# 14 Sep 2025
+# 15 Jan 2026
 
 # Remove the line below if you want to inherit .editorconfig settings from higher directories
 root = true
@@ -174,7 +174,7 @@ dotnet_style_operator_placement_when_wrapping = beginning_of_line
 tab_width = 4
 indent_size = 4
 indent_style = tab
-end_of_line = crlf
+end_of_line = lf
 dotnet_style_coalesce_expression = true:suggestion
 dotnet_style_null_propagation = true:suggestion
 dotnet_style_prefer_is_null_check_over_reference_equality_method = true:suggestion
