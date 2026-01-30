@@ -1,7 +1,7 @@
-﻿using Microsoft.CodeAnalysis.CodeRefactorings;
-using Microsoft.CodeAnalysis.Testing;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.CodeAnalysis.CodeRefactorings;
+using Microsoft.CodeAnalysis.Testing;
 
 #pragma warning disable IDE0079 // Remove unnecessary suppression
 #pragma warning disable CA1000 // Do not declare static members on generic types
@@ -20,8 +20,7 @@ namespace RecordValueAnalyser.Test
 		/// <inheritdoc cref="CodeRefactoringVerifier{TCodeRefactoring, TTest, TVerifier}.VerifyRefactoringAsync(string, DiagnosticResult[], string)"/>
 		public static async Task VerifyRefactoringAsync(string source, DiagnosticResult[] expected, string fixedSource)
 		{
-			var test = new Test
-			{
+			var test = new Test {
 				TestCode = source,
 				FixedCode = fixedSource,
 			};
