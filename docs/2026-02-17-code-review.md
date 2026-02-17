@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-The RecordValueAnalyser is a well-structured Roslyn analyzer with solid core logic and good test coverage of the primary constructor parameter path. However, the review identified **1 correctness bug** in the analyzer, **several robustness issues** in the code fix provider, **significant test coverage gaps**, and **documentation drift**. The most impactful finding is that `IsRecordType()` silently passes plain `readonly struct` types without inspecting their members, producing false negatives.
+The RecordValueAnalyser is a well-structured Roslyn analyzer with solid core logic and good test coverage of the primary constructor parameter path. However, the review identified **2 correctness bugs** in the analyzer (false negatives for `readonly struct` and `ArraySegment<T>`), **several robustness issues** in the code fix provider, **significant test coverage gaps**, and **documentation drift**. The most impactful finding is that `IsRecordType()` silently passes plain `readonly struct` types without inspecting their members, producing false negatives.
 
 ---
 
@@ -71,7 +71,47 @@ if (fieldDeclaration.Declaration.Variables.Count == 0)
     return (null, null, false);
 ```
 
-### 1.4 LOW: Missing `CancellationToken` argument
+### 1.4 HIGH: `ArraySegment<T>` produces false negative (same class as `ImmutableArray<T>`)
+
+**File:** `RecordValueAnalyser/RecordValueSemantics.cs:53`
+
+`ArraySegment<T>` is a struct that implements `IEquatable<ArraySegment<T>>`, but its `Equals` only checks reference equality on the underlying array plus offset and count. Two segments with identical *contents* from different array instances are not equal. The analyzer flow hits `HasEqualsTMethod()` → returns `true` → incorrectly reports `Ok`.
+
+```csharp
+// This record has broken value semantics but the analyzer reports no warning:
+record A(ArraySegment<int> Data);
+```
+
+This is the same class of bug that `IsImmutableArrayType()` was added to handle. `ArraySegment<T>` needs an equivalent explicit check before the `HasEqualsTMethod` call.
+
+**Fix:** Add an `IsArraySegmentType` check alongside the existing `IsImmutableArrayType`:
+```csharp
+private static bool IsArraySegmentType(ITypeSymbol? typeSymbol) =>
+    GetGenericName(typeSymbol) == "System.ArraySegment<T>";
+```
+
+### 1.5 MEDIUM: `IsPrimitiveType` omits `decimal` and newer numeric types
+
+**File:** `RecordValueAnalyser/RecordValueSemantics.cs:229-235`
+
+`IsPrimitiveType` lists every numeric `SpecialType` except `System.Decimal`. While `decimal` passes through `HasEqualsTMethod` (it implements `IEquatable<decimal>`), it is the only built-in numeric type missing from the primitive list. The same applies to newer numeric types introduced since .NET 5:
+
+| Type | Since | Has `IEquatable<T>`? | In `IsPrimitiveType`? |
+|------|-------|---------------------|----------------------|
+| `decimal` | .NET 1.0 | Yes | **No** |
+| `nint` / `nuint` | C# 9 | Yes | **No** |
+| `Half` | .NET 5 | Yes | **No** |
+| `Int128` / `UInt128` | .NET 7 | Yes | **No** |
+
+All produce correct results via `HasEqualsTMethod`, but relying on the Equals method lookup for basic numeric types is fragile and inconsistent. `decimal` at minimum should be added to `IsPrimitiveType` via `SpecialType.System_Decimal`. The others lack `SpecialType` entries and would need name-based checks if desired.
+
+**Fix (minimal):**
+```csharp
+SpecialType.System_Boolean or ... or SpecialType.System_String or SpecialType.System_Decimal
+    => true,
+```
+
+### 1.6 LOW: Missing `CancellationToken` argument
 
 **File:** `RecordValueAnalyser.CodeFixes/RecordValueAnalyserCodeFixProvider.cs:72`
 
@@ -219,15 +259,18 @@ Any caller passing type arguments compiles in DEBUG but fails in Release.
 
 ## Remediation Plan
 
-### Phase 1: Fix the Correctness Bug (Priority: Immediate)
+### Phase 1: Fix Correctness Bugs (Priority: Immediate)
 
 | # | Task | File | Effort |
 |---|------|------|--------|
 | 1.1 | Fix `IsRecordType()` to use `type?.IsRecord == true` | `RecordValueSemantics.cs:198-199` | 5 min |
-| 1.2 | Add test for `readonly struct` with reference field (should fail) | `UnitTestsClasses.cs` + `UnitTestsStructs.cs` | 15 min |
-| 1.3 | Add test for `decimal` type member (should pass) | `UnitTestsClasses.cs` | 10 min |
-| 1.4 | Run full test suite, verify no regressions | - | 5 min |
-| 1.5 | Run `dotnet format` | - | 2 min |
+| 1.2 | Add `IsArraySegmentType` check before `HasEqualsTMethod` | `RecordValueSemantics.cs` (near line 47) | 10 min |
+| 1.3 | Add `decimal` to `IsPrimitiveType` via `SpecialType.System_Decimal` | `RecordValueSemantics.cs:232` | 2 min |
+| 1.4 | Add test for `readonly struct` with reference field (should fail) | `UnitTestsClasses.cs` + `UnitTestsStructs.cs` | 15 min |
+| 1.5 | Add test for `ArraySegment<T>` member (should fail) | `UnitTestsClasses.cs` + `UnitTestsStructs.cs` | 10 min |
+| 1.6 | Add test for `decimal` type member (should pass) | `UnitTestsClasses.cs` | 10 min |
+| 1.7 | Run full test suite, verify no regressions | - | 5 min |
+| 1.8 | Run `dotnet format` | - | 2 min |
 
 ### Phase 2: Harden the Code Fix Provider (Priority: High)
 
@@ -271,7 +314,7 @@ Any caller passing type arguments compiles in DEBUG but fails in Release.
 
 ### Total Estimated Effort
 
-- **Phase 1 (Immediate):** ~37 minutes
+- **Phase 1 (Immediate):** ~59 minutes
 - **Phase 2 (High):** ~54 minutes
 - **Phase 3 (High):** ~75 minutes
 - **Phase 4 (Medium):** ~17 minutes
@@ -279,7 +322,53 @@ Any caller passing type arguments compiles in DEBUG but fails in Release.
 
 ---
 
-## Appendix: Issues Evaluated and Dismissed
+## Appendix A: C# 13/14 and .NET 9/10 Feature Impact Assessment
+
+The following new language features and BCL types were evaluated for impact on the analyzer. **None require new special-case handling** beyond the `ArraySegment<T>` fix already listed above.
+
+### Language features — no impact
+
+| Feature | Version | Why no impact |
+|---------|---------|--------------|
+| `params` collections | C# 13 | Doesn't change the member's declared type in a record |
+| `field` keyword | C# 14 | Syntactic sugar for backing fields; property type unchanged |
+| Extension members/blocks | C# 14 | Cannot override or shadow existing members; can't inject `Equals(T)` |
+| Partial properties | C# 13 | Semantic model merges partials; analyzer sees identical types |
+| Partial constructors | C# 14 | Same as partial properties |
+| `ref struct` interfaces | C# 13 | ref structs can't be record members (stack-only) |
+| `allows ref struct` constraint | C# 13 | Same — ref structs can't be stored in record fields |
+| Implicit `Span<T>` conversions | C# 14 | `Span<T>` is a ref struct, can't be a record member |
+| User-defined compound assignment | C# 14 | Doesn't affect equality semantics |
+| Overload resolution priority | C# 13 | Affects call-site resolution, not type equality |
+
+### New BCL types — correctly handled by existing logic
+
+| Type | Version | TypeKind | How analyzer handles it |
+|------|---------|----------|------------------------|
+| `System.Threading.Lock` | .NET 9 | Class | `IsClassType()` → fail |
+| `FrozenSet<T>` / `FrozenDictionary<K,V>` | .NET 8 | Class | `IsClassType()` → fail |
+| `Tensor<T>` | .NET 10 | Class | `IsClassType()` → fail |
+| `Memory<T>` / `ReadOnlyMemory<T>` | .NET 6 | Struct | No `IEquatable<T>`; struct recursion finds internal `object` field → fail |
+| `Span<T>` / `ReadOnlySpan<T>` | .NET 6 | Ref struct | Can't be record members — compiler error |
+| `OrderedDictionary<K,V>` | .NET 9 | Class | `IsClassType()` → fail |
+| `MLKem` / `MLDsa` / `SlhDsa` | .NET 10 | Class | `IsClassType()` → fail |
+| `Half` | .NET 5 | Struct | `IEquatable<Half>` → `HasEqualsTMethod()` → pass (correct) |
+| `Int128` / `UInt128` | .NET 7 | Struct | `IEquatable<T>` → `HasEqualsTMethod()` → pass (correct) |
+| `nint` / `nuint` | C# 9 | Struct | `IEquatable<T>` → `HasEqualsTMethod()` → pass (correct) |
+
+### Other type categories verified
+
+| Type category | TypeKind | Result | Notes |
+|--------------|----------|--------|-------|
+| Arrays (`int[]`, `string[]`) | Array | Default fail | Not Class, not Struct — falls through to fail |
+| Delegates (`Func<T>`, `Action`) | Delegate | Default fail | Same fall-through path |
+| Interfaces (`IList<T>`, etc.) | Interface | Default fail | No `Equals(T)` on interface types |
+| Unconstrained type params (`T`) | TypeParameter | Default fail | Correct — can't guarantee value semantics |
+| Constrained `T : IEquatable<T>` | TypeParameter | Pass via `HasEqualsTMethod` | Correct — constraint provides guarantee |
+
+---
+
+## Appendix B: Issues Evaluated and Dismissed
 
 The following were investigated and determined to be non-issues:
 
