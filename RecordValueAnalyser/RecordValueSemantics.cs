@@ -48,6 +48,10 @@ internal static class RecordValueSemantics
 			return (ValueEqualityResult.Failed, null); // ImmutableArray<T> lacks value semantics
 		}
 
+		if (IsArraySegmentType(type)) {
+			return (ValueEqualityResult.Failed, null); // ArraySegment<T> compares array identity, not contents
+		}
+
 		if (!type.IsTupleType) {
 			// for tuples we ignore Equals(T) and Equals(object)
 			if (HasEqualsTMethod(type)) {
@@ -261,4 +265,10 @@ internal static class RecordValueSemantics
 	/// </summary>
 	private static bool IsImmutableArrayType(ITypeSymbol? typeSymbol) =>
 		GetGenericName(typeSymbol) == "System.Collections.Immutable.ImmutableArray<T>";
+
+	/// <summary>
+	/// Is this an ArraySegment&lt;T&gt;? Its Equals compares array identity, not element contents.
+	/// </summary>
+	private static bool IsArraySegmentType(ITypeSymbol? typeSymbol) =>
+		GetGenericName(typeSymbol) == "System.ArraySegment<T>";
 }

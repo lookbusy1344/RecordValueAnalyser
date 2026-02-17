@@ -346,6 +346,19 @@ namespace System.Runtime.CompilerServices {
 	}
 
 	[TestMethod]
+	public async Task ArraySegmentFail()
+	{
+		// ArraySegment<T> implements IEquatable<T> but compares array identity, not contents
+		const string test = coGeneral + "public record class A(int I, ArraySegment<int> Data);";
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 30, 6, 52)
+			.WithArguments("System.ArraySegment<int> Data");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
+
+	[TestMethod]
 	public async Task ReadonlyStructWithReferenceFieldFail()
 	{
 		// A plain readonly struct (not a record struct) containing a reference type should fail.
