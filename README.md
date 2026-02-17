@@ -17,7 +17,7 @@ record TestRecord(int A, string B, IReadOnlyList<int> C);
 This project contains:
 - the Roslyn code analyser itself
 - a wrapper to make a nuget package https://www.nuget.org/packages/lookbusy1344.RecordValueAnalyser
-- a VSIX plugin for Visual Studio 2022
+- a VSIX plugin for Visual Studio 2022/6
 - a test project
 
 ## Why?
@@ -74,7 +74,7 @@ record TestRecord(int A, string B, IReadOnlyList<int> C);
                                    ~~~~~~~~~~~~~~~~~~~~  JSV01: member lacks value semantics
 ```
 
-It was built for C# 12+ and .NET 8/9. It checks `record class` and `record struct` types for the following:
+It was built for C# 12+ and .NET 8/9/10. It checks `record class` and `record struct` types for the following:
 
 - if the record has a Equals(T) method, it is ok and no more checks are performed
 - Otherwise all members are checked for:

@@ -66,12 +66,12 @@ The analyzer performs these checks:
 
 ### Target Framework
 - Analyzer: .NET Standard 2.0 (for broad compatibility)
-- Tests: .NET 8.0
-- Uses C# preview language features with nullable reference types enabled
+- Tests: .NET 10.0
+- Uses C# 12-14 language features with nullable reference types enabled
 
 ### Code Style
 - Uses extensive static analysis rules (Roslynator, Visual Studio analyzers)
 - Enforces code style in build with `EnforceCodeStyleInBuild`
 - Multiple `.editorconfig` files for consistent formatting across projects
-- CRLF line endings for CS files. Other files like markdown use LF.
+- LF line endings for CS files
 - **Important**: Always run `dotnet format` after making code changes
