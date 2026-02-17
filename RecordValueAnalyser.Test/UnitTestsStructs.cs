@@ -315,10 +315,29 @@ namespace System.Runtime.CompilerServices {
 		const string test = coGeneral
 			+ """
 			public struct MyInlineArray { public byte _element0; }
-			
+
 			public readonly record struct Tester(int I, MyInlineArray Ar);
 			""";
 
 		await VerifyCS.VerifyAnalyzerAsync(test);
+	}
+
+	[TestMethod]
+	public async Task ReadonlyStructWithReferenceFieldFail()
+	{
+		// A plain readonly struct (not a record struct) containing a reference type should fail.
+		// IsRecordType() must not match it.
+		const string test = coGeneral
+			+ """
+			public readonly struct Wrapper { public readonly List<int> Items; }
+
+			public record struct A(int I, Wrapper W);
+			""";
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(8, 31, 8, 40)
+			.WithArguments("Wrapper W (field System.Collections.Generic.List<int>)");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
 	}
 }

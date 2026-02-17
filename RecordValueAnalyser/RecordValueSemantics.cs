@@ -193,10 +193,9 @@ internal static class RecordValueSemantics
 	private static bool IsObjectType(ITypeSymbol? type) => type?.SpecialType == SpecialType.System_Object;
 
 	/// <summary>
-	/// Record class or Record struct
+	/// Record class or record struct. Plain readonly structs are excluded.
 	/// </summary>
-	private static bool IsRecordType(ITypeSymbol? type) =>
-		type != null && (type.IsRecord || (type.TypeKind == TypeKind.Struct && type.IsReadOnly));
+	private static bool IsRecordType(ITypeSymbol? type) => type?.IsRecord == true;
 
 	/// <summary>
 	/// True if this is a struct

@@ -344,4 +344,23 @@ namespace System.Runtime.CompilerServices {
 
 		await VerifyCS.VerifyAnalyzerAsync(test, expected);
 	}
+
+	[TestMethod]
+	public async Task ReadonlyStructWithReferenceFieldFail()
+	{
+		// A plain readonly struct (not a record struct) containing a reference type should fail.
+		// IsRecordType() must not match it.
+		const string test = coGeneral
+			+ """
+			public readonly struct Wrapper { public readonly List<int> Items; }
+
+			public record class A(int I, Wrapper W);
+			""";
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(8, 30, 8, 39)
+			.WithArguments("Wrapper W (field System.Collections.Generic.List<int>)");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
 }
