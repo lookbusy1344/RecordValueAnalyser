@@ -2,6 +2,10 @@
 <Project>
   <Import Sdk="Microsoft.NET.Sdk" Project="Sdk.props" />
 
+  <PropertyGroup>
+    <IsWindows Condition="'$(OS)' == 'Windows_NT'">true</IsWindows>
+  </PropertyGroup>
+
 <Target Name="SetSourceRevisionId" BeforeTargets="InitializeSourceControlInformation">
     <Exec Command="git describe --long --always --dirty=+ --broken --exclude=* --abbrev=40" ConsoleToMSBuild="True" IgnoreExitCode="False">
       <Output PropertyName="SourceRevisionId" TaskParameter="ConsoleOutput" />
@@ -30,7 +34,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="17.14.2120" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="17.14.2120" PrivateAssets="all" Condition="'$(IsWindows)' == 'true'" />
   </ItemGroup>
 
   <PropertyGroup>
@@ -42,7 +46,7 @@
 
   <Import Sdk="Microsoft.NET.Sdk" Project="Sdk.targets" />
 
-  <Import Project="$(VSToolsPath)\VSSDK\Microsoft.VsSDK.targets" Condition="Exists('$(VSToolsPath)\VSSDK\Microsoft.VsSDK.targets')" />
+  <Import Project="$(VSToolsPath)\VSSDK\Microsoft.VsSDK.targets" Condition="'$(IsWindows)' == 'true' AND Exists('$(VSToolsPath)\VSSDK\Microsoft.VsSDK.targets')" />
 
   <ItemGroup>
     <ProjectReference Include="..\RecordValueAnalyser.CodeFixes\RecordValueAnalyser.CodeFixes.csproj" />
