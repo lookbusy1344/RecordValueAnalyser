@@ -28,7 +28,6 @@ public class RecordValueAnalyser : DiagnosticAnalyzer
 	private static void AnalyzeRecordDeclaration(SyntaxNodeAnalysisContext context)
 	{
 		var recordDeclaration = (RecordDeclarationSyntax)context.Node;
-		//var recordTypeSymbol = context.SemanticModel.GetDeclaredSymbol(recordDeclaration);
 
 		// if the record has an Equals(T) method, then we're ok. No need to check further
 		if (RecordValueSemantics.RecordHasEquals(context)) {

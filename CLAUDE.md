@@ -13,7 +13,7 @@ The solution consists of 5 projects:
 - **RecordValueAnalyser**: Core analyzer implementation (netstandard2.0)
 - **RecordValueAnalyser.CodeFixes**: Code fix provider for the analyzer
 - **RecordValueAnalyser.Package**: NuGet package wrapper
-- **RecordValueAnalyser.Test**: MSTest-based unit tests (net8.0)
+- **RecordValueAnalyser.Test**: MSTest-based unit tests (net10.0)
 - **RecordValueAnalyser.Vsix**: Visual Studio extension
 
 The main analyzer logic is split between:

@@ -141,7 +141,7 @@ namespace System.Runtime.CompilerServices {
 	[TestMethod]
 	public async Task ObjectMemberFail()
 	{
-		// the Equals member is invalid because it doesn't take a ClassA
+		// object lacks value semantics and should always be flagged
 		const string test = coGeneral
 			+ """
 				public record struct A(object O, string S, DateTime Dt);
