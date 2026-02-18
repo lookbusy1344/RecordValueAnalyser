@@ -6,3 +6,4 @@ TestResults/
 *.bak
 copilotDiffState.xml
 copilot.data.*.xml
+*.DotSettings.user
