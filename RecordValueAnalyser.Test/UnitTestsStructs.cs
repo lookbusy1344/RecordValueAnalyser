@@ -364,6 +364,71 @@ namespace System.Runtime.CompilerServices {
 	}
 
 	[TestMethod]
+	public async Task BodyPropertyFail()
+	{
+		// a record body property with an array type should be flagged
+		const string test = coGeneral + "public record struct A { public int[] Numbers { get; set; } }";
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 26, 6, 60)
+			.WithArguments("int[] Numbers");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task BodyFieldFail()
+	{
+		// a record body field with an array type should be flagged
+		const string test = coGeneral + "public record struct A { public string[] Names; }";
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 26, 6, 48)
+			.WithArguments("string[] Names");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task BodyPropertyPass()
+	{
+		// a record body property with a value type should not be flagged
+		const string test = coGeneral + "public record struct A { public int Count { get; set; } }";
+
+		await VerifyCS.VerifyAnalyzerAsync(test);
+	}
+
+	[TestMethod]
+	public async Task MultipleDiagnostics()
+	{
+		// two failing parameters should both be reported
+		const string test = coGeneral + "public record struct A(int Valid, int[] Invalid1, string[] Invalid2);";
+
+		var expected1 = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 35, 6, 49)
+			.WithArguments("int[] Invalid1");
+
+		var expected2 = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 51, 6, 68)
+			.WithArguments("string[] Invalid2");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected1, expected2);
+	}
+
+	[TestMethod]
+	public async Task InterfaceMemberFail()
+	{
+		// an interface-typed parameter lacks value semantics and should be flagged
+		const string test = coGeneral + "public record struct A(int I, IComparable<int> Comp);";
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 31, 6, 52)
+			.WithArguments("System.IComparable<int> Comp");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
+
+	[TestMethod]
 	public async Task CodeFixRecordStructSemicolon()
 	{
 		// code fix on a semicolon-terminated record struct adds braces and readonly stub methods
