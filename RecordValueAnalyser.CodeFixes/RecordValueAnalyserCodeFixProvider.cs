@@ -69,7 +69,7 @@ public class RecordValueAnalyserCodeFixProvider : CodeFixProvider
 
 		// find the record declaration in the syntax tree
 		var recordDeclaration = await typeSymbol!.DeclaringSyntaxReferences[0]
-			.GetSyntaxAsync()
+			.GetSyntaxAsync(cancellationToken)
 			.ConfigureAwait(false) as RecordDeclarationSyntax;
 
 		// check if the recordDeclaration has OpenBraceToken '{'

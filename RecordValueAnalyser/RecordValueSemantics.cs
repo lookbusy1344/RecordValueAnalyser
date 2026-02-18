@@ -148,6 +148,10 @@ internal static class RecordValueSemantics
 			isProperty = true;
 		} else if (member is FieldDeclarationSyntax fieldDeclaration) {
 			type = context.SemanticModel.GetTypeInfo(fieldDeclaration.Declaration.Type).Type;
+			if (fieldDeclaration.Declaration.Variables.Count == 0) {
+				return (null, null, false);
+			}
+
 			memberName = fieldDeclaration.Declaration.Variables[0].Identifier.ValueText;
 			isProperty = false;
 		} else {
