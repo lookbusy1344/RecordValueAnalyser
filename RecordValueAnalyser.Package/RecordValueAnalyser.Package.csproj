@@ -37,9 +37,6 @@
 	<GenerateAssemblyCopyrightAttribute>false</GenerateAssemblyCopyrightAttribute>
 	<DevelopmentDependency>true</DevelopmentDependency>
 
-    <DevelopmentDependency>true</DevelopmentDependency>
-    <NoPackageAnalysis>true</NoPackageAnalysis>
-
     <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);_AddAnalyzersToOutput</TargetsForTfmSpecificContentInPackage>
   </PropertyGroup>
 

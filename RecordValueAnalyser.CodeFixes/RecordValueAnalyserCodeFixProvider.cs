@@ -69,7 +69,7 @@ public class RecordValueAnalyserCodeFixProvider : CodeFixProvider
 
 		// find the record declaration in the syntax tree
 		var recordDeclaration = await typeSymbol!.DeclaringSyntaxReferences[0]
-			.GetSyntaxAsync()
+			.GetSyntaxAsync(cancellationToken)
 			.ConfigureAwait(false) as RecordDeclarationSyntax;
 
 		// check if the recordDeclaration has OpenBraceToken '{'
@@ -107,7 +107,7 @@ public class RecordValueAnalyserCodeFixProvider : CodeFixProvider
 		.AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword), SyntaxFactory.Token(SyntaxKind.OverrideKeyword), SyntaxFactory.Token(SyntaxKind.ReadOnlyKeyword))
 		.WithExpressionBody(SyntaxFactory.ArrowExpressionClause(SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(0))))
 		.WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken))
-		.WithTrailingTrivia(SyntaxFactory.TriviaList(SyntaxFactory.Comment(ToDoString), SyntaxFactory.CarriageReturnLineFeed));
+		.WithTrailingTrivia(SyntaxFactory.TriviaList(SyntaxFactory.Comment(ToDoString), SyntaxFactory.LineFeed));
 
 	/// <summary>
 	/// Helper to build: public override int GetHashCode() => 0;
@@ -117,10 +117,10 @@ public class RecordValueAnalyserCodeFixProvider : CodeFixProvider
 		.AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword), SyntaxFactory.Token(SyntaxKind.OverrideKeyword))
 		.WithExpressionBody(SyntaxFactory.ArrowExpressionClause(SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(0))))
 		.WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken))
-		.WithTrailingTrivia(SyntaxFactory.TriviaList(SyntaxFactory.Comment(ToDoString), SyntaxFactory.CarriageReturnLineFeed));
+		.WithTrailingTrivia(SyntaxFactory.TriviaList(SyntaxFactory.Comment(ToDoString), SyntaxFactory.LineFeed));
 
 	/// <summary>
-	/// Helper to build: public readonly bool Equals(Self other) => true;
+	/// Helper to build: public readonly bool Equals(Self other) => false;
 	/// </summary>
 	private MethodDeclarationSyntax BuildEqualsStructMethod(string recordname) => SyntaxFactory.MethodDeclaration(
 			SyntaxFactory.PredefinedType(
@@ -137,10 +137,10 @@ public class RecordValueAnalyserCodeFixProvider : CodeFixProvider
 						.WithType(SyntaxFactory.ParseTypeName(recordname)))))
 		.WithExpressionBody(SyntaxFactory.ArrowExpressionClause(SyntaxFactory.LiteralExpression(SyntaxKind.FalseLiteralExpression)))
 		.WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken))
-		.WithTrailingTrivia(SyntaxFactory.TriviaList(SyntaxFactory.Comment(ToDoString), SyntaxFactory.CarriageReturnLineFeed));
+		.WithTrailingTrivia(SyntaxFactory.TriviaList(SyntaxFactory.Comment(ToDoString), SyntaxFactory.LineFeed));
 
 	/// <summary>
-	/// Helper to build: public virtual bool Equals(Self? other) => true;
+	/// Helper to build: public virtual bool Equals(Self? other) => false;
 	/// </summary>
 	private MethodDeclarationSyntax BuildEqualsClassMethod(string recordname) => SyntaxFactory.MethodDeclaration(
 			SyntaxFactory.PredefinedType(
@@ -159,5 +159,5 @@ public class RecordValueAnalyserCodeFixProvider : CodeFixProvider
 								SyntaxFactory.ParseTypeName(recordname))))))
 		.WithExpressionBody(SyntaxFactory.ArrowExpressionClause(SyntaxFactory.LiteralExpression(SyntaxKind.FalseLiteralExpression)))
 		.WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken))
-		.WithTrailingTrivia(SyntaxFactory.TriviaList(SyntaxFactory.Comment(ToDoString), SyntaxFactory.CarriageReturnLineFeed));
+		.WithTrailingTrivia(SyntaxFactory.TriviaList(SyntaxFactory.Comment(ToDoString), SyntaxFactory.LineFeed));
 }

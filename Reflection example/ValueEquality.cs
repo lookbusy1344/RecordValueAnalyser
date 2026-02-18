@@ -239,7 +239,7 @@ public static class ValueEquality
 	/// <summary>
 	/// Dummy method for release builds
 	/// </summary>
-	public static void CheckAssembly() { }
+	public static void CheckAssembly(params Type[] ignoretypes) { }
 }
 #endif
 

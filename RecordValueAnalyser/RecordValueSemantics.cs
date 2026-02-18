@@ -48,6 +48,10 @@ internal static class RecordValueSemantics
 			return (ValueEqualityResult.Failed, null); // ImmutableArray<T> lacks value semantics
 		}
 
+		if (IsArraySegmentType(type)) {
+			return (ValueEqualityResult.Failed, null); // ArraySegment<T> compares array identity, not contents
+		}
+
 		if (!type.IsTupleType) {
 			// for tuples we ignore Equals(T) and Equals(object)
 			if (HasEqualsTMethod(type)) {
@@ -144,6 +148,10 @@ internal static class RecordValueSemantics
 			isProperty = true;
 		} else if (member is FieldDeclarationSyntax fieldDeclaration) {
 			type = context.SemanticModel.GetTypeInfo(fieldDeclaration.Declaration.Type).Type;
+			if (fieldDeclaration.Declaration.Variables.Count == 0) {
+				return (null, null, false);
+			}
+
 			memberName = fieldDeclaration.Declaration.Variables[0].Identifier.ValueText;
 			isProperty = false;
 		} else {
@@ -193,10 +201,9 @@ internal static class RecordValueSemantics
 	private static bool IsObjectType(ITypeSymbol? type) => type?.SpecialType == SpecialType.System_Object;
 
 	/// <summary>
-	/// Record class or Record struct
+	/// Record class or record struct. Plain readonly structs are excluded.
 	/// </summary>
-	private static bool IsRecordType(ITypeSymbol? type) =>
-		type != null && (type.IsRecord || (type.TypeKind == TypeKind.Struct && type.IsReadOnly));
+	private static bool IsRecordType(ITypeSymbol? type) => type?.IsRecord == true;
 
 	/// <summary>
 	/// True if this is a struct
@@ -229,7 +236,7 @@ internal static class RecordValueSemantics
 	private static bool IsPrimitiveType(ITypeSymbol? type) =>
 		type != null
 			&& type.SpecialType switch {
-				SpecialType.System_Boolean or SpecialType.System_SByte or SpecialType.System_Int16 or SpecialType.System_Int32 or SpecialType.System_Int64 or SpecialType.System_Byte or SpecialType.System_UInt16 or SpecialType.System_UInt32 or SpecialType.System_UInt64 or SpecialType.System_Single or SpecialType.System_Double or SpecialType.System_Char or SpecialType.System_String
+				SpecialType.System_Boolean or SpecialType.System_SByte or SpecialType.System_Int16 or SpecialType.System_Int32 or SpecialType.System_Int64 or SpecialType.System_Byte or SpecialType.System_UInt16 or SpecialType.System_UInt32 or SpecialType.System_UInt64 or SpecialType.System_Single or SpecialType.System_Double or SpecialType.System_Decimal or SpecialType.System_Char or SpecialType.System_String
 				=> true,
 				_ => false,
 			};
@@ -262,4 +269,10 @@ internal static class RecordValueSemantics
 	/// </summary>
 	private static bool IsImmutableArrayType(ITypeSymbol? typeSymbol) =>
 		GetGenericName(typeSymbol) == "System.Collections.Immutable.ImmutableArray<T>";
+
+	/// <summary>
+	/// Is this an ArraySegment&lt;T&gt;? Its Equals compares array identity, not element contents.
+	/// </summary>
+	private static bool IsArraySegmentType(ITypeSymbol? typeSymbol) =>
+		GetGenericName(typeSymbol) == "System.ArraySegment<T>";
 }

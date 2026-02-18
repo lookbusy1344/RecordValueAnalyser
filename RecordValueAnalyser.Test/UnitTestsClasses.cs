@@ -141,7 +141,7 @@ namespace System.Runtime.CompilerServices {
 	[TestMethod]
 	public async Task ObjectMemberFail()
 	{
-		// the Equals member is invalid because it doesn't take a ClassA
+		// object lacks value semantics and should always be flagged
 		const string test = coGeneral
 			+ """
 				public record class A(object O, string S, DateTime Dt);
@@ -343,5 +343,185 @@ namespace System.Runtime.CompilerServices {
 			.WithArguments("System.Collections.Immutable.ImmutableArray<int> Numbers");
 
 		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task ArraySegmentFail()
+	{
+		// ArraySegment<T> implements IEquatable<T> but compares array identity, not contents
+		const string test = coGeneral + "public record class A(int I, ArraySegment<int> Data);";
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 30, 6, 52)
+			.WithArguments("System.ArraySegment<int> Data");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task ReadonlyStructWithReferenceFieldFail()
+	{
+		// A plain readonly struct (not a record struct) containing a reference type should fail.
+		// IsRecordType() must not match it.
+		const string test = coGeneral
+			+ """
+			public readonly struct Wrapper { public readonly List<int> Items; }
+
+			public record class A(int I, Wrapper W);
+			""";
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(8, 30, 8, 39)
+			.WithArguments("Wrapper W (field System.Collections.Generic.List<int>)");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task DecimalMemberPass()
+	{
+		// decimal is a primitive with value semantics and should produce no diagnostic
+		const string test = coGeneral + "public record class A(decimal D, int I, string S);";
+
+		await VerifyCS.VerifyAnalyzerAsync(test);
+	}
+
+	[TestMethod]
+	public async Task BodyPropertyFail()
+	{
+		// a record body property with an array type should be flagged
+		const string test = coGeneral + "public record class A { public int[] Numbers { get; set; } }";
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 25, 6, 59)
+			.WithArguments("int[] Numbers");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task BodyFieldFail()
+	{
+		// a record body field with an array type should be flagged
+		const string test = coGeneral + "public record class A { public string[] Names; }";
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 25, 6, 47)
+			.WithArguments("string[] Names");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task BodyPropertyPass()
+	{
+		// a record body property with a value type should not be flagged
+		const string test = coGeneral + "public record class A { public int Count { get; set; } }";
+
+		await VerifyCS.VerifyAnalyzerAsync(test);
+	}
+
+	[TestMethod]
+	public async Task MultipleDiagnostics()
+	{
+		// two failing parameters should both be reported
+		const string test = coGeneral + "public record class A(int Valid, int[] Invalid1, string[] Invalid2);";
+
+		var expected1 = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 34, 6, 48)
+			.WithArguments("int[] Invalid1");
+
+		var expected2 = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 50, 6, 67)
+			.WithArguments("string[] Invalid2");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected1, expected2);
+	}
+
+	[TestMethod]
+	public async Task RecordInheritanceFail()
+	{
+		// a derived record with a bad parameter should be flagged
+		const string test = coGeneral
+			+ """
+			public record class Base(int I);
+			public record class Derived(int[] Data) : Base(0);
+			""";
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(7, 29, 7, 39)
+			.WithArguments("int[] Data");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task RecordInheritanceEqualsPass()
+	{
+		// a derived record with Equals(T) defined should suppress the diagnostic
+		const string test = coGeneral
+			+ """
+			public record class Base(int I);
+			public record class Derived(int[] Data) : Base(0)
+			{
+				public virtual bool Equals(Derived other) => false;
+			}
+			""";
+
+		await VerifyCS.VerifyAnalyzerAsync(test);
+	}
+
+	[TestMethod]
+	public async Task InterfaceMemberFail()
+	{
+		// an interface-typed parameter lacks value semantics and should be flagged
+		const string test = coGeneral + "public record class A(int I, IComparable<int> Comp);";
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 30, 6, 51)
+			.WithArguments("System.IComparable<int> Comp");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task CodeFixRecordClassSemicolon()
+	{
+		// code fix on a semicolon-terminated record class adds braces and stub methods
+		const string source = "#nullable enable\n" + coGeneral + "public record class A(int[] Data);";
+		const string fixedSource = "#nullable enable\n" + coGeneral
+			+ "public record class A(int[] Data)\n"
+			+ "{\n"
+			+ "    public virtual bool Equals(A? other) => false; // TODO\n"
+			+ "    public override int GetHashCode() => 0; // TODO\n"
+			+ "}";
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(7, 23, 7, 33)
+			.WithArguments("int[] Data");
+
+		await VerifyCS.VerifyCodeFixAsync(source, expected, fixedSource);
+	}
+
+	[TestMethod]
+	public async Task CodeFixRecordClassBraced()
+	{
+		// code fix on a record class that already has braces inserts stub methods inside them
+		const string source = "#nullable enable\n" + coGeneral
+			+ "\npublic record class A(int[] Data)\n"
+			+ "{\n"
+			+ "}\n";
+		const string fixedSource = "#nullable enable\n" + coGeneral
+			+ "\npublic record class A(int[] Data)\n"
+			+ "{\n"
+			+ "    public virtual bool Equals(A? other) => false; // TODO\n"
+			+ "    public override int GetHashCode() => 0; // TODO\n"
+			+ "}\n";
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(8, 23, 8, 33)
+			.WithArguments("int[] Data");
+
+		await VerifyCS.VerifyCodeFixAsync(source, expected, fixedSource);
 	}
 }

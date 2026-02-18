@@ -141,7 +141,7 @@ namespace System.Runtime.CompilerServices {
 	[TestMethod]
 	public async Task ObjectMemberFail()
 	{
-		// the Equals member is invalid because it doesn't take a ClassA
+		// object lacks value semantics and should always be flagged
 		const string test = coGeneral
 			+ """
 				public record struct A(object O, string S, DateTime Dt);
@@ -315,10 +315,157 @@ namespace System.Runtime.CompilerServices {
 		const string test = coGeneral
 			+ """
 			public struct MyInlineArray { public byte _element0; }
-			
+
 			public readonly record struct Tester(int I, MyInlineArray Ar);
 			""";
 
 		await VerifyCS.VerifyAnalyzerAsync(test);
+	}
+
+	[TestMethod]
+	public async Task ArraySegmentFail()
+	{
+		// ArraySegment<T> implements IEquatable<T> but compares array identity, not contents
+		const string test = coGeneral + "public record struct A(int I, ArraySegment<int> Data);";
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 31, 6, 53)
+			.WithArguments("System.ArraySegment<int> Data");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task ReadonlyStructWithReferenceFieldFail()
+	{
+		// A plain readonly struct (not a record struct) containing a reference type should fail.
+		// IsRecordType() must not match it.
+		const string test = coGeneral
+			+ """
+			public readonly struct Wrapper { public readonly List<int> Items; }
+
+			public record struct A(int I, Wrapper W);
+			""";
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(8, 31, 8, 40)
+			.WithArguments("Wrapper W (field System.Collections.Generic.List<int>)");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task DecimalMemberPass()
+	{
+		// decimal is a primitive with value semantics and should produce no diagnostic
+		const string test = coGeneral + "public record struct A(decimal D, int I, string S);";
+
+		await VerifyCS.VerifyAnalyzerAsync(test);
+	}
+
+	[TestMethod]
+	public async Task BodyPropertyFail()
+	{
+		// a record body property with an array type should be flagged
+		const string test = coGeneral + "public record struct A { public int[] Numbers { get; set; } }";
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 26, 6, 60)
+			.WithArguments("int[] Numbers");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task BodyFieldFail()
+	{
+		// a record body field with an array type should be flagged
+		const string test = coGeneral + "public record struct A { public string[] Names; }";
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 26, 6, 48)
+			.WithArguments("string[] Names");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task BodyPropertyPass()
+	{
+		// a record body property with a value type should not be flagged
+		const string test = coGeneral + "public record struct A { public int Count { get; set; } }";
+
+		await VerifyCS.VerifyAnalyzerAsync(test);
+	}
+
+	[TestMethod]
+	public async Task MultipleDiagnostics()
+	{
+		// two failing parameters should both be reported
+		const string test = coGeneral + "public record struct A(int Valid, int[] Invalid1, string[] Invalid2);";
+
+		var expected1 = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 35, 6, 49)
+			.WithArguments("int[] Invalid1");
+
+		var expected2 = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 51, 6, 68)
+			.WithArguments("string[] Invalid2");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected1, expected2);
+	}
+
+	[TestMethod]
+	public async Task InterfaceMemberFail()
+	{
+		// an interface-typed parameter lacks value semantics and should be flagged
+		const string test = coGeneral + "public record struct A(int I, IComparable<int> Comp);";
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 31, 6, 52)
+			.WithArguments("System.IComparable<int> Comp");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task CodeFixRecordStructSemicolon()
+	{
+		// code fix on a semicolon-terminated record struct adds braces and readonly stub methods
+		const string source = coGeneral + "public record struct A(int[] Data);";
+		const string fixedSource = coGeneral
+			+ "public record struct A(int[] Data)\n"
+			+ "{\n"
+			+ "    public readonly bool Equals(A other) => false; // TODO\n"
+			+ "    public override readonly int GetHashCode() => 0; // TODO\n"
+			+ "}";
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 24, 6, 34)
+			.WithArguments("int[] Data");
+
+		await VerifyCS.VerifyCodeFixAsync(source, expected, fixedSource);
+	}
+
+	[TestMethod]
+	public async Task CodeFixRecordStructBraced()
+	{
+		// code fix on a record struct that already has braces inserts readonly stub methods inside them
+		const string source = coGeneral
+			+ "\npublic record struct A(int[] Data)\n"
+			+ "{\n"
+			+ "}\n";
+		const string fixedSource = coGeneral
+			+ "\npublic record struct A(int[] Data)\n"
+			+ "{\n"
+			+ "    public readonly bool Equals(A other) => false; // TODO\n"
+			+ "    public override readonly int GetHashCode() => 0; // TODO\n"
+			+ "}\n";
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(7, 24, 7, 34)
+			.WithArguments("int[] Data");
+
+		await VerifyCS.VerifyCodeFixAsync(source, expected, fixedSource);
 	}
 }

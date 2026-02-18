@@ -6,9 +6,8 @@ permissions:
 on:
   push:
     branches: ["main"]
-
-#  pull_request:
-#    branches: [ "main" ]
+  pull_request:
+    branches: ["main"]
 
 jobs:
   build:
@@ -30,3 +29,6 @@ jobs:
 
       - name: Test
         run: dotnet test --no-restore
+
+      - name: Check formatting
+        run: dotnet format --verify-no-changes
