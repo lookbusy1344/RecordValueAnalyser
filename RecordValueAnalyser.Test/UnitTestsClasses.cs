@@ -385,4 +385,45 @@ namespace System.Runtime.CompilerServices {
 
 		await VerifyCS.VerifyAnalyzerAsync(test);
 	}
+
+	[TestMethod]
+	public async Task CodeFixRecordClassSemicolon()
+	{
+		// code fix on a semicolon-terminated record class adds braces and stub methods
+		const string source = "#nullable enable\n" + coGeneral + "public record class A(int[] Data);";
+		const string fixedSource = "#nullable enable\n" + coGeneral
+			+ "public record class A(int[] Data)\n"
+			+ "{\n"
+			+ "    public virtual bool Equals(A? other) => false; // TODO\n"
+			+ "    public override int GetHashCode() => 0; // TODO\n"
+			+ "}";
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(7, 23, 7, 33)
+			.WithArguments("int[] Data");
+
+		await VerifyCS.VerifyCodeFixAsync(source, expected, fixedSource);
+	}
+
+	[TestMethod]
+	public async Task CodeFixRecordClassBraced()
+	{
+		// code fix on a record class that already has braces inserts stub methods inside them
+		const string source = "#nullable enable\n" + coGeneral
+			+ "\npublic record class A(int[] Data)\n"
+			+ "{\n"
+			+ "}\n";
+		const string fixedSource = "#nullable enable\n" + coGeneral
+			+ "\npublic record class A(int[] Data)\n"
+			+ "{\n"
+			+ "    public virtual bool Equals(A? other) => false; // TODO\n"
+			+ "    public override int GetHashCode() => 0; // TODO\n"
+			+ "}\n";
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(8, 23, 8, 33)
+			.WithArguments("int[] Data");
+
+		await VerifyCS.VerifyCodeFixAsync(source, expected, fixedSource);
+	}
 }

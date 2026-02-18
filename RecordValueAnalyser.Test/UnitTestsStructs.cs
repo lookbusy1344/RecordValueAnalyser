@@ -362,4 +362,45 @@ namespace System.Runtime.CompilerServices {
 
 		await VerifyCS.VerifyAnalyzerAsync(test);
 	}
+
+	[TestMethod]
+	public async Task CodeFixRecordStructSemicolon()
+	{
+		// code fix on a semicolon-terminated record struct adds braces and readonly stub methods
+		const string source = coGeneral + "public record struct A(int[] Data);";
+		const string fixedSource = coGeneral
+			+ "public record struct A(int[] Data)\n"
+			+ "{\n"
+			+ "    public readonly bool Equals(A other) => false; // TODO\n"
+			+ "    public override readonly int GetHashCode() => 0; // TODO\n"
+			+ "}";
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 24, 6, 34)
+			.WithArguments("int[] Data");
+
+		await VerifyCS.VerifyCodeFixAsync(source, expected, fixedSource);
+	}
+
+	[TestMethod]
+	public async Task CodeFixRecordStructBraced()
+	{
+		// code fix on a record struct that already has braces inserts readonly stub methods inside them
+		const string source = coGeneral
+			+ "\npublic record struct A(int[] Data)\n"
+			+ "{\n"
+			+ "}\n";
+		const string fixedSource = coGeneral
+			+ "\npublic record struct A(int[] Data)\n"
+			+ "{\n"
+			+ "    public readonly bool Equals(A other) => false; // TODO\n"
+			+ "    public override readonly int GetHashCode() => 0; // TODO\n"
+			+ "}\n";
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(7, 24, 7, 34)
+			.WithArguments("int[] Data");
+
+		await VerifyCS.VerifyCodeFixAsync(source, expected, fixedSource);
+	}
 }
