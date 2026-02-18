@@ -376,4 +376,13 @@ namespace System.Runtime.CompilerServices {
 
 		await VerifyCS.VerifyAnalyzerAsync(test, expected);
 	}
+
+	[TestMethod]
+	public async Task DecimalMemberPass()
+	{
+		// decimal is a primitive with value semantics and should produce no diagnostic
+		const string test = coGeneral + "public record class A(decimal D, int I, string S);";
+
+		await VerifyCS.VerifyAnalyzerAsync(test);
+	}
 }
