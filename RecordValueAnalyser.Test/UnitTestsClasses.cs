@@ -24,13 +24,13 @@ namespace System.Runtime.CompilerServices { internal static class IsExternalInit
 	// https://github.com/dotnet/runtime/issues/61135
 	// https://learn.microsoft.com/en-us/dotnet/api/system.runtime.compilerservices.inlinearrayattribute?view=net-8.0
 	private const string coInlineArrayAttribute = @"
-namespace System.Runtime.CompilerServices {
-    [AttributeUsage(AttributeTargets.Struct, AllowMultiple = false)]
-    public sealed class InlineArrayAttribute : Attribute {
-        public InlineArrayAttribute (int length) { Length = length; }
-        public int Length { get; }
-    } }
-";
+		namespace System.Runtime.CompilerServices {
+		    [AttributeUsage(AttributeTargets.Struct, AllowMultiple = false)]
+		    public sealed class InlineArrayAttribute : Attribute {
+		        public InlineArrayAttribute (int length) { Length = length; }
+		        public int Length { get; }
+		    } }
+		";
 
 	[TestMethod]
 	public async Task ValueTypesOnly()
@@ -59,11 +59,11 @@ namespace System.Runtime.CompilerServices {
 	{
 		// the nested struct is ok, because all the members are value types
 		const string test = coGeneral
-			+ """
-				public struct StructA { public int I; public string S; }
+							+ """
+							  public struct StructA { public int I; public string S; }
 
-				public record class A(int I, string S, DateTime Dt, StructA Sa);
-				""";
+							  public record class A(int I, string S, DateTime Dt, StructA Sa);
+							  """;
 
 		await VerifyCS.VerifyAnalyzerAsync(test);
 	}
@@ -73,11 +73,11 @@ namespace System.Runtime.CompilerServices {
 	{
 		// the array nested in the struct makes this fail
 		const string test = coGeneral
-			+ """
-				public struct StructA { public int I; public int[] Numbers; }
+							+ """
+							  public struct StructA { public int I; public int[] Numbers; }
 
-				public record class A(int I, string S, DateTime Dt, StructA Sa);
-				""";
+							  public record class A(int I, string S, DateTime Dt, StructA Sa);
+							  """;
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(8, 53, 8, 63)
@@ -91,13 +91,13 @@ namespace System.Runtime.CompilerServices {
 	{
 		// the Equals member makes this pass
 		const string test = coGeneral
-			+ """
-				public struct StructA { public int I; public int[] Numbers; 
-					public bool Equals(StructA other) => false; 
-				}
+							+ """
+							  public struct StructA { public int I; public int[] Numbers; 
+							  	public bool Equals(StructA other) => false; 
+							  }
 
-				public record class A(int I, string S, DateTime Dt, StructA Sa);
-				""";
+							  public record class A(int I, string S, DateTime Dt, StructA Sa);
+							  """;
 
 		await VerifyCS.VerifyAnalyzerAsync(test);
 	}
@@ -107,13 +107,13 @@ namespace System.Runtime.CompilerServices {
 	{
 		// the Equals(ClassA) member makes this pass
 		const string test = coGeneral
-			+ """
-				public struct ClassA { public int I; public int[] Numbers; 
-					public bool Equals(ClassA other) => false; 
-				}
+							+ """
+							  public struct ClassA { public int I; public int[] Numbers; 
+							  	public bool Equals(ClassA other) => false; 
+							  }
 
-				public record class A(int I, string S, DateTime Dt, ClassA Ca);
-				""";
+							  public record class A(int I, string S, DateTime Dt, ClassA Ca);
+							  """;
 
 		await VerifyCS.VerifyAnalyzerAsync(test);
 	}
@@ -123,13 +123,13 @@ namespace System.Runtime.CompilerServices {
 	{
 		// the Equals member is invalid because it doesn't take a ClassA
 		const string test = coGeneral
-			+ """
-				public struct ClassA { public int I; public int[] Numbers; 
-					public bool Equals(int junk) => false; 
-				}
+							+ """
+							  public struct ClassA { public int I; public int[] Numbers; 
+							  	public bool Equals(int junk) => false; 
+							  }
 
-				public record class A(int I, string S, DateTime Dt, ClassA Ca);
-				""";
+							  public record class A(int I, string S, DateTime Dt, ClassA Ca);
+							  """;
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(10, 53, 10, 62)
@@ -143,9 +143,9 @@ namespace System.Runtime.CompilerServices {
 	{
 		// object lacks value semantics and should always be flagged
 		const string test = coGeneral
-			+ """
-				public record class A(object O, string S, DateTime Dt);
-				""";
+							+ """
+							  public record class A(object O, string S, DateTime Dt);
+							  """;
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(6, 23, 6, 31)
@@ -159,13 +159,13 @@ namespace System.Runtime.CompilerServices {
 	{
 		// the Equals(object) is also ok
 		const string test = coGeneral
-			+ """
-				public struct ClassA { public int I; public int[] Numbers; 
-					public override bool Equals(object other) => false; 
-				}
+							+ """
+							  public struct ClassA { public int I; public int[] Numbers; 
+							  	public override bool Equals(object other) => false; 
+							  }
 
-				public record class A(int I, string S, DateTime Dt, ClassA Ca);
-				""";
+							  public record class A(int I, string S, DateTime Dt, ClassA Ca);
+							  """;
 
 		await VerifyCS.VerifyAnalyzerAsync(test);
 	}
@@ -175,12 +175,12 @@ namespace System.Runtime.CompilerServices {
 	{
 		// If the record has an Equals method, it's ok
 		const string test = coGeneral
-			+ """
-				public record class A(int I, string S, IReadOnlyList<int> Fail)
-				{
-					public virtual bool Equals(A other) => false;
-				}
-				""";
+							+ """
+							  public record class A(int I, string S, IReadOnlyList<int> Fail)
+							  {
+							  	public virtual bool Equals(A other) => false;
+							  }
+							  """;
 
 		await VerifyCS.VerifyAnalyzerAsync(test);
 	}
@@ -190,10 +190,10 @@ namespace System.Runtime.CompilerServices {
 	{
 		// Tuple are find if they contain value types
 		const string test = coGeneral
-			+ """
-				public record class Tup1(int IPass, (int a, int b) TupPass, DateTime? DtPass);
-				public record class Tup2(int IPass, (bool, int) TupPass);
-				""";
+							+ """
+							  public record class Tup1(int IPass, (int a, int b) TupPass, DateTime? DtPass);
+							  public record class Tup2(int IPass, (bool, int) TupPass);
+							  """;
 
 		await VerifyCS.VerifyAnalyzerAsync(test);
 	}
@@ -216,11 +216,11 @@ namespace System.Runtime.CompilerServices {
 	{
 		// A record containing a delegate not ok
 		const string test = coGeneral
-			+ """
-			public delegate int ExampleDelegate(string str1, string str2);
+							+ """
+							  public delegate int ExampleDelegate(string str1, string str2);
 
-			public record class Tester(int I, ExampleDelegate Ex);
-			""";
+							  public record class Tester(int I, ExampleDelegate Ex);
+							  """;
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(8, 35, 8, 53)
@@ -234,11 +234,11 @@ namespace System.Runtime.CompilerServices {
 	{
 		// A record containing a struct with a dynamic member. Not ok
 		const string test = coGeneral
-			+ """
-			public struct StructDynamic { public dynamic Dy { get; set; } }
+							+ """
+							  public struct StructDynamic { public dynamic Dy { get; set; } }
 
-			public record class Tester(int I, StructDynamic Dy);
-			""";
+							  public record class Tester(int I, StructDynamic Dy);
+							  """;
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(8, 35, 8, 51)
@@ -252,12 +252,12 @@ namespace System.Runtime.CompilerServices {
 	{
 		// A record containing a double-nested struct
 		const string test = coGeneral
-			+ """
-			public struct StructB { public string Str { get; set; } }
-			public struct StructA { public int? Number { get; set; } public StructB StB { get; set; } }
+							+ """
+							  public struct StructB { public string Str { get; set; } }
+							  public struct StructA { public int? Number { get; set; } public StructB StB { get; set; } }
 
-			public record class Tester(int I, StructA Sa);
-			""";
+							  public record class Tester(int I, StructA Sa);
+							  """;
 
 		await VerifyCS.VerifyAnalyzerAsync(test);
 	}
@@ -267,12 +267,12 @@ namespace System.Runtime.CompilerServices {
 	{
 		// A record containing a double-nested struct, should fail
 		const string test = coGeneral
-			+ """
-			public struct StructB { public string[] Str { get; set; } }
-			public struct StructA { public int? Number { get; set; } public StructB StB { get; set; } }
+							+ """
+							  public struct StructB { public string[] Str { get; set; } }
+							  public struct StructA { public int? Number { get; set; } public StructB StB { get; set; } }
 
-			public record class Tester(int I, StructA Sa);
-			""";
+							  public record class Tester(int I, StructA Sa);
+							  """;
 
 		var expected = VerifyCS.Diagnostic()
 			.WithSpan(9, 35, 9, 45)
@@ -286,13 +286,13 @@ namespace System.Runtime.CompilerServices {
 	{
 		// A record containing a .NET 8 inline array, should fail
 		const string test = coGeneral
-			+ coInlineArrayAttribute
-			+ """
-			[System.Runtime.CompilerServices.InlineArray(3)]
-			public struct MyInlineArray { public byte _element0; }
-			
-			public record class Tester(int I, MyInlineArray Ar);
-			""";
+							+ coInlineArrayAttribute
+							+ """
+							  [System.Runtime.CompilerServices.InlineArray(3)]
+							  public struct MyInlineArray { public byte _element0; }
+
+							  public record class Tester(int I, MyInlineArray Ar);
+							  """;
 
 		// bodge for "Target runtime doesn't support inline array types."
 		var unsupported = Microsoft.CodeAnalysis.Testing.DiagnosticResult
@@ -313,11 +313,11 @@ namespace System.Runtime.CompilerServices {
 		// A record containing a .NET 8 inline array, but lacking the attribute
 		// should pass because it is therefore a normal struct
 		const string test = coGeneral
-			+ """
-			public struct MyInlineArray { public byte _element0; }
-			
-			public record class Tester(int I, MyInlineArray Ar);
-			""";
+							+ """
+							  public struct MyInlineArray { public byte _element0; }
+
+							  public record class Tester(int I, MyInlineArray Ar);
+							  """;
 
 		// bodge for "Target runtime doesn't support inline array types."
 		//var unsupported = Microsoft.CodeAnalysis.Testing.DiagnosticResult
@@ -332,9 +332,9 @@ namespace System.Runtime.CompilerServices {
 	{
 		// A record containing ImmutableArray, should fail. They seem to lack value semantics
 		const string test = coGeneral
-			+ """
-			public record class Tester(int I, System.Collections.Immutable.ImmutableArray<int> Numbers);
-			""";
+							+ """
+							  public record class Tester(int I, System.Collections.Immutable.ImmutableArray<int> Numbers);
+							  """;
 
 		// the expected error
 		var expected = VerifyCS
@@ -364,11 +364,11 @@ namespace System.Runtime.CompilerServices {
 		// A plain readonly struct (not a record struct) containing a reference type should fail.
 		// IsRecordType() must not match it.
 		const string test = coGeneral
-			+ """
-			public readonly struct Wrapper { public readonly List<int> Items; }
+							+ """
+							  public readonly struct Wrapper { public readonly List<int> Items; }
 
-			public record class A(int I, Wrapper W);
-			""";
+							  public record class A(int I, Wrapper W);
+							  """;
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(8, 30, 8, 39)
@@ -443,10 +443,10 @@ namespace System.Runtime.CompilerServices {
 	{
 		// a derived record with a bad parameter should be flagged
 		const string test = coGeneral
-			+ """
-			public record class Base(int I);
-			public record class Derived(int[] Data) : Base(0);
-			""";
+							+ """
+							  public record class Base(int I);
+							  public record class Derived(int[] Data) : Base(0);
+							  """;
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(7, 29, 7, 39)
@@ -460,13 +460,13 @@ namespace System.Runtime.CompilerServices {
 	{
 		// a derived record with Equals(T) defined should suppress the diagnostic
 		const string test = coGeneral
-			+ """
-			public record class Base(int I);
-			public record class Derived(int[] Data) : Base(0)
-			{
-				public virtual bool Equals(Derived other) => false;
-			}
-			""";
+							+ """
+							  public record class Base(int I);
+							  public record class Derived(int[] Data) : Base(0)
+							  {
+							  	public virtual bool Equals(Derived other) => false;
+							  }
+							  """;
 
 		await VerifyCS.VerifyAnalyzerAsync(test);
 	}
@@ -490,11 +490,11 @@ namespace System.Runtime.CompilerServices {
 		// code fix on a semicolon-terminated record class adds braces and stub methods
 		const string source = "#nullable enable\n" + coGeneral + "public record class A(int[] Data);";
 		const string fixedSource = "#nullable enable\n" + coGeneral
-			+ "public record class A(int[] Data)\n"
-			+ "{\n"
-			+ "    public virtual bool Equals(A? other) => false; // TODO\n"
-			+ "    public override int GetHashCode() => 0; // TODO\n"
-			+ "}";
+														+ "public record class A(int[] Data)\n"
+														+ "{\n"
+														+ "    public virtual bool Equals(A? other) => false; // TODO\n"
+														+ "    public override int GetHashCode() => 0; // TODO\n"
+														+ "}";
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(7, 23, 7, 33)
@@ -508,15 +508,15 @@ namespace System.Runtime.CompilerServices {
 	{
 		// code fix on a record class that already has braces inserts stub methods inside them
 		const string source = "#nullable enable\n" + coGeneral
-			+ "\npublic record class A(int[] Data)\n"
-			+ "{\n"
-			+ "}\n";
+												   + "\npublic record class A(int[] Data)\n"
+												   + "{\n"
+												   + "}\n";
 		const string fixedSource = "#nullable enable\n" + coGeneral
-			+ "\npublic record class A(int[] Data)\n"
-			+ "{\n"
-			+ "    public virtual bool Equals(A? other) => false; // TODO\n"
-			+ "    public override int GetHashCode() => 0; // TODO\n"
-			+ "}\n";
+														+ "\npublic record class A(int[] Data)\n"
+														+ "{\n"
+														+ "    public virtual bool Equals(A? other) => false; // TODO\n"
+														+ "    public override int GetHashCode() => 0; // TODO\n"
+														+ "}\n";
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(8, 23, 8, 33)

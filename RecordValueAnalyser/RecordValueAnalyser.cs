@@ -12,8 +12,8 @@ public class RecordValueAnalyser : DiagnosticAnalyzer
 	public const string DiagnosticId = "JSV01";
 
 	private static readonly DiagnosticDescriptor ParamValueSemanticsRule = new(DiagnosticId, "Value semantics warning",
-		"Member '{0}' does not have value semantics", "Design", DiagnosticSeverity.Warning, isEnabledByDefault: true,
-		description: "Member '{0}' does not have value semantics.");
+		"Member '{0}' does not have value semantics", "Design", DiagnosticSeverity.Warning, true,
+		"Member '{0}' does not have value semantics.");
 
 	public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => [ParamValueSemanticsRule];
 

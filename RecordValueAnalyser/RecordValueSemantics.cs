@@ -32,16 +32,16 @@ internal static class RecordValueSemantics
 		}
 
 		if (IsStrictlyInvalid(type)) {
-			return (ValueEqualityResult.Failed, null);      // object and dynamic
+			return (ValueEqualityResult.Failed, null); // object and dynamic
 		}
 
 		if (HasSimpleEquality(type)) {
-			return (ValueEqualityResult.Ok, null);       // primitive types, string, enum
+			return (ValueEqualityResult.Ok, null); // primitive types, string, enum
 		}
 
 		// special cases
 		if (IsInlineArray(type)) {
-			return (ValueEqualityResult.Failed, null);      // Inline array structs lack value semantics
+			return (ValueEqualityResult.Failed, null); // Inline array structs lack value semantics
 		}
 
 		if (IsImmutableArrayType(type)) {
@@ -55,19 +55,19 @@ internal static class RecordValueSemantics
 		if (!type.IsTupleType) {
 			// for tuples we ignore Equals(T) and Equals(object)
 			if (HasEqualsTMethod(type)) {
-				return (ValueEqualityResult.Ok, null);        // Equals(T) not inherited
+				return (ValueEqualityResult.Ok, null); // Equals(T) not inherited
 			}
 
 			if (HasEqualsObjectMethod(type)) {
-				return (ValueEqualityResult.Ok, null);   // Equals(object) overridden and not inherited
+				return (ValueEqualityResult.Ok, null); // Equals(object) overridden and not inherited
 			}
 
 			if (IsRecordType(type)) {
-				return (ValueEqualityResult.Ok, null);            // a record is ok
+				return (ValueEqualityResult.Ok, null); // a record is ok
 			}
 
 			if (IsClassType(type)) {
-				return (ValueEqualityResult.Failed, null);         // a class is not ok
+				return (ValueEqualityResult.Failed, null); // a class is not ok
 			}
 		}
 
@@ -85,7 +85,7 @@ internal static class RecordValueSemantics
 				var memberType = member switch {
 					IPropertySymbol property => property.Type,
 					IFieldSymbol field => field.Type,
-					_ => null,
+					_ => null
 				};
 
 				if (memberType == null) {
@@ -215,9 +215,9 @@ internal static class RecordValueSemantics
 	/// </summary>
 	private static bool IsInlineArray(ITypeSymbol? type) =>
 		type != null
-			&& type.TypeKind == TypeKind.Struct
-			&& type.GetAttributes().Any(attribute =>
-				attribute.AttributeClass?.ToDisplayString() == "System.Runtime.CompilerServices.InlineArrayAttribute");
+		&& type.TypeKind == TypeKind.Struct
+		&& type.GetAttributes().Any(attribute =>
+			attribute.AttributeClass?.ToDisplayString() == "System.Runtime.CompilerServices.InlineArrayAttribute");
 
 	/// <summary>
 	/// Is this always invalid? (object, dynamic, etc)
@@ -235,11 +235,14 @@ internal static class RecordValueSemantics
 	/// </summary>
 	private static bool IsPrimitiveType(ITypeSymbol? type) =>
 		type != null
-			&& type.SpecialType switch {
-				SpecialType.System_Boolean or SpecialType.System_SByte or SpecialType.System_Int16 or SpecialType.System_Int32 or SpecialType.System_Int64 or SpecialType.System_Byte or SpecialType.System_UInt16 or SpecialType.System_UInt32 or SpecialType.System_UInt64 or SpecialType.System_Single or SpecialType.System_Double or SpecialType.System_Decimal or SpecialType.System_Char or SpecialType.System_String
+		&& type.SpecialType switch {
+			SpecialType.System_Boolean or SpecialType.System_SByte or SpecialType.System_Int16 or SpecialType.System_Int32 or SpecialType.System_Int64
+				or SpecialType.System_Byte or SpecialType.System_UInt16 or SpecialType.System_UInt32 or SpecialType.System_UInt64
+				or SpecialType.System_Single or SpecialType.System_Double or SpecialType.System_Decimal or SpecialType.System_Char
+				or SpecialType.System_String
 				=> true,
-				_ => false,
-			};
+			_ => false
+		};
 
 	/// <summary>
 	/// Does this type have an Equals(T) method that takes a single parameter of the same type?
@@ -248,9 +251,9 @@ internal static class RecordValueSemantics
 		type?.GetMembers("Equals")
 			.OfType<IMethodSymbol>()
 			.Any(m => m.Parameters.Length == 1
-				&& m.Parameters[0].Type.Equals(type, SymbolEqualityComparer.Default)
-				&& !m.IsStatic
-				&& !m.IsOverride) == true;
+					  && m.Parameters[0].Type.Equals(type, SymbolEqualityComparer.Default)
+					  && !m.IsStatic
+					  && !m.IsOverride) == true;
 
 	/// <summary>
 	/// Does this type have an Equals(object) override method defined in this type?
@@ -259,10 +262,10 @@ internal static class RecordValueSemantics
 		type?.GetMembers("Equals")
 			.OfType<IMethodSymbol>()
 			.Any(m => m.Parameters.Length == 1
-				&& IsObjectType(m.Parameters[0].Type)
-				&& !m.IsStatic
-				&& m.IsOverride
-				&& m.ContainingType.Equals(type, SymbolEqualityComparer.Default)) == true;
+					  && IsObjectType(m.Parameters[0].Type)
+					  && !m.IsStatic
+					  && m.IsOverride
+					  && m.ContainingType.Equals(type, SymbolEqualityComparer.Default)) == true;
 
 	/// <summary>
 	/// Is this an immutable array? They lack value semantics

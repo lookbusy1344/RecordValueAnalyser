@@ -11,7 +11,8 @@ using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-[ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(RecordValueAnalyserCodeFixProvider)), Shared]
+[ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(RecordValueAnalyserCodeFixProvider))]
+[Shared]
 public class RecordValueAnalyserCodeFixProvider : CodeFixProvider
 {
 	private const string ToDoString = " // TODO";
@@ -39,13 +40,14 @@ public class RecordValueAnalyserCodeFixProvider : CodeFixProvider
 		// Register a code action that will invoke the fix.
 		context.RegisterCodeFix(
 			CodeAction.Create(
-				title: CodeFixResources.CodeFixTitle,
-				createChangedSolution: c => FixEqualsAsync(context.Document, declaration, isclass, c),
-				equivalenceKey: nameof(CodeFixResources.CodeFixTitle)),
+				CodeFixResources.CodeFixTitle,
+				c => FixEqualsAsync(context.Document, declaration, isclass, c),
+				nameof(CodeFixResources.CodeFixTitle)),
 			diagnostic);
 	}
 
-	private async Task<Solution> FixEqualsAsync(Document document, TypeDeclarationSyntax typeDecl, bool isclassrecord, CancellationToken cancellationToken)
+	private async Task<Solution> FixEqualsAsync(Document document, TypeDeclarationSyntax typeDecl, bool isclassrecord,
+		CancellationToken cancellationToken)
 	{
 		/*	public virtual bool Equals(Self? other) => false;
 			public override int GetHashCode() => 0;
@@ -103,9 +105,11 @@ public class RecordValueAnalyserCodeFixProvider : CodeFixProvider
 	/// Helper to build: public override readonly int GetHashCode() => 0;
 	/// </summary>
 	private MethodDeclarationSyntax BuildStructGetHashCode() => SyntaxFactory.MethodDeclaration(
-		SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.IntKeyword)), "GetHashCode")
-		.AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword), SyntaxFactory.Token(SyntaxKind.OverrideKeyword), SyntaxFactory.Token(SyntaxKind.ReadOnlyKeyword))
-		.WithExpressionBody(SyntaxFactory.ArrowExpressionClause(SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(0))))
+			SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.IntKeyword)), "GetHashCode")
+		.AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword), SyntaxFactory.Token(SyntaxKind.OverrideKeyword),
+			SyntaxFactory.Token(SyntaxKind.ReadOnlyKeyword))
+		.WithExpressionBody(
+			SyntaxFactory.ArrowExpressionClause(SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(0))))
 		.WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken))
 		.WithTrailingTrivia(SyntaxFactory.TriviaList(SyntaxFactory.Comment(ToDoString), SyntaxFactory.LineFeed));
 
@@ -113,9 +117,10 @@ public class RecordValueAnalyserCodeFixProvider : CodeFixProvider
 	/// Helper to build: public override int GetHashCode() => 0;
 	/// </summary>
 	private MethodDeclarationSyntax BuildClassGetHashCode() => SyntaxFactory.MethodDeclaration(
-		SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.IntKeyword)), "GetHashCode")
+			SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.IntKeyword)), "GetHashCode")
 		.AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword), SyntaxFactory.Token(SyntaxKind.OverrideKeyword))
-		.WithExpressionBody(SyntaxFactory.ArrowExpressionClause(SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(0))))
+		.WithExpressionBody(
+			SyntaxFactory.ArrowExpressionClause(SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(0))))
 		.WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken))
 		.WithTrailingTrivia(SyntaxFactory.TriviaList(SyntaxFactory.Comment(ToDoString), SyntaxFactory.LineFeed));
 
@@ -133,7 +138,7 @@ public class RecordValueAnalyserCodeFixProvider : CodeFixProvider
 			SyntaxFactory.ParameterList(
 				SyntaxFactory.SingletonSeparatedList(
 					SyntaxFactory.Parameter(
-						SyntaxFactory.Identifier("other"))
+							SyntaxFactory.Identifier("other"))
 						.WithType(SyntaxFactory.ParseTypeName(recordname)))))
 		.WithExpressionBody(SyntaxFactory.ArrowExpressionClause(SyntaxFactory.LiteralExpression(SyntaxKind.FalseLiteralExpression)))
 		.WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken))
@@ -153,7 +158,7 @@ public class RecordValueAnalyserCodeFixProvider : CodeFixProvider
 			SyntaxFactory.ParameterList(
 				SyntaxFactory.SingletonSeparatedList(
 					SyntaxFactory.Parameter(
-						SyntaxFactory.Identifier("other"))
+							SyntaxFactory.Identifier("other"))
 						.WithType(
 							SyntaxFactory.NullableType(
 								SyntaxFactory.ParseTypeName(recordname))))))
