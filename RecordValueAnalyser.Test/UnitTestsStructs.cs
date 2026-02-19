@@ -798,6 +798,22 @@ public class RecordValueAnalyserUnitTest
 	}
 
 	[TestMethod]
+	public async Task DuplicateNestedTypeAcrossSiblingFieldsPass()
+	{
+		// A struct type that appears at two sibling positions should be checked at both.
+		// Previously the accumulating visited set would skip the second occurrence.
+		const string test = coGeneral
+							+ """
+							  public struct Good { public int X; }
+							  public struct Container { public Good A; public Good B; }
+
+							  public record struct R(Container C);
+							  """;
+
+		await VerifyCS.VerifyAnalyzerAsync(test);
+	}
+
+	[TestMethod]
 	public async Task CircularStructDirectCycleNoCrash()
 	{
 		// A → B → A circular struct layout (CS0523). Analyzer must not crash and must not report JSV01.
