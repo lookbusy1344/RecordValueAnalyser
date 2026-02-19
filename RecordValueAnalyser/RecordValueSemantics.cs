@@ -268,7 +268,8 @@ internal static class RecordValueSemantics
 			.Any(m => m.Parameters.Length == 1
 					  && m.Parameters[0].Type.Equals(type, SymbolEqualityComparer.Default)
 					  && !m.IsStatic
-					  && !m.IsOverride) == true;
+					  && !m.IsOverride
+					  && !m.IsAbstract) == true;
 
 	/// <summary>
 	/// Does this type have an Equals(object) override method defined in this type?
