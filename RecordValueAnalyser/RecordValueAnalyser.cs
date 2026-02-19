@@ -68,24 +68,46 @@ public class RecordValueAnalyser : DiagnosticAnalyzer
 
 		// check any fields and properties
 		foreach (var member in recordDeclaration.Members) {
-			var (unwrappedType, memberName, _) = RecordValueSemantics.GetPropertyOrFieldUnderlyingType(context, member);
-			if (unwrappedType == null) {
-				continue;
+			if (member is FieldDeclarationSyntax fieldDeclaration) {
+				// A field declaration can declare multiple variables: int[] A, B, C;
+				// Get the shared type and check it once, then report each failing variable separately.
+				var fieldType = context.SemanticModel.GetTypeInfo(fieldDeclaration.Declaration.Type).Type;
+				if (fieldType == null) {
+					continue;
+				}
+
+				var (fieldResult, fieldErrorMember) = RecordValueSemantics.CheckMember(fieldType);
+				if (fieldResult == ValueEqualityResult.Ok) {
+					continue;
+				}
+
+				var fieldTypeName = fieldType.ToDisplayString(NullableFlowState.None);
+				foreach (var variable in fieldDeclaration.Declaration.Variables) {
+					var variableName = variable.Identifier.ValueText;
+					var args = fieldErrorMember == null
+						? $"{fieldTypeName} {variableName}"
+						: $"{fieldTypeName} {variableName} (field {fieldErrorMember})";
+					context.ReportDiagnostic(Diagnostic.Create(ParamValueSemanticsRule, fieldDeclaration.GetLocation(), args));
+				}
+			} else {
+				var (unwrappedType, memberName, _) = RecordValueSemantics.GetPropertyOrFieldUnderlyingType(context, member);
+				if (unwrappedType == null) {
+					continue;
+				}
+
+				// if the property has value semantics, then we're ok
+				var (result, errorMember) = RecordValueSemantics.CheckMember(unwrappedType);
+				if (result == ValueEqualityResult.Ok) {
+					continue;
+				}
+
+				// otherwise, we have a problem. show a diagnostic
+				var typeName = unwrappedType.ToDisplayString(NullableFlowState.None);
+				memberName ??= "?";
+				var args = errorMember == null ? $"{typeName} {memberName}" : $"{typeName} {memberName} (field {errorMember})";
+
+				context.ReportDiagnostic(Diagnostic.Create(ParamValueSemanticsRule, member.GetLocation(), args));
 			}
-
-			// if the property has value semantics, then we're ok
-			var (result, errorMember) = RecordValueSemantics.CheckMember(unwrappedType);
-			if (result == ValueEqualityResult.Ok) {
-				continue;
-			}
-
-			// otherwise, we have a problem. show a diagnostic
-			var typeName = unwrappedType?.ToDisplayString(NullableFlowState.None) ?? "";
-			memberName ??= "?";
-			var args = errorMember == null ? $"{typeName} {memberName}" : $"{typeName} {memberName} (field {errorMember})";
-
-			var diagnostic = Diagnostic.Create(ParamValueSemanticsRule, member.GetLocation(), args);
-			context.ReportDiagnostic(diagnostic);
 		}
 	}
 }

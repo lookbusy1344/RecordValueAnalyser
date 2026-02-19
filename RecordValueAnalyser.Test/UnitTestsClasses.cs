@@ -487,6 +487,27 @@ public class RecordValueAnalyserUnitTest
 	}
 
 	[TestMethod]
+	public async Task MultiVariableFieldFail()
+	{
+		// each variable in a multi-variable field declaration should produce its own diagnostic
+		const string test = coGeneral + "public record class A { public int[] X, Y, Z; }";
+
+		var expectedX = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 25, 6, 46)
+			.WithArguments("int[] X");
+
+		var expectedY = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 25, 6, 46)
+			.WithArguments("int[] Y");
+
+		var expectedZ = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 25, 6, 46)
+			.WithArguments("int[] Z");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expectedX, expectedY, expectedZ);
+	}
+
+	[TestMethod]
 	public async Task BodyPropertyPass()
 	{
 		// a record body property with a value type should not be flagged
