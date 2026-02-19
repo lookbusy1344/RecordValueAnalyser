@@ -123,6 +123,48 @@ public class RecordValueAnalyserUnitTest
 	}
 
 	[TestMethod]
+	public async Task NestedStructStaticEqualsFail()
+	{
+		// static Equals(T) is excluded by HasEqualsTMethod (!m.IsStatic) — struct should still fail
+		const string test = coGeneral
+							+ """
+							  public struct StructA {
+							  	public int[] Items;
+							  	public static bool Equals(StructA other) => false;
+							  }
+
+							  public record struct A(StructA Sa);
+							  """;
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(11, 24, 11, 34)
+			.WithArguments("StructA Sa (field int[])");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task NestedStructNonOverrideEqualsObjectFail()
+	{
+		// Equals(object) without 'override' is excluded by HasEqualsObjectMethod (m.IsOverride)
+		const string test = coGeneral
+							+ """
+							  public struct StructA {
+							  	public int[] Items;
+							  	public bool Equals(object other) => false;
+							  }
+
+							  public record struct A(StructA Sa);
+							  """;
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(11, 24, 11, 34)
+			.WithArguments("StructA Sa (field int[])");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
+
+	[TestMethod]
 	public async Task ObjectMemberFail()
 	{
 		// object lacks value semantics and should always be flagged
