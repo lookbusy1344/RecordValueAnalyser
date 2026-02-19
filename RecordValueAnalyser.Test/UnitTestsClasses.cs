@@ -587,4 +587,67 @@ public class RecordValueAnalyserUnitTest
 
 		await VerifyCS.VerifyCodeFixAsync(source, expected, fixedSource);
 	}
+
+	[TestMethod]
+	public async Task GenericRecordUnconstrainedFail()
+	{
+		// unconstrained T has no guaranteed equality — should be flagged
+		const string test = coGeneral + "public record class Wrapper<T>(T Value);";
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 32, 6, 39)
+			.WithArguments("T Value");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task GenericRecordStructConstrainedFail()
+	{
+		// T : struct still has no guaranteed Equals(T) — should be flagged (current behaviour)
+		const string test = coGeneral + "public record class Wrapper<T>(T Value) where T : struct;";
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 32, 6, 39)
+			.WithArguments("T Value");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task MixedBodyAndParameterFail()
+	{
+		// both a failing parameter and a failing body field should each produce a diagnostic
+		const string test = coGeneral + "public record class A(int[] BadParam) { public string[] BadBody; }";
+
+		var expected1 = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 23, 6, 37)
+			.WithArguments("int[] BadParam");
+
+		var expected2 = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 41, 6, 65)
+			.WithArguments("string[] BadBody");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected1, expected2);
+	}
+
+	[TestMethod]
+	public async Task TriplyNestedStructFail()
+	{
+		// three levels of struct nesting — the innermost bad member should still be caught
+		const string test = coGeneral
+							+ """
+							  public struct StructC { public int[] Items { get; set; } }
+							  public struct StructB { public StructC C { get; set; } }
+							  public struct StructA { public StructB B { get; set; } }
+
+							  public record class Tester(int I, StructA Sa);
+							  """;
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(10, 35, 10, 45)
+			.WithArguments("StructA Sa (field StructB)");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
 }
