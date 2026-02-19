@@ -87,37 +87,37 @@ public class RecordValueAnalyserUnitTest
 	}
 
 	[TestMethod]
-	public async Task NestedClassEqualsPass()
+	public async Task NestedStructBEqualsPass()
 	{
-		// the Equals(ClassA) member makes this pass
+		// the Equals(StructB) member makes this pass
 		const string test = coGeneral
 							+ """
-							  public struct ClassA { public int I; public int[] Numbers; 
-							  	public bool Equals(ClassA other) => false; 
+							  public struct StructB { public int I; public int[] Numbers;
+							  	public bool Equals(StructB other) => false;
 							  }
 
-							  public record struct A(int I, string S, DateTime Dt, ClassA Ca);
+							  public record struct A(int I, string S, DateTime Dt, StructB Sb);
 							  """;
 
 		await VerifyCS.VerifyAnalyzerAsync(test);
 	}
 
 	[TestMethod]
-	public async Task NestedClassInvalidEqualsFail()
+	public async Task NestedStructBInvalidEqualsFail()
 	{
-		// the Equals member is invalid because it doesn't take a ClassA
+		// the Equals member is invalid because it doesn't take a StructB
 		const string test = coGeneral
 							+ """
-							  public struct ClassA { public int I; public int[] Numbers; 
-							  	public bool Equals(int junk) => false; 
+							  public struct StructB { public int I; public int[] Numbers;
+							  	public bool Equals(int junk) => false;
 							  }
 
-							  public record struct A(int I, string S, DateTime Dt, ClassA Ca);
+							  public record struct A(int I, string S, DateTime Dt, StructB Sb);
 							  """;
 
 		var expected = VerifyCS.Diagnostic("JSV01")
-			.WithSpan(10, 54, 10, 63)
-			.WithArguments("ClassA Ca (field int[])");
+			.WithSpan(10, 54, 10, 64)
+			.WithArguments("StructB Sb (field int[])");
 
 		await VerifyCS.VerifyAnalyzerAsync(test, expected);
 	}
@@ -139,19 +139,53 @@ public class RecordValueAnalyserUnitTest
 	}
 
 	[TestMethod]
-	public async Task NestedClassObjEqualsPass()
+	public async Task NestedStructBObjEqualsPass()
 	{
-		// the Equals(object) is also ok
+		// Equals(object) on a struct is also ok
 		const string test = coGeneral
 							+ """
-							  public struct ClassA { public int I; public int[] Numbers; 
-							  	public override bool Equals(object other) => false; 
+							  public struct StructB { public int I; public int[] Numbers;
+							  	public override bool Equals(object other) => false;
 							  }
 
-							  public record struct A(int I, string S, DateTime Dt, ClassA Ca);
+							  public record struct A(int I, string S, DateTime Dt, StructB Sb);
 							  """;
 
 		await VerifyCS.VerifyAnalyzerAsync(test);
+	}
+
+	[TestMethod]
+	public async Task NestedClassWithEqualsObjectPass()
+	{
+		// an actual class with Equals(object) overridden has value semantics
+		const string test = coGeneral
+							+ """
+							  public class ClassB { public int I; public int[] Numbers;
+							  	public override bool Equals(object other) => true;
+							  }
+
+							  public record struct A(int I, ClassB Cb);
+							  """;
+
+		await VerifyCS.VerifyAnalyzerAsync(test);
+	}
+
+	[TestMethod]
+	public async Task NestedClassWithoutEqualsFail()
+	{
+		// an actual class without Equals lacks value semantics
+		const string test = coGeneral
+							+ """
+							  public class ClassB { public int I; }
+
+							  public record struct A(int I, ClassB Cb);
+							  """;
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(8, 31, 8, 40)
+			.WithArguments("ClassB Cb");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
 	}
 
 	[TestMethod]
