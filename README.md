@@ -74,19 +74,28 @@ record TestRecord(int A, string B, IReadOnlyList<int> C);
                                    ~~~~~~~~~~~~~~~~~~~~  JSV01: member lacks value semantics
 ```
 
-It was built for C# 12+ and .NET 8/9/10. It checks `record class` and `record struct` types for the following:
+It was built for C# 12+ and .NET 8, 9, and 10. It checks `record class` and `record struct` types for the following:
 
-- if the record has a Equals(T) method, it is ok and no more checks are performed
+- if the record has a `Equals(T)` method, it is ok and no more checks are performed (partial records are handled correctly via the semantic model)
 - Otherwise all members are checked for:
     - the member is a primitive type, enum or string (these are ok)
-    - it is a object or dynamic (these are never ok)
-	- it is an inline array (these are never ok)
-    - it has Equals(T) or Equals(object) method overriden directly in the type (these are ok)
+    - it is `object` or `dynamic` (these are never ok)
+    - it is an inline array (these are never ok)
+    - it is `ImmutableArray<T>` (these are never ok — compares array identity, not contents)
+    - it is `ArraySegment<T>` (these are never ok — compares array identity, not contents)
+    - it is `Memory<T>` or `ReadOnlyMemory<T>` (these are never ok — compare span identity, not contents)
+    - it has `Equals(T)` or `Equals(object)` overridden directly in the type (these are ok)
     - it is a record (these will be checked elsewhere, so are assumed ok here)
     - it is a class (without Equals method, these are not ok)
     - it is a tuple or struct (without Equals method, their members are checked recursively)
+    - circular struct layouts (CS0523) are detected and do not cause unbounded recursion
+    - Multi-variable field declarations (e.g. `int[] A, B;`) each produce their own diagnostic
 
-It works in Visual Studio 2022 and Visual Studio Code, and also on the command line.
+It works with:
+    - Visual Studio 2022/6
+    - Visual Studio Code
+    - Rider
+    - `dotnet` command line tools
 
 ## Warnings
 
@@ -94,7 +103,7 @@ It works in Visual Studio 2022 and Visual Studio Code, and also on the command l
 
 ## Code fix
 
-The analyser provides a simple code fix. It will add template `Equals` and `GetHashCode` methods to the member. For example:
+The analyser provides a simple code fix. It will add template `Equals` and `GetHashCode` methods to the record. For example:
 
 ```
 public record class Test(IReadOnlyList<int> Numbers)
@@ -114,9 +123,31 @@ public record struct Test(IReadOnlyList<int> Numbers)
 }
 ```
 
+For derived record classes the correct modifier is emitted automatically:
+
+```
+// non-sealed derived record class
+public record class Derived(IReadOnlyList<int> Numbers) : Base(Numbers)
+{
+	public new virtual bool Equals(Derived? other) => false; // TODO
+	public override int GetHashCode() => 0; // TODO
+}
+
+// sealed derived record class
+public sealed record class SealedDerived(IReadOnlyList<int> Numbers) : Base(Numbers)
+{
+	public new sealed bool Equals(SealedDerived? other) => false; // TODO
+	public override int GetHashCode() => 0; // TODO
+}
+```
+
+Each record in a hierarchy introduces a new type-specific `Equals(T?)` slot rather than overriding the base's `Equals(Base?)`, so `new` suppresses CS0114.
+
 It is not necessary for records to implement `IEquatable<T>`. When you write your implementations `SequenceEqual` is very useful for comparing  collections.
 
-Note that GetHashCode for collections is tricky!
+### A note about GetHashCode for collections
+
+GetHashCode implementation for collections is tricky!
 
 ```
 public override int GetHashCode() => Numbers.GetHashCode(); // BROKEN!
