@@ -652,6 +652,32 @@ public class RecordValueAnalyserUnitTest
 	}
 
 	[TestMethod]
+	public async Task GenericRecordClassConstrainedFail()
+	{
+		// T : class still falls through to Failed — class-constrained T has no guaranteed Equals(T)
+		const string test = coGeneral + "public record class Wrapper<T>(T Value) where T : class;";
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 32, 6, 39)
+			.WithArguments("T Value");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task GenericRecordNotNullConstrainedFail()
+	{
+		// T : notnull still falls through to Failed — notnull does not imply value semantics
+		const string test = coGeneral + "public record class Wrapper<T>(T Value) where T : notnull;";
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 32, 6, 39)
+			.WithArguments("T Value");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
+
+	[TestMethod]
 	public async Task MixedBodyAndParameterFail()
 	{
 		// both a failing parameter and a failing body field should each produce a diagnostic

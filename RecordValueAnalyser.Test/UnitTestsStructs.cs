@@ -123,6 +123,48 @@ public class RecordValueAnalyserUnitTest
 	}
 
 	[TestMethod]
+	public async Task NestedStructStaticEqualsFail()
+	{
+		// static Equals(T) is excluded by HasEqualsTMethod (!m.IsStatic) — struct should still fail
+		const string test = coGeneral
+							+ """
+							  public struct StructA {
+							  	public int[] Items;
+							  	public static bool Equals(StructA other) => false;
+							  }
+
+							  public record struct A(StructA Sa);
+							  """;
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(11, 24, 11, 34)
+			.WithArguments("StructA Sa (field int[])");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task NestedStructNonOverrideEqualsObjectFail()
+	{
+		// Equals(object) without 'override' is excluded by HasEqualsObjectMethod (m.IsOverride)
+		const string test = coGeneral
+							+ """
+							  public struct StructA {
+							  	public int[] Items;
+							  	public bool Equals(object other) => false;
+							  }
+
+							  public record struct A(StructA Sa);
+							  """;
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(11, 24, 11, 34)
+			.WithArguments("StructA Sa (field int[])");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
+
+	[TestMethod]
 	public async Task ObjectMemberFail()
 	{
 		// object lacks value semantics and should always be flagged
@@ -227,6 +269,28 @@ public class RecordValueAnalyserUnitTest
 			.WithArguments("(int a, int[] b) TupFail (field int[])");
 
 		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task RecordWithNestedTupleFail()
+	{
+		// recursive descent into nested tuple — outer loop reports the inner tuple as the failing member
+		const string test = coGeneral + "public record struct A((int, (string, int[])) T);";
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 24, 6, 48)
+			.WithArguments("(int, (string, int[])) T (field (string, int[]))");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task RecordWithNestedTuplePass()
+	{
+		// nested tuple with all value-semantic types — should pass
+		const string test = coGeneral + "public record struct A((int, (string, DateTime)) T);";
+
+		await VerifyCS.VerifyAnalyzerAsync(test);
 	}
 
 	[TestMethod]
@@ -399,6 +463,23 @@ public class RecordValueAnalyserUnitTest
 	}
 
 	[TestMethod]
+	public async Task RecordWithImmutableArray()
+	{
+		// ImmutableArray<T> lacks value semantics — struct parity with class test
+		const string test = coGeneral
+							+ """
+							  public record struct Tester(int I, System.Collections.Immutable.ImmutableArray<int> Numbers);
+							  """;
+
+		var expected = VerifyCS
+			.Diagnostic()
+			.WithSpan(6, 36, 6, 92)
+			.WithArguments("System.Collections.Immutable.ImmutableArray<int> Numbers");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
+
+	[TestMethod]
 	public async Task ReadonlyStructWithReferenceFieldFail()
 	{
 		// A plain readonly struct (not a record struct) containing a reference type should fail.
@@ -422,6 +503,43 @@ public class RecordValueAnalyserUnitTest
 	{
 		// decimal is a primitive with value semantics and should produce no diagnostic
 		const string test = coGeneral + "public record struct A(decimal D, int I, string S);";
+
+		await VerifyCS.VerifyAnalyzerAsync(test);
+	}
+
+	[TestMethod]
+	public async Task NativeIntegerPass()
+	{
+		// nint/nuint are not in IsPrimitiveType but IntPtr/UIntPtr implement IEquatable<T> — should pass
+		const string test = coGeneral + "public record struct A(nint I, nuint U);";
+
+		await VerifyCS.VerifyAnalyzerAsync(test);
+	}
+
+	[TestMethod]
+	public async Task FlagsEnumPass()
+	{
+		// [Flags] enum is still TypeKind.Enum — HasSimpleEquality returns true
+		const string test = coGeneral
+							+ """
+							  [Flags] public enum MyFlags { A = 1, B = 2, C = 4 }
+
+							  public record struct A(MyFlags F);
+							  """;
+
+		await VerifyCS.VerifyAnalyzerAsync(test);
+	}
+
+	[TestMethod]
+	public async Task EnumWithByteUnderlyingTypePass()
+	{
+		// enum with non-default underlying type is still TypeKind.Enum — HasSimpleEquality returns true
+		const string test = coGeneral
+							+ """
+							  public enum ByteEnum : byte { X = 0, Y = 1, Z = 255 }
+
+							  public record struct A(ByteEnum E);
+							  """;
 
 		await VerifyCS.VerifyAnalyzerAsync(test);
 	}
@@ -572,6 +690,32 @@ public class RecordValueAnalyserUnitTest
 	{
 		// T : IEquatable<T> still falls through to Failed — type parameter GetMembers() does not expose interface members
 		const string test = coGeneral + "public record struct Wrapper<T>(T Value) where T : IEquatable<T>;";
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 33, 6, 40)
+			.WithArguments("T Value");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task GenericRecordClassConstrainedFail()
+	{
+		// T : class still falls through to Failed — class-constrained T has no guaranteed Equals(T)
+		const string test = coGeneral + "public record struct Wrapper<T>(T Value) where T : class;";
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 33, 6, 40)
+			.WithArguments("T Value");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task GenericRecordNotNullConstrainedFail()
+	{
+		// T : notnull still falls through to Failed — notnull does not imply value semantics
+		const string test = coGeneral + "public record struct Wrapper<T>(T Value) where T : notnull;";
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(6, 33, 6, 40)
