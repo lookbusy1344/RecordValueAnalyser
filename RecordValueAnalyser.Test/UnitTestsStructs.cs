@@ -248,6 +248,19 @@ public class RecordValueAnalyserUnitTest
 	}
 
 	[TestMethod]
+	public async Task PartialRecordEqualsInOtherPartial()
+	{
+		// Equals(T) defined in a different partial declaration must suppress JSV01
+		const string file1 = coGeneral + "public partial record struct A(int[] Data);";
+		const string file2 = "public partial record struct A\n{\n    public readonly bool Equals(A other) => false;\n}";
+
+		var test = new VerifyCS.Test();
+		test.TestState.Sources.Add(("File1.cs", file1));
+		test.TestState.Sources.Add(("File2.cs", file2));
+		await test.RunAsync();
+	}
+
+	[TestMethod]
 	public async Task RecordWithTuplePass()
 	{
 		// Tuple are find if they contain value types
@@ -582,6 +595,27 @@ public class RecordValueAnalyserUnitTest
 	}
 
 	[TestMethod]
+	public async Task MultiVariableFieldFail()
+	{
+		// each variable in a multi-variable field declaration should produce its own diagnostic
+		const string test = coGeneral + "public record struct A { public int[] X, Y, Z; }";
+
+		var expectedX = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 26, 6, 47)
+			.WithArguments("int[] X");
+
+		var expectedY = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 26, 6, 47)
+			.WithArguments("int[] Y");
+
+		var expectedZ = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 26, 6, 47)
+			.WithArguments("int[] Z");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expectedX, expectedY, expectedZ);
+	}
+
+	[TestMethod]
 	public async Task BodyPropertyPass()
 	{
 		// a record body property with a value type should not be flagged
@@ -761,6 +795,22 @@ public class RecordValueAnalyserUnitTest
 			.WithArguments("StructA Sa (field StructB)");
 
 		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task DuplicateNestedTypeAcrossSiblingFieldsPass()
+	{
+		// A struct type that appears at two sibling positions should be checked at both.
+		// Previously the accumulating visited set would skip the second occurrence.
+		const string test = coGeneral
+							+ """
+							  public struct Good { public int X; }
+							  public struct Container { public Good A; public Good B; }
+
+							  public record struct R(Container C);
+							  """;
+
+		await VerifyCS.VerifyAnalyzerAsync(test);
 	}
 
 	[TestMethod]

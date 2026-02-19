@@ -452,6 +452,15 @@ public class RecordValueAnalyserUnitTest
 	}
 
 	[TestMethod]
+	public async Task NativeIntegerPass()
+	{
+		// nint/nuint are not in IsPrimitiveType but IntPtr/UIntPtr implement IEquatable<T> — should pass
+		const string test = coGeneral + "public record class A(nint I, nuint U);";
+
+		await VerifyCS.VerifyAnalyzerAsync(test);
+	}
+
+	[TestMethod]
 	public async Task NullableStringMemberPass()
 	{
 		// nullable reference types with value semantics should not produce a diagnostic
@@ -487,6 +496,27 @@ public class RecordValueAnalyserUnitTest
 	}
 
 	[TestMethod]
+	public async Task MultiVariableFieldFail()
+	{
+		// each variable in a multi-variable field declaration should produce its own diagnostic
+		const string test = coGeneral + "public record class A { public int[] X, Y, Z; }";
+
+		var expectedX = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 25, 6, 46)
+			.WithArguments("int[] X");
+
+		var expectedY = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 25, 6, 46)
+			.WithArguments("int[] Y");
+
+		var expectedZ = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 25, 6, 46)
+			.WithArguments("int[] Z");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expectedX, expectedY, expectedZ);
+	}
+
+	[TestMethod]
 	public async Task BodyPropertyPass()
 	{
 		// a record body property with a value type should not be flagged
@@ -510,6 +540,28 @@ public class RecordValueAnalyserUnitTest
 			.WithArguments("string[] Invalid2");
 
 		await VerifyCS.VerifyAnalyzerAsync(test, expected1, expected2);
+	}
+
+	[TestMethod]
+	public async Task CodeFixDerivedRecordClass()
+	{
+		// code fix on a derived record class should generate 'sealed override', not 'virtual'
+		const string source = "#nullable enable\n" + coGeneral
+							  + "public record class Base(int I);\n"
+							  + "public record class Derived(int[] Data) : Base(0);";
+		const string fixedSource = "#nullable enable\n" + coGeneral
+								   + "public record class Base(int I);\n"
+								   + "public record class Derived(int[] Data) : Base(0)\n"
+								   + "{\n"
+								   + "    public new virtual bool Equals(Derived? other) => false; // TODO\n"
+								   + "    public override int GetHashCode() => 0; // TODO\n"
+								   + "}";
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(8, 29, 8, 39)
+			.WithArguments("int[] Data");
+
+		await VerifyCS.VerifyCodeFixAsync(source, expected, fixedSource);
 	}
 
 	[TestMethod]
@@ -543,6 +595,19 @@ public class RecordValueAnalyserUnitTest
 							  """;
 
 		await VerifyCS.VerifyAnalyzerAsync(test);
+	}
+
+	[TestMethod]
+	public async Task PartialRecordEqualsInOtherPartial()
+	{
+		// Equals(T) defined in a different partial declaration must suppress JSV01
+		const string file1 = coGeneral + "public partial record class A(int[] Data);";
+		const string file2 = "public partial record class A\n{\n    public virtual bool Equals(A other) => false;\n}";
+
+		var test = new VerifyCS.Test();
+		test.TestState.Sources.Add(("File1.cs", file1));
+		test.TestState.Sources.Add(("File2.cs", file2));
+		await test.RunAsync();
 	}
 
 	[TestMethod]
@@ -714,6 +779,22 @@ public class RecordValueAnalyserUnitTest
 			.WithArguments("StructA Sa (field StructB)");
 
 		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task DuplicateNestedTypeAcrossSiblingFieldsPass()
+	{
+		// A struct type that appears at two sibling positions should be checked at both.
+		// Previously the accumulating visited set would skip the second occurrence.
+		const string test = coGeneral
+							+ """
+							  public struct Good { public int X; }
+							  public struct Container { public Good A; public Good B; }
+
+							  public record class R(Container C);
+							  """;
+
+		await VerifyCS.VerifyAnalyzerAsync(test);
 	}
 
 	[TestMethod]

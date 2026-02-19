@@ -35,116 +35,117 @@ internal static class RecordValueSemantics
 		}
 
 		// Cycle detection: a circular struct layout (CS0523) must not cause unbounded recursion.
-		// Treat the back-edge as Ok — the compiler already reports the layout error.
+		// Track only the current recursion path; remove on exit so sibling branches are not skipped.
 		if (!visited.Add(type)) {
-			return (ValueEqualityResult.Ok, null);
+			return (ValueEqualityResult.Ok, null); // back-edge: compiler already reports CS0523
 		}
 
-		if (IsStrictlyInvalid(type)) {
-			return (ValueEqualityResult.Failed, null); // object and dynamic
-		}
-
-		if (HasSimpleEquality(type)) {
-			return (ValueEqualityResult.Ok, null); // primitive types, string, enum
-		}
-
-		// special cases
-		if (IsInlineArray(type)) {
-			return (ValueEqualityResult.Failed, null); // Inline array structs lack value semantics
-		}
-
-		if (IsImmutableArrayType(type)) {
-			return (ValueEqualityResult.Failed, null); // ImmutableArray<T> lacks value semantics
-		}
-
-		if (IsArraySegmentType(type)) {
-			return (ValueEqualityResult.Failed, null); // ArraySegment<T> compares array identity, not contents
-		}
-
-		if (IsMemoryType(type)) {
-			return (ValueEqualityResult.Failed, null); // Memory<T>/ReadOnlyMemory<T> compare span identity, not contents
-		}
-
-		if (!type.IsTupleType) {
-			// for tuples we ignore Equals(T) and Equals(object)
-			if (HasEqualsTMethod(type)) {
-				return (ValueEqualityResult.Ok, null); // Equals(T) not inherited
+		try {
+			if (IsStrictlyInvalid(type)) {
+				return (ValueEqualityResult.Failed, null); // object and dynamic
 			}
 
-			if (HasEqualsObjectMethod(type)) {
-				return (ValueEqualityResult.Ok, null); // Equals(object) overridden and not inherited
+			if (HasSimpleEquality(type)) {
+				return (ValueEqualityResult.Ok, null); // primitive types, string, enum
 			}
 
-			if (IsRecordType(type)) {
-				return (ValueEqualityResult.Ok, null); // a record is ok
+			// special cases
+			if (IsInlineArray(type)) {
+				return (ValueEqualityResult.Failed, null); // Inline array structs lack value semantics
 			}
 
-			if (IsClassType(type)) {
-				return (ValueEqualityResult.Failed, null); // a class is not ok
+			if (IsImmutableArrayType(type)) {
+				return (ValueEqualityResult.Failed, null); // ImmutableArray<T> lacks value semantics
 			}
-		}
 
-		// get the members of the tuple or struct
-		IEnumerable<ISymbol>? members = null;
-		if (type is INamedTypeSymbol namedTypeSymbol && namedTypeSymbol.IsTupleType) {
-			members = namedTypeSymbol.TupleElements;
-		} else if (IsStruct(type)) {
-			members = type.GetMembers()
-				.Where(m => m is IFieldSymbol f ? !f.IsImplicitlyDeclared : m is IPropertySymbol);
-		}
+			if (IsArraySegmentType(type)) {
+				return (ValueEqualityResult.Failed, null); // ArraySegment<T> compares array identity, not contents
+			}
 
-		if (members != null) {
-			// this compound type has members. Check each one
-			foreach (var member in members) {
-				var memberType = member switch {
-					IPropertySymbol property => property.Type,
-					IFieldSymbol field => field.Type,
-					_ => null
-				};
+			if (IsMemoryType(type)) {
+				return (ValueEqualityResult.Failed, null); // Memory<T>/ReadOnlyMemory<T> compare span identity, not contents
+			}
 
-				if (memberType == null) {
-					continue;
+			if (!type.IsTupleType) {
+				// for tuples we ignore Equals(T) and Equals(object)
+				if (HasEqualsTMethod(type)) {
+					return (ValueEqualityResult.Ok, null); // Equals(T) not inherited
 				}
 
-				var (result, _) = CheckMember(memberType, visited);
+				if (HasEqualsObjectMethod(type)) {
+					return (ValueEqualityResult.Ok, null); // Equals(object) overridden and not inherited
+				}
 
-				if (result != ValueEqualityResult.Ok) {
-					// if the nested type fails, return the type name
-					var nestedtypefail = memberType?.ToDisplayString(NullableFlowState.None) ?? "UNKNOWN";
-					return (ValueEqualityResult.NestedFailed, nestedtypefail);
+				if (IsRecordType(type)) {
+					return (ValueEqualityResult.Ok, null); // a record is ok
+				}
+
+				if (IsClassType(type)) {
+					return (ValueEqualityResult.Failed, null); // a class is not ok
 				}
 			}
 
-			return (ValueEqualityResult.Ok, null); // compound type passes equality test
-		}
+			// get the members of the tuple or struct
+			IEnumerable<ISymbol>? members = null;
+			if (type is INamedTypeSymbol namedTypeSymbol && namedTypeSymbol.IsTupleType) {
+				members = namedTypeSymbol.TupleElements;
+			} else if (IsStruct(type)) {
+				members = type.GetMembers()
+					.Where(m => m is IFieldSymbol f ? !f.IsImplicitlyDeclared : m is IPropertySymbol);
+			}
 
-		// by default, fail
-		return (ValueEqualityResult.Failed, null);
+			if (members != null) {
+				// this compound type has members. Check each one
+				foreach (var member in members) {
+					var memberType = member switch {
+						IPropertySymbol property => property.Type,
+						IFieldSymbol field => field.Type,
+						_ => null
+					};
+
+					if (memberType == null) {
+						continue;
+					}
+
+					var (result, _) = CheckMember(memberType, visited);
+
+					if (result != ValueEqualityResult.Ok) {
+						// if the nested type fails, return the type name
+						var nestedtypefail = memberType?.ToDisplayString(NullableFlowState.None) ?? "UNKNOWN";
+						return (ValueEqualityResult.NestedFailed, nestedtypefail);
+					}
+				}
+
+				return (ValueEqualityResult.Ok, null); // compound type passes equality test
+			}
+
+			// by default, fail
+			return (ValueEqualityResult.Failed, null);
+		}
+		finally {
+			_ = visited.Remove(type);
+		}
 	}
 
 	/// <summary>
-	/// Does this record have an Equals(T) method?
+	/// Does this record have a user-defined Equals(T) method?
+	/// Uses the semantic type symbol so partial record declarations in other files are included.
 	/// </summary>
 	internal static bool RecordHasEquals(SyntaxNodeAnalysisContext context)
 	{
 		var recordDeclaration = (RecordDeclarationSyntax)context.Node;
-		var recordTypeSymbol = context.SemanticModel.GetDeclaredSymbol(recordDeclaration);
+		var recordTypeSymbol = context.SemanticModel.GetDeclaredSymbol(recordDeclaration) as INamedTypeSymbol;
 
-		foreach (var member in recordDeclaration.Members) {
-			var memberSymbol = context.SemanticModel.GetDeclaredSymbol(member);
-
-			if (memberSymbol is IMethodSymbol methodSymbol) {
-				// this is a method member. Check if its Equals(T), and if so no further checks are needed
-				if (methodSymbol.Name == "Equals"
-					&& methodSymbol.ReturnType.SpecialType == SpecialType.System_Boolean
-					&& methodSymbol.Parameters.Length == 1
-					&& methodSymbol.Parameters[0].Type.Equals(recordTypeSymbol, SymbolEqualityComparer.Default)) {
-					return true;
-				}
-			}
+		if (recordTypeSymbol == null) {
+			return false;
 		}
 
-		return false;
+		return recordTypeSymbol.GetMembers("Equals")
+			.OfType<IMethodSymbol>()
+			.Any(m => m.ReturnType.SpecialType == SpecialType.System_Boolean
+					  && m.Parameters.Length == 1
+					  && m.Parameters[0].Type.Equals(recordTypeSymbol, SymbolEqualityComparer.Default)
+					  && !m.IsImplicitlyDeclared);
 	}
 
 	/// <summary>
@@ -267,7 +268,8 @@ internal static class RecordValueSemantics
 			.Any(m => m.Parameters.Length == 1
 					  && m.Parameters[0].Type.Equals(type, SymbolEqualityComparer.Default)
 					  && !m.IsStatic
-					  && !m.IsOverride) == true;
+					  && !m.IsOverride
+					  && !m.IsAbstract) == true;
 
 	/// <summary>
 	/// Does this type have an Equals(object) override method defined in this type?
