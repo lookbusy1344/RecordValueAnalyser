@@ -373,6 +373,32 @@ public class RecordValueAnalyserUnitTest
 	}
 
 	[TestMethod]
+	public async Task MemoryFail()
+	{
+		// Memory<T> compares underlying span identity, not element contents
+		const string test = coGeneral + "public record struct A(int I, Memory<int> Data);";
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 31, 6, 47)
+			.WithArguments("System.Memory<int> Data");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task ReadOnlyMemoryFail()
+	{
+		// ReadOnlyMemory<T> compares underlying span identity, not element contents
+		const string test = coGeneral + "public record struct A(int I, ReadOnlyMemory<int> Data);";
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 31, 6, 55)
+			.WithArguments("System.ReadOnlyMemory<int> Data");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
+
+	[TestMethod]
 	public async Task ReadonlyStructWithReferenceFieldFail()
 	{
 		// A plain readonly struct (not a record struct) containing a reference type should fail.
