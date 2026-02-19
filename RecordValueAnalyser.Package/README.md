@@ -88,10 +88,10 @@ It was built for C# 12+ and .NET 8, 9, and 10. It checks `record class` and `rec
     - Multi-variable field declarations (e.g. `int[] A, B;`) each produce their own diagnostic
 
 It works with:
-    - Visual Studio 2022/6
-    - Visual Studio Code
-    - Rider
-    - `dotnet` command line tools
+- Visual Studio 2022/6
+- Visual Studio Code
+- Rider
+- `dotnet` command line tools
 
 ## Warnings
 
@@ -118,7 +118,5 @@ public record struct Test(IReadOnlyList<int> Numbers)
 	public override readonly int GetHashCode() => 0; // TODO
 }
 ```
-
-Each record in a hierarchy introduces a new type-specific `Equals(T?)` slot rather than overriding the base's `Equals(Base?)`, so `new` suppresses CS0114.
 
 It is not necessary for records to implement `IEquatable<T>`.

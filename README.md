@@ -92,10 +92,10 @@ It was built for C# 12+ and .NET 8, 9, and 10. It checks `record class` and `rec
     - Multi-variable field declarations (e.g. `int[] A, B;`) each produce their own diagnostic
 
 It works with:
-    - Visual Studio 2022/6
-    - Visual Studio Code
-    - Rider
-    - `dotnet` command line tools
+- Visual Studio 2022/6
+- Visual Studio Code
+- Rider
+- `dotnet` command line tools
 
 ## Warnings
 
@@ -141,27 +141,27 @@ public sealed record class SealedDerived(IReadOnlyList<int> Numbers) : Base(Numb
 }
 ```
 
-Each record in a hierarchy introduces a new type-specific `Equals(T?)` slot rather than overriding the base's `Equals(Base?)`, so `new` suppresses CS0114.
-
-It is not necessary for records to implement `IEquatable<T>`. When you write your implementations `SequenceEqual` is very useful for comparing  collections.
+It is not necessary for records to implement `IEquatable<T>`.
 
 ### A note about GetHashCode for collections
 
 GetHashCode implementation for collections is tricky!
 
 ```
-public override int GetHashCode() => Numbers.GetHashCode(); // BROKEN!
-public override int GetHashCode() => HashCode.Combine(Numbers); // BROKEN!
+public override int GetHashCode() => Numbers.GetHashCode(); // ❌ BROKEN!
+public override int GetHashCode() => HashCode.Combine(Numbers); // ❌ BROKEN!
 
-public override int GetHashCode() // CORRECT IMPLEMENTATION
+public override int GetHashCode() // ✅ CORRECT IMPLEMENTATION
 {
 	var hash = new HashCode();
 	foreach (var n in Numbers) hash.Add(n);
 	return hash.ToHashCode();
 }
 
-public readonly bool Equals(Test other) => Numbers.SequenceEqual(other.Numbers); // CORRECT IMPLEMENTATION
+public readonly bool Equals(Test other) => Numbers.SequenceEqual(other.Numbers); // ✅ CORRECT IMPLEMENTATION
 ```
+
+When you write your implementations `SequenceEqual` is very useful for comparing  collections.
 
 ## Testing
 
