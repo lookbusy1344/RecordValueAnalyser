@@ -82,7 +82,7 @@ public class RecordValueAnalyser : DiagnosticAnalyzer
 			// otherwise, we have a problem. show a diagnostic
 			var typeName = unwrappedType?.ToDisplayString(NullableFlowState.None) ?? "";
 			memberName ??= "?";
-			var args = errorMember == null ? $"{typeName} {memberName}" : $"{typeName} {memberName} ({errorMember})";
+			var args = errorMember == null ? $"{typeName} {memberName}" : $"{typeName} {memberName} (field {errorMember})";
 
 			var diagnostic = Diagnostic.Create(ParamValueSemanticsRule, member.GetLocation(), args);
 			context.ReportDiagnostic(diagnostic);
