@@ -495,6 +495,34 @@ public class RecordValueAnalyserUnitTest
 	}
 
 	[TestMethod]
+	public async Task FlagsEnumPass()
+	{
+		// [Flags] enum is still TypeKind.Enum — HasSimpleEquality returns true
+		const string test = coGeneral
+							+ """
+							  [Flags] public enum MyFlags { A = 1, B = 2, C = 4 }
+
+							  public record struct A(MyFlags F);
+							  """;
+
+		await VerifyCS.VerifyAnalyzerAsync(test);
+	}
+
+	[TestMethod]
+	public async Task EnumWithByteUnderlyingTypePass()
+	{
+		// enum with non-default underlying type is still TypeKind.Enum — HasSimpleEquality returns true
+		const string test = coGeneral
+							+ """
+							  public enum ByteEnum : byte { X = 0, Y = 1, Z = 255 }
+
+							  public record struct A(ByteEnum E);
+							  """;
+
+		await VerifyCS.VerifyAnalyzerAsync(test);
+	}
+
+	[TestMethod]
 	public async Task NullableStringMemberPass()
 	{
 		// nullable reference types with value semantics should not produce a diagnostic
