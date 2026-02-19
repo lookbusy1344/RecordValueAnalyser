@@ -534,6 +534,28 @@ public class RecordValueAnalyserUnitTest
 	}
 
 	[TestMethod]
+	public async Task CodeFixDerivedRecordClass()
+	{
+		// code fix on a derived record class should generate 'sealed override', not 'virtual'
+		const string source = "#nullable enable\n" + coGeneral
+							  + "public record class Base(int I);\n"
+							  + "public record class Derived(int[] Data) : Base(0);";
+		const string fixedSource = "#nullable enable\n" + coGeneral
+								   + "public record class Base(int I);\n"
+								   + "public record class Derived(int[] Data) : Base(0)\n"
+								   + "{\n"
+								   + "    public new virtual bool Equals(Derived? other) => false; // TODO\n"
+								   + "    public override int GetHashCode() => 0; // TODO\n"
+								   + "}";
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(8, 29, 8, 39)
+			.WithArguments("int[] Data");
+
+		await VerifyCS.VerifyCodeFixAsync(source, expected, fixedSource);
+	}
+
+	[TestMethod]
 	public async Task RecordInheritanceFail()
 	{
 		// a derived record with a bad parameter should be flagged
