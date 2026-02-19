@@ -486,6 +486,15 @@ public class RecordValueAnalyserUnitTest
 	}
 
 	[TestMethod]
+	public async Task NativeIntegerPass()
+	{
+		// nint/nuint are not in IsPrimitiveType but IntPtr/UIntPtr implement IEquatable<T> — should pass
+		const string test = coGeneral + "public record struct A(nint I, nuint U);";
+
+		await VerifyCS.VerifyAnalyzerAsync(test);
+	}
+
+	[TestMethod]
 	public async Task NullableStringMemberPass()
 	{
 		// nullable reference types with value semantics should not produce a diagnostic
