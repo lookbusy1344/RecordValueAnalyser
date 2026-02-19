@@ -123,28 +123,24 @@ internal static class RecordValueSemantics
 	}
 
 	/// <summary>
-	/// Does this record have an Equals(T) method?
+	/// Does this record have a user-defined Equals(T) method?
+	/// Uses the semantic type symbol so partial record declarations in other files are included.
 	/// </summary>
 	internal static bool RecordHasEquals(SyntaxNodeAnalysisContext context)
 	{
 		var recordDeclaration = (RecordDeclarationSyntax)context.Node;
-		var recordTypeSymbol = context.SemanticModel.GetDeclaredSymbol(recordDeclaration);
+		var recordTypeSymbol = context.SemanticModel.GetDeclaredSymbol(recordDeclaration) as INamedTypeSymbol;
 
-		foreach (var member in recordDeclaration.Members) {
-			var memberSymbol = context.SemanticModel.GetDeclaredSymbol(member);
-
-			if (memberSymbol is IMethodSymbol methodSymbol) {
-				// this is a method member. Check if its Equals(T), and if so no further checks are needed
-				if (methodSymbol.Name == "Equals"
-					&& methodSymbol.ReturnType.SpecialType == SpecialType.System_Boolean
-					&& methodSymbol.Parameters.Length == 1
-					&& methodSymbol.Parameters[0].Type.Equals(recordTypeSymbol, SymbolEqualityComparer.Default)) {
-					return true;
-				}
-			}
+		if (recordTypeSymbol == null) {
+			return false;
 		}
 
-		return false;
+		return recordTypeSymbol.GetMembers("Equals")
+			.OfType<IMethodSymbol>()
+			.Any(m => m.ReturnType.SpecialType == SpecialType.System_Boolean
+					  && m.Parameters.Length == 1
+					  && m.Parameters[0].Type.Equals(recordTypeSymbol, SymbolEqualityComparer.Default)
+					  && !m.IsImplicitlyDeclared);
 	}
 
 	/// <summary>

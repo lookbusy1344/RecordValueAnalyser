@@ -546,6 +546,19 @@ public class RecordValueAnalyserUnitTest
 	}
 
 	[TestMethod]
+	public async Task PartialRecordEqualsInOtherPartial()
+	{
+		// Equals(T) defined in a different partial declaration must suppress JSV01
+		const string file1 = coGeneral + "public partial record class A(int[] Data);";
+		const string file2 = "public partial record class A\n{\n    public virtual bool Equals(A other) => false;\n}";
+
+		var test = new VerifyCS.Test();
+		test.TestState.Sources.Add(("File1.cs", file1));
+		test.TestState.Sources.Add(("File2.cs", file2));
+		await test.RunAsync();
+	}
+
+	[TestMethod]
 	public async Task RecordInheritanceBodyPropertyFail()
 	{
 		// a body property on a derived record with a non-value type should be flagged

@@ -248,6 +248,19 @@ public class RecordValueAnalyserUnitTest
 	}
 
 	[TestMethod]
+	public async Task PartialRecordEqualsInOtherPartial()
+	{
+		// Equals(T) defined in a different partial declaration must suppress JSV01
+		const string file1 = coGeneral + "public partial record struct A(int[] Data);";
+		const string file2 = "public partial record struct A\n{\n    public readonly bool Equals(A other) => false;\n}";
+
+		var test = new VerifyCS.Test();
+		test.TestState.Sources.Add(("File1.cs", file1));
+		test.TestState.Sources.Add(("File2.cs", file2));
+		await test.RunAsync();
+	}
+
+	[TestMethod]
 	public async Task RecordWithTuplePass()
 	{
 		// Tuple are find if they contain value types
