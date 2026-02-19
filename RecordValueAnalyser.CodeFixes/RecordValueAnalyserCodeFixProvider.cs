@@ -92,7 +92,7 @@ public class RecordValueAnalyserCodeFixProvider : CodeFixProvider
 		}
 
 		// replace the record in the syntax tree
-		var oldRoot = await document.GetSyntaxRootAsync().ConfigureAwait(false);
+		var oldRoot = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
 		var newRoot = oldRoot!.ReplaceNode(recordDeclaration, updatedDeclaration);
 
 		// To get a new document with the updated syntax tree

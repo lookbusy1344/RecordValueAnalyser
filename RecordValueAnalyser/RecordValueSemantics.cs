@@ -52,6 +52,10 @@ internal static class RecordValueSemantics
 			return (ValueEqualityResult.Failed, null); // ArraySegment<T> compares array identity, not contents
 		}
 
+		if (IsMemoryType(type)) {
+			return (ValueEqualityResult.Failed, null); // Memory<T>/ReadOnlyMemory<T> compare span identity, not contents
+		}
+
 		if (!type.IsTupleType) {
 			// for tuples we ignore Equals(T) and Equals(object)
 			if (HasEqualsTMethod(type)) {
@@ -76,7 +80,8 @@ internal static class RecordValueSemantics
 		if (type is INamedTypeSymbol namedTypeSymbol && namedTypeSymbol.IsTupleType) {
 			members = namedTypeSymbol.TupleElements;
 		} else if (IsStruct(type)) {
-			members = type.GetMembers();
+			members = type.GetMembers()
+				.Where(m => m is IFieldSymbol f ? !f.IsImplicitlyDeclared : m is IPropertySymbol);
 		}
 
 		if (members != null) {
@@ -278,4 +283,10 @@ internal static class RecordValueSemantics
 	/// </summary>
 	private static bool IsArraySegmentType(ITypeSymbol? typeSymbol) =>
 		GetGenericName(typeSymbol) == "System.ArraySegment<T>";
+
+	/// <summary>
+	/// Is this Memory&lt;T&gt; or ReadOnlyMemory&lt;T&gt;? Their Equals compares span identity, not element contents.
+	/// </summary>
+	private static bool IsMemoryType(ITypeSymbol? typeSymbol) =>
+		GetGenericName(typeSymbol) is "System.Memory<T>" or "System.ReadOnlyMemory<T>";
 }

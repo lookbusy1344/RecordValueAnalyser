@@ -11,9 +11,14 @@ public class RecordValueAnalyser : DiagnosticAnalyzer
 {
 	public const string DiagnosticId = "JSV01";
 
-	private static readonly DiagnosticDescriptor ParamValueSemanticsRule = new(DiagnosticId, "Value semantics warning",
-		"Member '{0}' does not have value semantics", "Design", DiagnosticSeverity.Warning, true,
-		"Member '{0}' does not have value semantics.");
+	private static readonly DiagnosticDescriptor ParamValueSemanticsRule = new(
+		DiagnosticId,
+		new LocalizableResourceString(nameof(Resources.AnalyzerTitle), Resources.ResourceManager, typeof(Resources)),
+		new LocalizableResourceString(nameof(Resources.AnalyzerMessageFormat), Resources.ResourceManager, typeof(Resources)),
+		"Design",
+		DiagnosticSeverity.Warning,
+		true,
+		new LocalizableResourceString(nameof(Resources.AnalyzerDescription), Resources.ResourceManager, typeof(Resources)));
 
 	public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => [ParamValueSemanticsRule];
 

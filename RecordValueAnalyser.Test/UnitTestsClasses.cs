@@ -1,6 +1,7 @@
 namespace RecordValueAnalyser.Test.Classes;
 
 using System.Threading.Tasks;
+using global::RecordValueAnalyser.Test;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using VerifyCS = CSharpCodeFixVerifier<RecordValueAnalyser, RecordValueAnalyserCodeFixProvider>;
 
@@ -12,25 +13,8 @@ using VerifyCS = CSharpCodeFixVerifier<RecordValueAnalyser, RecordValueAnalyserC
 [TestClass]
 public class RecordValueAnalyserUnitTest
 {
-	private const string coGeneral = @"
-using System;
-using System.Collections.Generic;
-
-namespace System.Runtime.CompilerServices { internal static class IsExternalInit { } }
-";
-
-	// This is needed for testing inline arrays, which are .NET 8 only
-	// Its a stub for the real attribute
-	// https://github.com/dotnet/runtime/issues/61135
-	// https://learn.microsoft.com/en-us/dotnet/api/system.runtime.compilerservices.inlinearrayattribute?view=net-8.0
-	private const string coInlineArrayAttribute = @"
-		namespace System.Runtime.CompilerServices {
-		    [AttributeUsage(AttributeTargets.Struct, AllowMultiple = false)]
-		    public sealed class InlineArrayAttribute : Attribute {
-		        public InlineArrayAttribute (int length) { Length = length; }
-		        public int Length { get; }
-		    } }
-		";
+	private const string coGeneral = TestConstants.General;
+	private const string coInlineArrayAttribute = TestConstants.InlineArrayAttribute;
 
 	[TestMethod]
 	public async Task ValueTypesOnly()
@@ -103,37 +87,37 @@ namespace System.Runtime.CompilerServices { internal static class IsExternalInit
 	}
 
 	[TestMethod]
-	public async Task NestedClassEqualsPass()
+	public async Task NestedStructBEqualsPass()
 	{
-		// the Equals(ClassA) member makes this pass
+		// the Equals(StructB) member makes this pass
 		const string test = coGeneral
 							+ """
-							  public struct ClassA { public int I; public int[] Numbers; 
-							  	public bool Equals(ClassA other) => false; 
+							  public struct StructB { public int I; public int[] Numbers;
+							  	public bool Equals(StructB other) => false;
 							  }
 
-							  public record class A(int I, string S, DateTime Dt, ClassA Ca);
+							  public record class A(int I, string S, DateTime Dt, StructB Sb);
 							  """;
 
 		await VerifyCS.VerifyAnalyzerAsync(test);
 	}
 
 	[TestMethod]
-	public async Task NestedClassInvalidEqualsFail()
+	public async Task NestedStructBInvalidEqualsFail()
 	{
-		// the Equals member is invalid because it doesn't take a ClassA
+		// the Equals member is invalid because it doesn't take a StructB
 		const string test = coGeneral
 							+ """
-							  public struct ClassA { public int I; public int[] Numbers; 
-							  	public bool Equals(int junk) => false; 
+							  public struct StructB { public int I; public int[] Numbers;
+							  	public bool Equals(int junk) => false;
 							  }
 
-							  public record class A(int I, string S, DateTime Dt, ClassA Ca);
+							  public record class A(int I, string S, DateTime Dt, StructB Sb);
 							  """;
 
 		var expected = VerifyCS.Diagnostic("JSV01")
-			.WithSpan(10, 53, 10, 62)
-			.WithArguments("ClassA Ca (field int[])");
+			.WithSpan(10, 53, 10, 63)
+			.WithArguments("StructB Sb (field int[])");
 
 		await VerifyCS.VerifyAnalyzerAsync(test, expected);
 	}
@@ -155,19 +139,53 @@ namespace System.Runtime.CompilerServices { internal static class IsExternalInit
 	}
 
 	[TestMethod]
-	public async Task NestedClassObjEqualsPass()
+	public async Task NestedStructBObjEqualsPass()
 	{
-		// the Equals(object) is also ok
+		// Equals(object) on a struct is also ok
 		const string test = coGeneral
 							+ """
-							  public struct ClassA { public int I; public int[] Numbers; 
-							  	public override bool Equals(object other) => false; 
+							  public struct StructB { public int I; public int[] Numbers;
+							  	public override bool Equals(object other) => false;
 							  }
 
-							  public record class A(int I, string S, DateTime Dt, ClassA Ca);
+							  public record class A(int I, string S, DateTime Dt, StructB Sb);
 							  """;
 
 		await VerifyCS.VerifyAnalyzerAsync(test);
+	}
+
+	[TestMethod]
+	public async Task NestedClassWithEqualsObjectPass()
+	{
+		// an actual class with Equals(object) overridden has value semantics
+		const string test = coGeneral
+							+ """
+							  public class ClassB { public int I; public int[] Numbers;
+							  	public override bool Equals(object other) => true;
+							  }
+
+							  public record class A(int I, ClassB Cb);
+							  """;
+
+		await VerifyCS.VerifyAnalyzerAsync(test);
+	}
+
+	[TestMethod]
+	public async Task NestedClassWithoutEqualsFail()
+	{
+		// an actual class without Equals lacks value semantics
+		const string test = coGeneral
+							+ """
+							  public class ClassB { public int I; }
+
+							  public record class A(int I, ClassB Cb);
+							  """;
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(8, 30, 8, 39)
+			.WithArguments("ClassB Cb");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
 	}
 
 	[TestMethod]
@@ -282,6 +300,25 @@ namespace System.Runtime.CompilerServices { internal static class IsExternalInit
 	}
 
 	[TestMethod]
+	public async Task NestedStructAutoPropertyFailSingleDiagnostic()
+	{
+		// A struct with an auto-property containing a failing type should produce exactly
+		// one diagnostic, not two (one for the property and one for the backing field)
+		const string test = coGeneral
+							+ """
+							  public struct StructWithProp { public int[] Items { get; set; } }
+
+							  public record class Tester(int I, StructWithProp Sp);
+							  """;
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(8, 35, 8, 52)
+			.WithArguments("StructWithProp Sp (field int[])");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
+
+	[TestMethod]
 	public async Task RecordWithInlineArray()
 	{
 		// A record containing a .NET 8 inline array, should fail
@@ -359,6 +396,32 @@ namespace System.Runtime.CompilerServices { internal static class IsExternalInit
 	}
 
 	[TestMethod]
+	public async Task MemoryFail()
+	{
+		// Memory<T> compares underlying span identity, not element contents
+		const string test = coGeneral + "public record class A(int I, Memory<int> Data);";
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 30, 6, 46)
+			.WithArguments("System.Memory<int> Data");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task ReadOnlyMemoryFail()
+	{
+		// ReadOnlyMemory<T> compares underlying span identity, not element contents
+		const string test = coGeneral + "public record class A(int I, ReadOnlyMemory<int> Data);";
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 30, 6, 54)
+			.WithArguments("System.ReadOnlyMemory<int> Data");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
+
+	[TestMethod]
 	public async Task ReadonlyStructWithReferenceFieldFail()
 	{
 		// A plain readonly struct (not a record struct) containing a reference type should fail.
@@ -382,6 +445,15 @@ namespace System.Runtime.CompilerServices { internal static class IsExternalInit
 	{
 		// decimal is a primitive with value semantics and should produce no diagnostic
 		const string test = coGeneral + "public record class A(decimal D, int I, string S);";
+
+		await VerifyCS.VerifyAnalyzerAsync(test);
+	}
+
+	[TestMethod]
+	public async Task NullableStringMemberPass()
+	{
+		// nullable reference types with value semantics should not produce a diagnostic
+		const string test = "#nullable enable\n" + coGeneral + "public record class A(string? Name, int I);";
 
 		await VerifyCS.VerifyAnalyzerAsync(test);
 	}
@@ -472,6 +544,21 @@ namespace System.Runtime.CompilerServices { internal static class IsExternalInit
 	}
 
 	[TestMethod]
+	public async Task RecordInheritanceBodyPropertyFail()
+	{
+		// a body property on a derived record with a non-value type should be flagged
+		const string test = coGeneral
+							+ "public record class Base(int I);\n"
+							+ "public record class Derived(int Valid) : Base(0) { public int[] Data { get; set; } }";
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(7, 52, 7, 83)
+			.WithArguments("int[] Data");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
+
+	[TestMethod]
 	public async Task InterfaceMemberFail()
 	{
 		// an interface-typed parameter lacks value semantics and should be flagged
@@ -523,5 +610,81 @@ namespace System.Runtime.CompilerServices { internal static class IsExternalInit
 			.WithArguments("int[] Data");
 
 		await VerifyCS.VerifyCodeFixAsync(source, expected, fixedSource);
+	}
+
+	[TestMethod]
+	public async Task GenericRecordUnconstrainedFail()
+	{
+		// unconstrained T has no guaranteed equality — should be flagged
+		const string test = coGeneral + "public record class Wrapper<T>(T Value);";
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 32, 6, 39)
+			.WithArguments("T Value");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task GenericRecordStructConstrainedFail()
+	{
+		// T : struct still has no guaranteed Equals(T) — should be flagged (current behaviour)
+		const string test = coGeneral + "public record class Wrapper<T>(T Value) where T : struct;";
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 32, 6, 39)
+			.WithArguments("T Value");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task GenericRecordIEquatableConstrainedFail()
+	{
+		// T : IEquatable<T> still falls through to Failed — type parameter GetMembers() does not expose interface members
+		const string test = coGeneral + "public record class Wrapper<T>(T Value) where T : IEquatable<T>;";
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 32, 6, 39)
+			.WithArguments("T Value");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task MixedBodyAndParameterFail()
+	{
+		// both a failing parameter and a failing body field should each produce a diagnostic
+		const string test = coGeneral + "public record class A(int[] BadParam) { public string[] BadBody; }";
+
+		var expected1 = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 23, 6, 37)
+			.WithArguments("int[] BadParam");
+
+		var expected2 = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 41, 6, 65)
+			.WithArguments("string[] BadBody");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected1, expected2);
+	}
+
+	[TestMethod]
+	public async Task TriplyNestedStructFail()
+	{
+		// three levels of struct nesting — the innermost bad member should still be caught
+		const string test = coGeneral
+							+ """
+							  public struct StructC { public int[] Items { get; set; } }
+							  public struct StructB { public StructC C { get; set; } }
+							  public struct StructA { public StructB B { get; set; } }
+
+							  public record class Tester(int I, StructA Sa);
+							  """;
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(10, 35, 10, 45)
+			.WithArguments("StructA Sa (field StructB)");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
 	}
 }
