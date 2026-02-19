@@ -1,6 +1,7 @@
 namespace RecordValueAnalyser.Test.Structs;
 
 using System.Threading.Tasks;
+using global::RecordValueAnalyser.Test;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using VerifyCS = CSharpCodeFixVerifier<RecordValueAnalyser, RecordValueAnalyserCodeFixProvider>;
 
@@ -12,25 +13,8 @@ using VerifyCS = CSharpCodeFixVerifier<RecordValueAnalyser, RecordValueAnalyserC
 [TestClass]
 public class RecordValueAnalyserUnitTest
 {
-	private const string coGeneral = @"
-using System;
-using System.Collections.Generic;
-
-namespace System.Runtime.CompilerServices { internal static class IsExternalInit { } }
-";
-
-	// This is needed for testing inline arrays, which are .NET 8 only
-	// Its a stub for the real attribute
-	// https://github.com/dotnet/runtime/issues/61135
-	// https://learn.microsoft.com/en-us/dotnet/api/system.runtime.compilerservices.inlinearrayattribute?view=net-8.0
-	private const string coInlineArrayAttribute = @"
-		namespace System.Runtime.CompilerServices {
-		    [AttributeUsage(AttributeTargets.Struct, AllowMultiple = false)]
-		    public sealed class InlineArrayAttribute : Attribute {
-		        public InlineArrayAttribute (int length) { Length = length; }
-		        public int Length { get; }
-		    } }
-		";
+	private const string coGeneral = TestConstants.General;
+	private const string coInlineArrayAttribute = TestConstants.InlineArrayAttribute;
 
 	[TestMethod]
 	public async Task ValueTypesOnly()
