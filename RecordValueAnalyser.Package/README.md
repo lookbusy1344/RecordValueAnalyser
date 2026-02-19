@@ -1,8 +1,11 @@
 # Value-Semantics Analyser for C# Records
 
+[![CodeQL](https://github.com/lookbusy1344/RecordValueAnalyser/actions/workflows/codeql.yml/badge.svg)](https://github.com/lookbusy1344/RecordValueAnalyser/actions/workflows/codeql.yml)
+[![Test](https://github.com/lookbusy1344/RecordValueAnalyser/actions/workflows/test.yml/badge.svg)](https://github.com/lookbusy1344/RecordValueAnalyser/actions/workflows/test.yml)
+
 ## TL;DR
 
-Equality checks on .NET records don’t always work properly. This analyser reports when. For example:
+Equality checks on .NET records don't always work properly. This analyser reports when. For example:
 
 ```
 record TestRecord(int A, string B, IReadOnlyList<int> C);
@@ -11,9 +14,7 @@ record TestRecord(int A, string B, IReadOnlyList<int> C);
 
 ## Repository
 
-This project is a C# Roslyn code analyser to check records for correct value semantics. Source code is available here:
-
-https://github.com/lookbusy1344/RecordValueAnalyser
+Source code and issue tracker: https://github.com/lookbusy1344/RecordValueAnalyser
 
 ## Why?
 
@@ -69,19 +70,28 @@ record TestRecord(int A, string B, IReadOnlyList<int> C);
                                    ~~~~~~~~~~~~~~~~~~~~  JSV01: member lacks value semantics
 ```
 
-It was built for C# 12 and .NET 8. It checks `record class` and `record struct` types for the following:
+It was built for C# 12+ and .NET 8, 9, and 10. It checks `record class` and `record struct` types for the following:
 
-- if the record has a Equals(T) method, it is ok and no more checks are performed
+- if the record has a `Equals(T)` method, it is ok and no more checks are performed (partial records are handled correctly via the semantic model)
 - Otherwise all members are checked for:
     - the member is a primitive type, enum or string (these are ok)
-    - it is a object or dynamic (these are never ok)
-	- it is an inline array (these are never ok) - **new in version 1.2 for .NET 8**
-    - it has Equals(T) or Equals(object) method overriden directly in the type (these are ok)
+    - it is `object` or `dynamic` (these are never ok)
+    - it is an inline array (these are never ok)
+    - it is `ImmutableArray<T>` (these are never ok — compares array identity, not contents)
+    - it is `ArraySegment<T>` (these are never ok — compares array identity, not contents)
+    - it is `Memory<T>` or `ReadOnlyMemory<T>` (these are never ok — compare span identity, not contents)
+    - it has `Equals(T)` or `Equals(object)` overridden directly in the type (these are ok)
     - it is a record (these will be checked elsewhere, so are assumed ok here)
     - it is a class (without Equals method, these are not ok)
     - it is a tuple or struct (without Equals method, their members are checked recursively)
+    - circular struct layouts (CS0523) are detected and do not cause unbounded recursion
+    - Multi-variable field declarations (e.g. `int[] A, B;`) each produce their own diagnostic
 
-It works in Visual Studio 2022 and Visual Studio Code, and also on the command line.
+It works with:
+    - Visual Studio 2022/6
+    - Visual Studio Code
+    - Rider
+    - `dotnet` command line tools
 
 ## Warnings
 
@@ -89,7 +99,7 @@ It works in Visual Studio 2022 and Visual Studio Code, and also on the command l
 
 ## Code fix
 
-The analyser provides a simple code fix. It will add template `Equals` and `GetHashCode` methods to the member. For example:
+The analyser provides a simple code fix. It will add template `Equals` and `GetHashCode` methods to the record. For example:
 
 ```
 public record class Test(IReadOnlyList<int> Numbers)
@@ -109,4 +119,6 @@ public record struct Test(IReadOnlyList<int> Numbers)
 }
 ```
 
-It is not necessary for records to implement `IEquatable<T>`. When you write your implementations `SequenceEqual` is very useful for comparing  collections.
+Each record in a hierarchy introduces a new type-specific `Equals(T?)` slot rather than overriding the base's `Equals(Base?)`, so `new` suppresses CS0114.
+
+It is not necessary for records to implement `IEquatable<T>`.
