@@ -25,9 +25,18 @@ internal static class RecordValueSemantics
 	/// Check if this record member type has value semantics
 	/// </summary>
 	internal static CheckResultTuple CheckMember(ITypeSymbol? type)
+		=> CheckMember(type, new HashSet<ITypeSymbol>(SymbolEqualityComparer.Default));
+
+	private static CheckResultTuple CheckMember(ITypeSymbol? type, HashSet<ITypeSymbol> visited)
 	{
 		type = GetUnderlyingType(type); // unwrap any nullable
 		if (type == null) {
+			return (ValueEqualityResult.Ok, null);
+		}
+
+		// Cycle detection: a circular struct layout (CS0523) must not cause unbounded recursion.
+		// Treat the back-edge as Ok — the compiler already reports the layout error.
+		if (!visited.Add(type)) {
 			return (ValueEqualityResult.Ok, null);
 		}
 
@@ -97,7 +106,7 @@ internal static class RecordValueSemantics
 					continue;
 				}
 
-				var (result, _) = CheckMember(memberType);
+				var (result, _) = CheckMember(memberType, visited);
 
 				if (result != ValueEqualityResult.Ok) {
 					// if the nested type fails, return the type name

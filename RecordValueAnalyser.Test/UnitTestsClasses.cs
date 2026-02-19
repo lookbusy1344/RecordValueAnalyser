@@ -1,7 +1,9 @@
 namespace RecordValueAnalyser.Test.Classes;
 
+using System.Threading;
 using System.Threading.Tasks;
 using global::RecordValueAnalyser.Test;
+using Microsoft.CodeAnalysis.Testing;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using VerifyCS = CSharpCodeFixVerifier<RecordValueAnalyser, RecordValueAnalyserCodeFixProvider>;
 
@@ -712,5 +714,57 @@ public class RecordValueAnalyserUnitTest
 			.WithArguments("StructA Sa (field StructB)");
 
 		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task CircularStructDirectCycleNoCrash()
+	{
+		// A → B → A circular struct layout (CS0523). Analyzer must not crash and must not report JSV01.
+		const string test = coGeneral
+							+ """
+							  struct A { public B b; }
+							  struct B { public A a; }
+							  public record class R(A field);
+							  """;
+
+		var t = new VerifyCS.Test { TestCode = test, CompilerDiagnostics = CompilerDiagnostics.None };
+		await t.RunAsync(CancellationToken.None);
+	}
+
+	[TestMethod]
+	public async Task CircularStructIndirectCycleNoCrash()
+	{
+		// X → Y → Z → X three-type circular struct layout (CS0523). Analyzer must not crash.
+		const string test = coGeneral
+							+ """
+							  struct X { public Y y; }
+							  struct Y { public Z z; }
+							  struct Z { public X x; }
+							  public record class R(X field);
+							  """;
+
+		var t = new VerifyCS.Test { TestCode = test, CompilerDiagnostics = CompilerDiagnostics.None };
+		await t.RunAsync(CancellationToken.None);
+	}
+
+	[TestMethod]
+	public async Task CircularStructWithInvalidMemberFails()
+	{
+		// A contains B (cycle) but also int[] Items which lacks value semantics.
+		// The analyzer must report JSV01 for int[] and not crash.
+		const string test = coGeneral
+							+ """
+							  struct A { public B b; public int[] Items; }
+							  struct B { public A a; }
+							  public record class R(A field);
+							  """;
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(8, 23, 8, 30)
+			.WithArguments("A field (field int[])");
+
+		var t = new VerifyCS.Test { TestCode = test, CompilerDiagnostics = CompilerDiagnostics.None };
+		t.ExpectedDiagnostics.Add(expected);
+		await t.RunAsync(CancellationToken.None);
 	}
 }
