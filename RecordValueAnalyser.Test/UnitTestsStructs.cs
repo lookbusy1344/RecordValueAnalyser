@@ -399,6 +399,23 @@ public class RecordValueAnalyserUnitTest
 	}
 
 	[TestMethod]
+	public async Task RecordWithImmutableArray()
+	{
+		// ImmutableArray<T> lacks value semantics — struct parity with class test
+		const string test = coGeneral
+							+ """
+							  public record struct Tester(int I, System.Collections.Immutable.ImmutableArray<int> Numbers);
+							  """;
+
+		var expected = VerifyCS
+			.Diagnostic()
+			.WithSpan(6, 36, 6, 92)
+			.WithArguments("System.Collections.Immutable.ImmutableArray<int> Numbers");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
+
+	[TestMethod]
 	public async Task ReadonlyStructWithReferenceFieldFail()
 	{
 		// A plain readonly struct (not a record struct) containing a reference type should fail.
