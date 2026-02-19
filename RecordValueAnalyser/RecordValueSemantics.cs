@@ -76,7 +76,8 @@ internal static class RecordValueSemantics
 		if (type is INamedTypeSymbol namedTypeSymbol && namedTypeSymbol.IsTupleType) {
 			members = namedTypeSymbol.TupleElements;
 		} else if (IsStruct(type)) {
-			members = type.GetMembers();
+			members = type.GetMembers()
+				.Where(m => m is IFieldSymbol f ? !f.IsImplicitlyDeclared : m is IPropertySymbol);
 		}
 
 		if (members != null) {

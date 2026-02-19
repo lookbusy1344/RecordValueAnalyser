@@ -300,6 +300,25 @@ public class RecordValueAnalyserUnitTest
 	}
 
 	[TestMethod]
+	public async Task NestedStructAutoPropertyFailSingleDiagnostic()
+	{
+		// A struct with an auto-property containing a failing type should produce exactly
+		// one diagnostic, not two (one for the property and one for the backing field)
+		const string test = coGeneral
+							+ """
+							  public struct StructWithProp { public int[] Items { get; set; } }
+
+							  public record class Tester(int I, StructWithProp Sp);
+							  """;
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(8, 35, 8, 52)
+			.WithArguments("StructWithProp Sp (field int[])");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
+
+	[TestMethod]
 	public async Task RecordWithInlineArray()
 	{
 		// A record containing a .NET 8 inline array, should fail
