@@ -272,6 +272,28 @@ public class RecordValueAnalyserUnitTest
 	}
 
 	[TestMethod]
+	public async Task RecordWithNestedTupleFail()
+	{
+		// recursive descent into nested tuple — outer loop reports the inner tuple as the failing member
+		const string test = coGeneral + "public record struct A((int, (string, int[])) T);";
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 24, 6, 48)
+			.WithArguments("(int, (string, int[])) T (field (string, int[]))");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task RecordWithNestedTuplePass()
+	{
+		// nested tuple with all value-semantic types — should pass
+		const string test = coGeneral + "public record struct A((int, (string, DateTime)) T);";
+
+		await VerifyCS.VerifyAnalyzerAsync(test);
+	}
+
+	[TestMethod]
 	public async Task RecordWithDelegate()
 	{
 		// A record containing a delegate not ok
