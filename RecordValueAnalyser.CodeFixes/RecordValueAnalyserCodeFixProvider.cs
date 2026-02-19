@@ -58,9 +58,16 @@ public class RecordValueAnalyserCodeFixProvider : CodeFixProvider
 			public override readonly int GetHashCode() => 0;
 		 */
 
-		// get the type we're working on
+		// Use typeDecl directly — avoids the null chain via DeclaringSyntaxReferences[0]
+		// and handles partial records where the triggering syntax node may not be [0].
+		var recordDeclaration = typeDecl as RecordDeclarationSyntax;
+		if (recordDeclaration == null) {
+			return document.Project.Solution;
+		}
+
+		// get the type symbol for symbol-level queries (e.g. detecting derived records)
 		var semanticModel = await document.GetSemanticModelAsync(cancellationToken).ConfigureAwait(false);
-		var typeSymbol = semanticModel.GetDeclaredSymbol(typeDecl, cancellationToken);
+		var typeSymbol = semanticModel?.GetDeclaredSymbol(typeDecl, cancellationToken) as INamedTypeSymbol;
 
 		// name of the record, for use in Equals(T)
 		var recordname = typeDecl.Identifier.Text;
@@ -69,13 +76,8 @@ public class RecordValueAnalyserCodeFixProvider : CodeFixProvider
 		var equalsmethod = isclassrecord ? BuildEqualsClassMethod(recordname) : BuildEqualsStructMethod(recordname);
 		var gethashcodemethod = isclassrecord ? BuildClassGetHashCode() : BuildStructGetHashCode();
 
-		// find the record declaration in the syntax tree
-		var recordDeclaration = await typeSymbol!.DeclaringSyntaxReferences[0]
-			.GetSyntaxAsync(cancellationToken)
-			.ConfigureAwait(false) as RecordDeclarationSyntax;
-
 		// check if the recordDeclaration has OpenBraceToken '{'
-		var hasbraces = recordDeclaration!.OpenBraceToken.IsKind(SyntaxKind.OpenBraceToken);
+		var hasbraces = recordDeclaration.OpenBraceToken.IsKind(SyntaxKind.OpenBraceToken);
 
 		RecordDeclarationSyntax updatedDeclaration;
 		if (hasbraces) {
