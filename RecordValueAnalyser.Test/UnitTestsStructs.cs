@@ -427,6 +427,15 @@ public class RecordValueAnalyserUnitTest
 	}
 
 	[TestMethod]
+	public async Task NullableStringMemberPass()
+	{
+		// nullable reference types with value semantics should not produce a diagnostic
+		const string test = "#nullable enable\n" + coGeneral + "public record struct A(string? Name, int I);";
+
+		await VerifyCS.VerifyAnalyzerAsync(test);
+	}
+
+	[TestMethod]
 	public async Task BodyPropertyFail()
 	{
 		// a record body property with an array type should be flagged
@@ -550,6 +559,19 @@ public class RecordValueAnalyserUnitTest
 	{
 		// T : struct still has no guaranteed Equals(T) — should be flagged (current behaviour)
 		const string test = coGeneral + "public record struct Wrapper<T>(T Value) where T : struct;";
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 33, 6, 40)
+			.WithArguments("T Value");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task GenericRecordIEquatableConstrainedFail()
+	{
+		// T : IEquatable<T> still falls through to Failed — type parameter GetMembers() does not expose interface members
+		const string test = coGeneral + "public record struct Wrapper<T>(T Value) where T : IEquatable<T>;";
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(6, 33, 6, 40)

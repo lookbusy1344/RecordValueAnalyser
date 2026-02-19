@@ -450,6 +450,15 @@ public class RecordValueAnalyserUnitTest
 	}
 
 	[TestMethod]
+	public async Task NullableStringMemberPass()
+	{
+		// nullable reference types with value semantics should not produce a diagnostic
+		const string test = "#nullable enable\n" + coGeneral + "public record class A(string? Name, int I);";
+
+		await VerifyCS.VerifyAnalyzerAsync(test);
+	}
+
+	[TestMethod]
 	public async Task BodyPropertyFail()
 	{
 		// a record body property with an array type should be flagged
@@ -535,6 +544,21 @@ public class RecordValueAnalyserUnitTest
 	}
 
 	[TestMethod]
+	public async Task RecordInheritanceBodyPropertyFail()
+	{
+		// a body property on a derived record with a non-value type should be flagged
+		const string test = coGeneral
+							+ "public record class Base(int I);\n"
+							+ "public record class Derived(int Valid) : Base(0) { public int[] Data { get; set; } }";
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(7, 52, 7, 83)
+			.WithArguments("int[] Data");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
+
+	[TestMethod]
 	public async Task InterfaceMemberFail()
 	{
 		// an interface-typed parameter lacks value semantics and should be flagged
@@ -606,6 +630,19 @@ public class RecordValueAnalyserUnitTest
 	{
 		// T : struct still has no guaranteed Equals(T) — should be flagged (current behaviour)
 		const string test = coGeneral + "public record class Wrapper<T>(T Value) where T : struct;";
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 32, 6, 39)
+			.WithArguments("T Value");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task GenericRecordIEquatableConstrainedFail()
+	{
+		// T : IEquatable<T> still falls through to Failed — type parameter GetMembers() does not expose interface members
+		const string test = coGeneral + "public record class Wrapper<T>(T Value) where T : IEquatable<T>;";
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(6, 32, 6, 39)
