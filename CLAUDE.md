@@ -1,8 +1,4 @@
-# CLAUDE.md
-
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
-## Project Overview
+# Project Overview
 
 RecordValueAnalyser is a C# Roslyn code analyzer that checks records for correct value semantics. The analyzer identifies when record members lack value semantics, which can cause equality comparisons to fail unexpectedly.
 
@@ -31,13 +27,13 @@ dotnet clean                              # Clean solution
 
 ### Test
 ```bash
-dotnet test                               # Run all tests
-RunTests.cmd                              # Run tests via script (builds Debug first)
+dotnet build -c Debug RecordValueAnalyser.Test
+dotnet test
 ```
 
 ### Package
 ```bash
-Publish.cmd                               # Clean + Release build of Package project
+dotnet build -c Release RecordValueAnalyser.Package
 ```
 
 ### Code Formatting
