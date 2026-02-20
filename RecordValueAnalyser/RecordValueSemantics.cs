@@ -87,7 +87,7 @@ internal static class RecordValueSemantics
 
 			// get the members of the tuple or struct
 			IEnumerable<ISymbol>? members = null;
-			if (type is INamedTypeSymbol namedTypeSymbol && namedTypeSymbol.IsTupleType) {
+			if (type is INamedTypeSymbol { IsTupleType: true } namedTypeSymbol) {
 				members = namedTypeSymbol.TupleElements;
 			} else if (IsStruct(type)) {
 				members = type.GetMembers()
@@ -195,15 +195,15 @@ internal static class RecordValueSemantics
 	}
 
 	/// <summary>
-	/// Gets the generic name of type eg System.Collections.Immutable.ImmutableArray<T>
+	/// Gets the generic name of type eg System.Collections.Immutable.ImmutableArray&lt;T&gt;
 	/// </summary>
-	private static string? GetGenericName(ITypeSymbol? typeSymbol) => typeSymbol?.OriginalDefinition?.ToDisplayString();
+	private static string? GetGenericName(ITypeSymbol? typeSymbol) => typeSymbol?.OriginalDefinition.ToDisplayString();
 
 	/// <summary>
 	/// Is this a nullable value type, like 'int?'
 	/// </summary>
 	private static bool IsNullableValueType(ITypeSymbol? type) =>
-		type?.IsValueType == true && type.NullableAnnotation == NullableAnnotation.Annotated;
+		type is { IsValueType: true, NullableAnnotation: NullableAnnotation.Annotated };
 
 	/// <summary>
 	/// Check for a class
@@ -223,15 +223,13 @@ internal static class RecordValueSemantics
 	/// <summary>
 	/// True if this is a struct
 	/// </summary>
-	private static bool IsStruct(ITypeSymbol? type) => type != null && type.TypeKind == TypeKind.Struct;
+	private static bool IsStruct(ITypeSymbol? type) => type is { TypeKind: TypeKind.Struct };
 
 	/// <summary>
 	/// True if this is an inline array (new in .NET8). These lack value semantics
 	/// </summary>
 	private static bool IsInlineArray(ITypeSymbol? type) =>
-		type != null
-		&& type.TypeKind == TypeKind.Struct
-		&& type.GetAttributes().Any(attribute =>
+		type is { TypeKind: TypeKind.Struct } && type.GetAttributes().Any(attribute =>
 			attribute.AttributeClass?.ToDisplayString() == "System.Runtime.CompilerServices.InlineArrayAttribute");
 
 	/// <summary>
@@ -267,9 +265,7 @@ internal static class RecordValueSemantics
 			.OfType<IMethodSymbol>()
 			.Any(m => m.Parameters.Length == 1
 					  && m.Parameters[0].Type.Equals(type, SymbolEqualityComparer.Default)
-					  && !m.IsStatic
-					  && !m.IsOverride
-					  && !m.IsAbstract) == true;
+					  && m is { IsStatic: false, IsOverride: false, IsAbstract: false }) == true;
 
 	/// <summary>
 	/// Does this type have an Equals(object) override method defined in this type?
@@ -279,8 +275,7 @@ internal static class RecordValueSemantics
 			.OfType<IMethodSymbol>()
 			.Any(m => m.Parameters.Length == 1
 					  && IsObjectType(m.Parameters[0].Type)
-					  && !m.IsStatic
-					  && m.IsOverride
+					  && m is { IsStatic: false, IsOverride: true }
 					  && m.ContainingType.Equals(type, SymbolEqualityComparer.Default)) == true;
 
 	/// <summary>
