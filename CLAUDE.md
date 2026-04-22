@@ -22,4 +22,10 @@ Main logic split between `RecordValueAnalyser.cs` (entry point / diagnostics) an
 
 ## Pre-Commit
 
-Use the `dotnet-pre-commit` skill before every commit.
+Run in order before every commit. Stop and fix on any failure — never skip with `--no-verify`.
+
+```bash
+dotnet build -c Debug RecordValueAnalyser.Test
+dotnet format
+gtimeout 120 dotnet test
+```
