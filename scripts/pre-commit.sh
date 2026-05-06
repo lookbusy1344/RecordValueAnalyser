@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
 
 # Install with:
-#   ln -sf ../../scripts/pre-commit .git/hooks/pre-commit
+#   ln -sf ../../scripts/pre-commit.sh .git/hooks/pre-commit
 #   chmod +x .git/hooks/pre-commit
+#
+# Or append to an existing .git/hooks/pre-commit:
+#   if [ -x "scripts/pre-commit.sh" ]; then
+#       ./scripts/pre-commit.sh
+#   fi
 
 set -euo pipefail
 
