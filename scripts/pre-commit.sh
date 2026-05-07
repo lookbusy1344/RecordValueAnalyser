@@ -1,85 +1,61 @@
 #!/usr/bin/env bash
-
-# Install with:
-#   ln -sf ../../scripts/pre-commit.sh .git/hooks/pre-commit
-#   chmod +x .git/hooks/pre-commit
+# pre-commit.sh — run all required checks before committing.
 #
-# Or append to an existing .git/hooks/pre-commit:
+# Install (one-time setup):
+#   ln -sf ../../scripts/pre-commit.sh .git/hooks/pre-commit
+#
+# Or from an existing hook:
+#
 # if [ ! -x "scripts/pre-commit.sh" ]; then
 #     echo "Missing executable scripts/pre-commit.sh" >&2
 #     exit 1
 # fi
+#
 # ./scripts/pre-commit.sh
 
 set -euo pipefail
 
-readonly BUILD_TARGET="RecordValueAnalyser.Test"
-readonly TEST_TIMEOUT_SECONDS="120"
+# Resolve the real script path before computing directories. We can't rely on
+# `readlink -f` because it's unavailable on macOS's BSD userland by default.
+resolve_script_path() {
+    local source_dir=""
+    local source_path="$1"
 
-# Keep docs-only commits fast by skipping the .NET validation pipeline.
-is_documentation_file() {
-  local path="$1"
+    while [ -L "${source_path}" ]; do
+        source_dir="$(cd "$(dirname "${source_path}")" && pwd)"
+        source_path="$(readlink "${source_path}")"
+        [[ "${source_path}" != /* ]] && source_path="${source_dir}/${source_path}"
+    done
 
-  [[ "$path" == *.md ]] \
-    || [[ "$path" == docs/* ]] \
-    || [[ "$(basename "$path")" == README* ]]
+    source_dir="$(cd "$(dirname "${source_path}")" && pwd)"
+    printf '%s\n' "${source_dir}/$(basename "${source_path}")"
 }
 
-requires_dotnet_checks() {
-  local path="$1"
+REAL_SCRIPT="$(resolve_script_path "$0")"
+SCRIPT_DIR="$(cd "$(dirname "${REAL_SCRIPT}")" && pwd)"
+PROJECT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
-  [[ "$path" == *.cs ]] \
-    || [[ "$path" == *.csproj ]] \
-    || [[ "$path" == *.sln ]] \
-    || [[ "$path" == *.editorconfig ]] \
-    || [[ "$path" == *.props ]] \
-    || [[ "$path" == *.targets ]]
+cd "${PROJECT_DIR}"
+
+# Wrapper that prints each command before running it.
+run() {
+    echo "==> $*"
+    "$@"
 }
 
-main() {
-  local changed_files=()
-  local changed_file
-
-  # Bash 3 on macOS does not provide mapfile, so collect paths manually.
-  # git diff HEAD covers staged, unstaged, and mixed changes so a dirty working
-  # tree with only unstaged .NET modifications can't slip past the trigger.
-  while IFS= read -r changed_file; do
-    changed_files+=("$changed_file")
-  done < <(git diff HEAD --name-only --diff-filter=ACMR)
-
-  if [[ "${#changed_files[@]}" -eq 0 ]]; then
-    echo "No changed files found."
+# Only trigger if .NET source or build files are modified — staged OR unstaged.
+# `git diff HEAD` catches both, so a dirty working tree can't slip past the hook
+# just because the user staged unrelated changes.
+if ! git -C "${PROJECT_DIR}" diff HEAD --name-only -z | tr '\0' '\n' | grep -qE \
+    '\.(cs|csproj|sln|editorconfig|props|targets)$'; then
+    echo "==> No .NET source or build files modified, skipping."
     exit 0
-  fi
+fi
 
-  local has_non_documentation_files="false"
-  local has_dotnet_files="false"
+echo "==> Running RecordValueAnalyser pre-commit checks..."
 
-  for changed_file in "${changed_files[@]}"; do
-    if ! is_documentation_file "$changed_file"; then
-      has_non_documentation_files="true"
-    fi
+run dotnet build -c Debug RecordValueAnalyser.Test
+run dotnet format --verify-no-changes
+run gtimeout 120 dotnet test
 
-    if requires_dotnet_checks "$changed_file"; then
-      has_dotnet_files="true"
-    fi
-  done
-
-  if [[ "$has_non_documentation_files" == "false" ]]; then
-    echo "Documentation-only changes detected. Skipping .NET checks."
-    exit 0
-  fi
-
-  # Non-doc changes still skip the expensive checks unless .NET-relevant files are present.
-  if [[ "$has_dotnet_files" == "false" ]]; then
-    echo "No .NET source or build files changed. Skipping .NET checks."
-    exit 0
-  fi
-
-  echo "Running pre-commit checks for staged .NET files..."
-  dotnet build -c Debug "$BUILD_TARGET"
-  dotnet format --verify-no-changes
-  gtimeout "$TEST_TIMEOUT_SECONDS" dotnet test
-}
-
-main "$@"
+echo "==> All checks passed."
