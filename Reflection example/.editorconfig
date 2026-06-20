@@ -1,6 +1,6 @@
 # New config, for command-line and ASP.NET apps, and UI combined
 # This keeps open-braces on same line for code blocks
-# 30 Jan 2026
+# 17 Jun 2026
 
 # Remove the line below if you want to inherit .editorconfig settings from higher directories
 root = true
@@ -30,7 +30,7 @@ dotnet_remove_unnecessary_suppression_exclusions = all # none
 #### C# Coding Conventions ####
 
 # Modifier preferences
-csharp_preferred_modifier_order = public,private,protected,internal,file,static,extern,new,virtual,abstract,sealed,override,readonly,unsafe,required,volatile,async
+csharp_preferred_modifier_order = public, private, protected, internal, file, static, extern, new, virtual, abstract, sealed, override, readonly, unsafe, required, volatile, async
 
 #### C# Formatting Rules ####
 
@@ -41,7 +41,7 @@ csharp_new_line_before_finally = true
 csharp_new_line_before_members_in_anonymous_types = true
 csharp_new_line_before_members_in_object_initializers = true
 csharp_new_line_before_open_brace = methods, types, events, local_functions, anonymous_methods, anonymous_types, properties, indexers, accessors
-  # OTHER OPTS: lambdas, control_blocks, all, none
+# OTHER OPTS: lambdas, control_blocks, all, none
 csharp_new_line_between_query_expression_clauses = true
 
 # Indentation preferences
@@ -217,12 +217,12 @@ dotnet_analyzer_diagnostic.category-Usage.severity = warning
 [*.md]
 end_of_line = lf
 spelling_languages = en-GB
-spelling_checkable_types = strings,identifiers,comments
+spelling_checkable_types = strings, identifiers, comments
 spelling_error_severity = information
 
 [*.{cs,vb,cshtml,razor}]
-spelling_languages = en-US,en-GB
-spelling_checkable_types = strings,identifiers,comments
+spelling_languages = en-US, en-GB
+spelling_checkable_types = strings, identifiers, comments
 spelling_error_severity = information
 
 dotnet_diagnostic.CA2000.severity = warning
@@ -254,12 +254,12 @@ dotnet_diagnostic.RCS1001.severity = none
 dotnet_diagnostic.RCS1003.severity = none
 
 # Duplicated in VS2022
-dotnet_diagnostic.rcs1213.severity = none	# same as IDE0051
-dotnet_diagnostic.rcs1163.severity = none	# same as IDE0060
-dotnet_diagnostic.rcs1169.severity = none	# same as IDE0044
-dotnet_diagnostic.rcs1021.severity = none	# same as IDE0053
-dotnet_diagnostic.rcs1085.severity = none	# same as IDE0032
-dotnet_diagnostic.rcs1046.severity = none	# same as VSTHRD200
+dotnet_diagnostic.rcs1213.severity = none # same as IDE0051
+dotnet_diagnostic.rcs1163.severity = none # same as IDE0060
+dotnet_diagnostic.rcs1169.severity = none # same as IDE0044
+dotnet_diagnostic.rcs1021.severity = none # same as IDE0053
+dotnet_diagnostic.rcs1085.severity = none # same as IDE0032
+dotnet_diagnostic.rcs1046.severity = none # same as VSTHRD200
 
 # TURNING ON SOME USEFUL MESSAGES
 
@@ -341,3 +341,6 @@ roslynator_infinite_loop_style = while # for|while
 
 # Use pattern matching
 dotnet_diagnostic.rcs9001.severity = suggestion
+
+# Rider only - for multi-line arrays, collections, enums, etc
+trailing_comma_in_multiline_lists = true
