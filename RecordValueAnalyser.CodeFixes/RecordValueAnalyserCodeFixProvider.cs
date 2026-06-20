@@ -67,7 +67,7 @@ public class RecordValueAnalyserCodeFixProvider : CodeFixProvider
 
 		// get the type symbol for symbol-level queries (e.g. detecting derived records)
 		var semanticModel = await document.GetSemanticModelAsync(cancellationToken).ConfigureAwait(false);
-		var typeSymbol = semanticModel?.GetDeclaredSymbol(typeDecl, cancellationToken) as INamedTypeSymbol;
+		var typeSymbol = semanticModel?.GetDeclaredSymbol(typeDecl, cancellationToken);
 
 		// name of the record, for use in Equals(T)
 		var recordname = typeDecl.Identifier.Text;
@@ -85,12 +85,13 @@ public class RecordValueAnalyserCodeFixProvider : CodeFixProvider
 		if (!isclassrecord) {
 			equalsmethod = BuildEqualsStructMethod(recordname);
 		} else if (isBaseRecord) {
-			equalsmethod = BuildEqualsClassMethod(recordname);             // public virtual
+			equalsmethod = BuildEqualsClassMethod(recordname); // public virtual
 		} else if (isSealedRecord) {
 			equalsmethod = BuildEqualsSealedDerivedClassMethod(recordname); // public new sealed
 		} else {
-			equalsmethod = BuildEqualsDerivedClassMethod(recordname);       // public new virtual
+			equalsmethod = BuildEqualsDerivedClassMethod(recordname); // public new virtual
 		}
+
 		var gethashcodemethod = isclassrecord ? BuildClassGetHashCode() : BuildStructGetHashCode();
 
 		// check if the recordDeclaration has OpenBraceToken '{'
@@ -121,7 +122,7 @@ public class RecordValueAnalyserCodeFixProvider : CodeFixProvider
 	}
 
 	/// <summary>
-	/// Helper to build: public override readonly int GetHashCode() => 0;
+	///     Helper to build: public override readonly int GetHashCode() => 0;
 	/// </summary>
 	private MethodDeclarationSyntax BuildStructGetHashCode() => SyntaxFactory.MethodDeclaration(
 			SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.IntKeyword)), "GetHashCode")
@@ -133,7 +134,7 @@ public class RecordValueAnalyserCodeFixProvider : CodeFixProvider
 		.WithTrailingTrivia(SyntaxFactory.TriviaList(SyntaxFactory.Comment(ToDoString), SyntaxFactory.LineFeed));
 
 	/// <summary>
-	/// Helper to build: public override int GetHashCode() => 0;
+	///     Helper to build: public override int GetHashCode() => 0;
 	/// </summary>
 	private MethodDeclarationSyntax BuildClassGetHashCode() => SyntaxFactory.MethodDeclaration(
 			SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.IntKeyword)), "GetHashCode")
@@ -144,7 +145,7 @@ public class RecordValueAnalyserCodeFixProvider : CodeFixProvider
 		.WithTrailingTrivia(SyntaxFactory.TriviaList(SyntaxFactory.Comment(ToDoString), SyntaxFactory.LineFeed));
 
 	/// <summary>
-	/// Helper to build: public readonly bool Equals(Self other) => false;
+	///     Helper to build: public readonly bool Equals(Self other) => false;
 	/// </summary>
 	private MethodDeclarationSyntax BuildEqualsStructMethod(string recordname) => SyntaxFactory.MethodDeclaration(
 			SyntaxFactory.PredefinedType(
@@ -164,7 +165,7 @@ public class RecordValueAnalyserCodeFixProvider : CodeFixProvider
 		.WithTrailingTrivia(SyntaxFactory.TriviaList(SyntaxFactory.Comment(ToDoString), SyntaxFactory.LineFeed));
 
 	/// <summary>
-	/// Helper to build: public virtual bool Equals(Self? other) => false;
+	///     Helper to build: public virtual bool Equals(Self? other) => false;
 	/// </summary>
 	private MethodDeclarationSyntax BuildEqualsClassMethod(string recordname) => SyntaxFactory.MethodDeclaration(
 			SyntaxFactory.PredefinedType(
@@ -186,10 +187,10 @@ public class RecordValueAnalyserCodeFixProvider : CodeFixProvider
 		.WithTrailingTrivia(SyntaxFactory.TriviaList(SyntaxFactory.Comment(ToDoString), SyntaxFactory.LineFeed));
 
 	/// <summary>
-	/// Helper to build: public new virtual bool Equals(Self? other) => false;
-	/// Used for non-sealed derived record classes. Each record in a hierarchy introduces a new
-	/// type-specific Equals(T?) slot; 'new' suppresses CS0114 and 'virtual' allows further overriding
-	/// by child records.
+	///     Helper to build: public new virtual bool Equals(Self? other) => false;
+	///     Used for non-sealed derived record classes. Each record in a hierarchy introduces a new
+	///     type-specific Equals(T?) slot; 'new' suppresses CS0114 and 'virtual' allows further overriding
+	///     by child records.
 	/// </summary>
 	private MethodDeclarationSyntax BuildEqualsDerivedClassMethod(string recordname) => SyntaxFactory.MethodDeclaration(
 			SyntaxFactory.PredefinedType(
@@ -212,8 +213,8 @@ public class RecordValueAnalyserCodeFixProvider : CodeFixProvider
 		.WithTrailingTrivia(SyntaxFactory.TriviaList(SyntaxFactory.Comment(ToDoString), SyntaxFactory.LineFeed));
 
 	/// <summary>
-	/// Helper to build: public new sealed bool Equals(Self? other) => false;
-	/// Used for sealed derived record classes.
+	///     Helper to build: public new sealed bool Equals(Self? other) => false;
+	///     Used for sealed derived record classes.
 	/// </summary>
 	private MethodDeclarationSyntax BuildEqualsSealedDerivedClassMethod(string recordname) => SyntaxFactory.MethodDeclaration(
 			SyntaxFactory.PredefinedType(

@@ -2,7 +2,6 @@ namespace RecordValueAnalyser.Test.Classes;
 
 using System.Threading;
 using System.Threading.Tasks;
-using global::RecordValueAnalyser.Test;
 using Microsoft.CodeAnalysis.Testing;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using VerifyCS = CSharpCodeFixVerifier<RecordValueAnalyser, RecordValueAnalyserCodeFixProvider>;
@@ -334,7 +333,7 @@ public class RecordValueAnalyserUnitTest
 							  """;
 
 		// bodge for "Target runtime doesn't support inline array types."
-		var unsupported = Microsoft.CodeAnalysis.Testing.DiagnosticResult
+		var unsupported = DiagnosticResult
 			.CompilerError("CS9171")
 			.WithSpan(14, 15, 14, 28);
 
@@ -547,15 +546,15 @@ public class RecordValueAnalyserUnitTest
 	{
 		// code fix on a derived record class should generate 'sealed override', not 'virtual'
 		const string source = "#nullable enable\n" + coGeneral
-							  + "public record class Base(int I);\n"
-							  + "public record class Derived(int[] Data) : Base(0);";
+												   + "public record class Base(int I);\n"
+												   + "public record class Derived(int[] Data) : Base(0);";
 		const string fixedSource = "#nullable enable\n" + coGeneral
-								   + "public record class Base(int I);\n"
-								   + "public record class Derived(int[] Data) : Base(0)\n"
-								   + "{\n"
-								   + "    public new virtual bool Equals(Derived? other) => false; // TODO\n"
-								   + "    public override int GetHashCode() => 0; // TODO\n"
-								   + "}";
+														+ "public record class Base(int I);\n"
+														+ "public record class Derived(int[] Data) : Base(0)\n"
+														+ "{\n"
+														+ "    public new virtual bool Equals(Derived? other) => false; // TODO\n"
+														+ "    public override int GetHashCode() => 0; // TODO\n"
+														+ "}";
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(8, 29, 8, 39)

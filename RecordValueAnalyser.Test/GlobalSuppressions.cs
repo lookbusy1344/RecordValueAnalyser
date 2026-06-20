@@ -5,6 +5,12 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-[assembly: SuppressMessage("Style", "IDE0161:Convert to file-scoped namespace", Justification = "<Pending>", Scope = "namespace", Target = "~N:RecordValueAnalyser.Test")]
-[assembly: SuppressMessage("Style", "IDE0130:Namespace does not match folder structure", Justification = "<Pending>", Scope = "namespace", Target = "~N:RecordValueAnalyser.Test.Classes")]
-[assembly: SuppressMessage("Style", "IDE0130:Namespace does not match folder structure", Justification = "<Pending>", Scope = "namespace", Target = "~N:RecordValueAnalyser.Test.Structs")]
+[assembly:
+	SuppressMessage("Style", "IDE0161:Convert to file-scoped namespace", Justification = "<Pending>", Scope = "namespace",
+		Target = "~N:RecordValueAnalyser.Test")]
+[assembly:
+	SuppressMessage("Style", "IDE0130:Namespace does not match folder structure", Justification = "<Pending>", Scope = "namespace",
+		Target = "~N:RecordValueAnalyser.Test.Classes")]
+[assembly:
+	SuppressMessage("Style", "IDE0130:Namespace does not match folder structure", Justification = "<Pending>", Scope = "namespace",
+		Target = "~N:RecordValueAnalyser.Test.Structs")]

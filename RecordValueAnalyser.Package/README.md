@@ -20,9 +20,11 @@ Source code and issue tracker: https://github.com/lookbusy1344/RecordValueAnalys
 
 This project is a C# Roslyn code analyser to check records for correct value semantics.
 
-Records are a feature in modern C#. They are intended to be used for immutable data with value semantics. This means that two instances of the same record type should be considered equal if all their members are equal. This is the same as the behaviour of `struct` and tuple types.
+Records are a feature in modern C#. They are intended to be used for immutable data with value semantics. This means that two instances of the same
+record type should be considered equal if all their members are equal. This is the same as the behaviour of `struct` and tuple types.
 
-Internally records are regular classes (or structs), but they have a synthesized `Equals` method that compares all their members. Without this Equals method, different instances would never be equal:
+Internally records are regular classes (or structs), but they have a synthesized `Equals` method that compares all their members. Without this Equals
+method, different instances would never be equal:
 
 ```
 class TestClass
@@ -63,7 +65,8 @@ The C member is an array, and these lack value semantics. Therefore `a` and `b` 
 
 ## What the analyser does
 
-It scans your records, and reports any members that don't have value semantics. It also scans into any nested stucts and tuples. In the above example, it would cause a warning on the C field:
+It scans your records, and reports any members that don't have value semantics. It also scans into any nested stucts and tuples. In the above example,
+it would cause a warning on the C field:
 
 ```
 record TestRecord(int A, string B, IReadOnlyList<int> C);
@@ -88,6 +91,7 @@ It was built for C# 12+ and .NET 8, 9, and 10. It checks `record class` and `rec
     - Multi-variable field declarations (e.g. `int[] A, B;`) each produce their own diagnostic
 
 It works with:
+
 - Visual Studio 2022/6
 - Visual Studio Code
 - Rider

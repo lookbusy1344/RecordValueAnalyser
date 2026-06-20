@@ -5,7 +5,6 @@ using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
-
 // https://learn.microsoft.com/en-us/dotnet/api/microsoft.codeanalysis.itypesymbol?view=roslyn-dotnet-4.6.0
 
 // Tuples for return values
@@ -16,16 +15,16 @@ internal enum ValueEqualityResult
 {
 	Ok,
 	Failed,
-	NestedFailed
+	NestedFailed,
 }
 
 internal static class RecordValueSemantics
 {
 	/// <summary>
-	/// Check if this record member type has value semantics
+	///     Check if this record member type has value semantics
 	/// </summary>
 	internal static CheckResultTuple CheckMember(ITypeSymbol? type)
-		=> CheckMember(type, new HashSet<ITypeSymbol>(SymbolEqualityComparer.Default));
+		=> CheckMember(type, new(SymbolEqualityComparer.Default));
 
 	private static CheckResultTuple CheckMember(ITypeSymbol? type, HashSet<ITypeSymbol> visited)
 	{
@@ -100,7 +99,7 @@ internal static class RecordValueSemantics
 					var memberType = member switch {
 						IPropertySymbol property => property.Type,
 						IFieldSymbol field => field.Type,
-						_ => null
+						_ => null,
 					};
 
 					if (memberType == null) {
@@ -128,8 +127,8 @@ internal static class RecordValueSemantics
 	}
 
 	/// <summary>
-	/// Does this record have a user-defined Equals(T) method?
-	/// Uses the semantic type symbol so partial record declarations in other files are included.
+	///     Does this record have a user-defined Equals(T) method?
+	///     Uses the semantic type symbol so partial record declarations in other files are included.
 	/// </summary>
 	internal static bool RecordHasEquals(SyntaxNodeAnalysisContext context)
 	{
@@ -149,7 +148,7 @@ internal static class RecordValueSemantics
 	}
 
 	/// <summary>
-	/// Get the type and name of the property or field
+	///     Get the type and name of the property or field
 	/// </summary>
 	internal static MemberStatusTuple GetPropertyOrFieldUnderlyingType(SyntaxNodeAnalysisContext context, MemberDeclarationSyntax member)
 	{
@@ -178,7 +177,7 @@ internal static class RecordValueSemantics
 	}
 
 	/// <summary>
-	/// Given Nullable value type, return the underlying type. If not nullable, return the type itself.
+	///     Given Nullable value type, return the underlying type. If not nullable, return the type itself.
 	/// </summary>
 	private static ITypeSymbol? GetUnderlyingType(ITypeSymbol? type)
 	{
@@ -195,56 +194,56 @@ internal static class RecordValueSemantics
 	}
 
 	/// <summary>
-	/// Gets the generic name of type eg System.Collections.Immutable.ImmutableArray&lt;T&gt;
+	///     Gets the generic name of type eg System.Collections.Immutable.ImmutableArray&lt;T&gt;
 	/// </summary>
 	private static string? GetGenericName(ITypeSymbol? typeSymbol) => typeSymbol?.OriginalDefinition.ToDisplayString();
 
 	/// <summary>
-	/// Is this a nullable value type, like 'int?'
+	///     Is this a nullable value type, like 'int?'
 	/// </summary>
 	private static bool IsNullableValueType(ITypeSymbol? type) =>
 		type is { IsValueType: true, NullableAnnotation: NullableAnnotation.Annotated };
 
 	/// <summary>
-	/// Check for a class
+	///     Check for a class
 	/// </summary>
 	private static bool IsClassType(ITypeSymbol? type) => type?.TypeKind == TypeKind.Class;
 
 	/// <summary>
-	/// Check for System.Object
+	///     Check for System.Object
 	/// </summary>
 	private static bool IsObjectType(ITypeSymbol? type) => type?.SpecialType == SpecialType.System_Object;
 
 	/// <summary>
-	/// Record class or record struct. Plain readonly structs are excluded.
+	///     Record class or record struct. Plain readonly structs are excluded.
 	/// </summary>
 	private static bool IsRecordType(ITypeSymbol? type) => type?.IsRecord == true;
 
 	/// <summary>
-	/// True if this is a struct
+	///     True if this is a struct
 	/// </summary>
 	private static bool IsStruct(ITypeSymbol? type) => type is { TypeKind: TypeKind.Struct };
 
 	/// <summary>
-	/// True if this is an inline array (new in .NET8). These lack value semantics
+	///     True if this is an inline array (new in .NET8). These lack value semantics
 	/// </summary>
 	private static bool IsInlineArray(ITypeSymbol? type) =>
 		type is { TypeKind: TypeKind.Struct } && type.GetAttributes().Any(attribute =>
 			attribute.AttributeClass?.ToDisplayString() == "System.Runtime.CompilerServices.InlineArrayAttribute");
 
 	/// <summary>
-	/// Is this always invalid? (object, dynamic, etc)
+	///     Is this always invalid? (object, dynamic, etc)
 	/// </summary>
 	private static bool IsStrictlyInvalid(ITypeSymbol? type) =>
 		type?.SpecialType == SpecialType.System_Object || type?.TypeKind == TypeKind.Dynamic;
 
 	/// <summary>
-	/// Simple equality means a primitive type, string or enum
+	///     Simple equality means a primitive type, string or enum
 	/// </summary>
 	private static bool HasSimpleEquality(ITypeSymbol? type) => type != null && (type.TypeKind == TypeKind.Enum || IsPrimitiveType(type));
 
 	/// <summary>
-	/// Is this a primitive type? Includes string
+	///     Is this a primitive type? Includes string
 	/// </summary>
 	private static bool IsPrimitiveType(ITypeSymbol? type) =>
 		type != null
@@ -254,11 +253,11 @@ internal static class RecordValueSemantics
 				or SpecialType.System_Single or SpecialType.System_Double or SpecialType.System_Decimal or SpecialType.System_Char
 				or SpecialType.System_String
 				=> true,
-			_ => false
+			_ => false,
 		};
 
 	/// <summary>
-	/// Does this type have an Equals(T) method that takes a single parameter of the same type?
+	///     Does this type have an Equals(T) method that takes a single parameter of the same type?
 	/// </summary>
 	private static bool HasEqualsTMethod(ITypeSymbol? type) =>
 		type?.GetMembers("Equals")
@@ -268,7 +267,7 @@ internal static class RecordValueSemantics
 					  && m is { IsStatic: false, IsOverride: false, IsAbstract: false }) == true;
 
 	/// <summary>
-	/// Does this type have an Equals(object) override method defined in this type?
+	///     Does this type have an Equals(object) override method defined in this type?
 	/// </summary>
 	private static bool HasEqualsObjectMethod(ITypeSymbol? type) =>
 		type?.GetMembers("Equals")
@@ -279,19 +278,19 @@ internal static class RecordValueSemantics
 					  && m.ContainingType.Equals(type, SymbolEqualityComparer.Default)) == true;
 
 	/// <summary>
-	/// Is this an immutable array? They lack value semantics
+	///     Is this an immutable array? They lack value semantics
 	/// </summary>
 	private static bool IsImmutableArrayType(ITypeSymbol? typeSymbol) =>
 		GetGenericName(typeSymbol) == "System.Collections.Immutable.ImmutableArray<T>";
 
 	/// <summary>
-	/// Is this an ArraySegment&lt;T&gt;? Its Equals compares array identity, not element contents.
+	///     Is this an ArraySegment&lt;T&gt;? Its Equals compares array identity, not element contents.
 	/// </summary>
 	private static bool IsArraySegmentType(ITypeSymbol? typeSymbol) =>
 		GetGenericName(typeSymbol) == "System.ArraySegment<T>";
 
 	/// <summary>
-	/// Is this Memory&lt;T&gt; or ReadOnlyMemory&lt;T&gt;? Their Equals compares span identity, not element contents.
+	///     Is this Memory&lt;T&gt; or ReadOnlyMemory&lt;T&gt;? Their Equals compares span identity, not element contents.
 	/// </summary>
 	private static bool IsMemoryType(ITypeSymbol? typeSymbol) =>
 		GetGenericName(typeSymbol) is "System.Memory<T>" or "System.ReadOnlyMemory<T>";

@@ -2,7 +2,6 @@ namespace RecordValueAnalyser.Test.Structs;
 
 using System.Threading;
 using System.Threading.Tasks;
-using global::RecordValueAnalyser.Test;
 using Microsoft.CodeAnalysis.Testing;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using VerifyCS = CSharpCodeFixVerifier<RecordValueAnalyser, RecordValueAnalyserCodeFixProvider>;
@@ -411,7 +410,7 @@ public class RecordValueAnalyserUnitTest
 							  """;
 
 		// bodge for "Target runtime doesn't support inline array types."
-		var unsupported = Microsoft.CodeAnalysis.Testing.DiagnosticResult
+		var unsupported = DiagnosticResult
 			.CompilerError("CS9171")
 			.WithSpan(14, 15, 14, 28);
 

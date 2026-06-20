@@ -5,6 +5,6 @@
 
 ### New Rules
 
-Rule ID | Category | Severity | Notes
---------|----------|----------|-------
-JSV01 | Design | Warning | RecordAnalyser
+ Rule ID | Category | Severity | Notes          
+---------|----------|----------|----------------
+ JSV01   | Design   | Warning  | RecordAnalyser 

@@ -1,63 +1,63 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project>
-  <Import Sdk="Microsoft.NET.Sdk" Project="Sdk.props" />
+    <Import Sdk="Microsoft.NET.Sdk" Project="Sdk.props"/>
 
-  <PropertyGroup>
-    <IsWindows Condition="'$(OS)' == 'Windows_NT'">true</IsWindows>
-  </PropertyGroup>
+    <PropertyGroup>
+        <IsWindows Condition="'$(OS)' == 'Windows_NT'">true</IsWindows>
+    </PropertyGroup>
 
-<Target Name="SetSourceRevisionId" BeforeTargets="InitializeSourceControlInformation">
-    <Exec Command="git describe --long --always --dirty=+ --broken --exclude=* --abbrev=40" ConsoleToMSBuild="True" IgnoreExitCode="False">
-      <Output PropertyName="SourceRevisionId" TaskParameter="ConsoleOutput" />
-    </Exec>
-</Target>
+    <Target Name="SetSourceRevisionId" BeforeTargets="InitializeSourceControlInformation">
+        <Exec Command="git describe --long --always --dirty=+ --broken --exclude=* --abbrev=40" ConsoleToMSBuild="True" IgnoreExitCode="False">
+            <Output PropertyName="SourceRevisionId" TaskParameter="ConsoleOutput"/>
+        </Exec>
+    </Target>
 
-  <PropertyGroup>
-	<InformationalVersion>$(SourceRevisionId)</InformationalVersion>
-    <TargetFramework>net472</TargetFramework>
-    <RootNamespace>RecordValueAnalyser.Vsix</RootNamespace>
-    <AssemblyName>RecordValueAnalyser.Vsix</AssemblyName>
-  </PropertyGroup>
+    <PropertyGroup>
+        <InformationalVersion>$(SourceRevisionId)</InformationalVersion>
+        <TargetFramework>net472</TargetFramework>
+        <RootNamespace>RecordValueAnalyser.Vsix</RootNamespace>
+        <AssemblyName>RecordValueAnalyser.Vsix</AssemblyName>
+    </PropertyGroup>
 
-  <PropertyGroup>
-    <GeneratePkgDefFile>false</GeneratePkgDefFile>
-    <IncludeAssemblyInVSIXContainer>false</IncludeAssemblyInVSIXContainer>
-    <IncludeDebugSymbolsInVSIXContainer>false</IncludeDebugSymbolsInVSIXContainer>
-    <IncludeDebugSymbolsInLocalVSIXDeployment>false</IncludeDebugSymbolsInLocalVSIXDeployment>
-    <CopyBuildOutputToOutputDirectory>false</CopyBuildOutputToOutputDirectory>
-    <CopyOutputSymbolsToOutputDirectory>false</CopyOutputSymbolsToOutputDirectory>
-    <VSSDKTargetPlatformRegRootSuffix>Roslyn</VSSDKTargetPlatformRegRootSuffix>
-  </PropertyGroup>
+    <PropertyGroup>
+        <GeneratePkgDefFile>false</GeneratePkgDefFile>
+        <IncludeAssemblyInVSIXContainer>false</IncludeAssemblyInVSIXContainer>
+        <IncludeDebugSymbolsInVSIXContainer>false</IncludeDebugSymbolsInVSIXContainer>
+        <IncludeDebugSymbolsInLocalVSIXDeployment>false</IncludeDebugSymbolsInLocalVSIXDeployment>
+        <CopyBuildOutputToOutputDirectory>false</CopyBuildOutputToOutputDirectory>
+        <CopyOutputSymbolsToOutputDirectory>false</CopyOutputSymbolsToOutputDirectory>
+        <VSSDKTargetPlatformRegRootSuffix>Roslyn</VSSDKTargetPlatformRegRootSuffix>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.VisualStudio.SDK.Analyzers" Version="17.7.113">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="17.14.2120" PrivateAssets="all" Condition="'$(IsWindows)' == 'true'" />
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Microsoft.VisualStudio.SDK.Analyzers" Version="17.7.113">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="17.14.2120" PrivateAssets="all" Condition="'$(IsWindows)' == 'true'"/>
+    </ItemGroup>
 
-  <PropertyGroup>
-    <StartAction>Program</StartAction>
-    <StartProgram>$(DevEnvDir)devenv.exe</StartProgram>
-    <StartArguments>/rootsuffix $(VSSDKTargetPlatformRegRootSuffix)</StartArguments>
-  </PropertyGroup>
+    <PropertyGroup>
+        <StartAction>Program</StartAction>
+        <StartProgram>$(DevEnvDir)devenv.exe</StartProgram>
+        <StartArguments>/rootsuffix $(VSSDKTargetPlatformRegRootSuffix)</StartArguments>
+    </PropertyGroup>
 
-  <Import Sdk="Microsoft.NET.Sdk" Project="Sdk.targets" />
+    <Import Sdk="Microsoft.NET.Sdk" Project="Sdk.targets"/>
 
-  <Import Project="$(VSToolsPath)\VSSDK\Microsoft.VsSDK.targets" Condition="'$(IsWindows)' == 'true' AND Exists('$(VSToolsPath)\VSSDK\Microsoft.VsSDK.targets')" />
+    <Import Project="$(VSToolsPath)\VSSDK\Microsoft.VsSDK.targets" Condition="'$(IsWindows)' == 'true' AND Exists('$(VSToolsPath)\VSSDK\Microsoft.VsSDK.targets')"/>
 
-  <ItemGroup>
-    <ProjectReference Include="..\RecordValueAnalyser.CodeFixes\RecordValueAnalyser.CodeFixes.csproj" />
-    <ProjectReference Include="..\RecordValueAnalyser\RecordValueAnalyser.csproj" />
-  </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\RecordValueAnalyser.CodeFixes\RecordValueAnalyser.CodeFixes.csproj"/>
+        <ProjectReference Include="..\RecordValueAnalyser\RecordValueAnalyser.csproj"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <!-- https://github.com/dotnet/sdk/issues/433 -->
-    <ProjectReference Update="@(ProjectReference)" AdditionalProperties="TargetFramework=netstandard2.0" />
+    <ItemGroup>
+        <!-- https://github.com/dotnet/sdk/issues/433 -->
+        <ProjectReference Update="@(ProjectReference)" AdditionalProperties="TargetFramework=netstandard2.0"/>
 
-    <!-- https://github.com/Microsoft/extendvs/issues/57 -->
-    <ProjectReference Update="@(ProjectReference)" Name="%(Filename)" />
-  </ItemGroup>
+        <!-- https://github.com/Microsoft/extendvs/issues/57 -->
+        <ProjectReference Update="@(ProjectReference)" Name="%(Filename)"/>
+    </ItemGroup>
 
 </Project>
