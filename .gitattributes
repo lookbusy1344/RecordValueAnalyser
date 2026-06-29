@@ -1,10 +1,20 @@
-# 16 Jan 2026
+# 27 Jun 2026
 # Others, leave as-is (dont treat them as text)
 * -text
+
+# To exclude from github stats:
+# *.XX text eol=lf
+# *.XX linguist-detectable=false
 
 # General text files
 *.txt text eol=lf
 *.md text eol=lf
+*.csv text eol=lf
+*.tsv text eol=lf
+*.jsonl text eol=lf
+*.ndjson text eol=lf
+*.psv text eol=lf
+*.tab text eol=lf
 *.yml text eol=lf
 *.yaml text eol=lf
 *.json text eol=lf
