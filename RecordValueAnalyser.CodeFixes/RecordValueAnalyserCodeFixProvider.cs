@@ -60,8 +60,7 @@ public class RecordValueAnalyserCodeFixProvider : CodeFixProvider
 
 		// Use typeDecl directly — avoids the null chain via DeclaringSyntaxReferences[0]
 		// and handles partial records where the triggering syntax node may not be [0].
-		var recordDeclaration = typeDecl as RecordDeclarationSyntax;
-		if (recordDeclaration == null) {
+		if (typeDecl is not RecordDeclarationSyntax recordDeclaration) {
 			return document.Project.Solution;
 		}
 

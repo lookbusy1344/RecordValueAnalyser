@@ -24,7 +24,7 @@ internal static class RecordValueSemantics
 	///     Check if this record member type has value semantics
 	/// </summary>
 	internal static CheckResultTuple CheckMember(ITypeSymbol? type)
-		=> CheckMember(type, new(SymbolEqualityComparer.Default));
+		=> CheckMember(type, [with(SymbolEqualityComparer.Default)]);
 
 	private static CheckResultTuple CheckMember(ITypeSymbol? type, HashSet<ITypeSymbol> visited)
 	{
@@ -133,9 +133,8 @@ internal static class RecordValueSemantics
 	internal static bool RecordHasEquals(SyntaxNodeAnalysisContext context)
 	{
 		var recordDeclaration = (RecordDeclarationSyntax)context.Node;
-		var recordTypeSymbol = context.SemanticModel.GetDeclaredSymbol(recordDeclaration) as INamedTypeSymbol;
 
-		if (recordTypeSymbol == null) {
+		if (context.SemanticModel.GetDeclaredSymbol(recordDeclaration) is not INamedTypeSymbol recordTypeSymbol) {
 			return false;
 		}
 

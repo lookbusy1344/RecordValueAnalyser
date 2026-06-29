@@ -169,6 +169,16 @@ When you write your implementations `SequenceEqual` is very useful for comparing
 
 Tests are in `RecordValueAnalyser.Test`. They are run in the CI pipeline.
 
+## Formatting
+
+To run `dotnet format` at `info` severity, exclude the test project:
+
+```bash
+dotnet format --severity info --exclude RecordValueAnalyser.Test/
+```
+
+The test project contains Roslyn verifier helper files with backtick/`+` characters in their names (`Verifiers/CSharpCodeFixVerifier`2.cs` etc.). At `info` severity `dotnet format` applies code fixes, and the workspace throws an unhandled `NotSupportedException` when re-pathing those files, so the project must be excluded.
+
 ## Usage
 
 Install from nuget:
