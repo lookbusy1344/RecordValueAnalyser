@@ -288,14 +288,14 @@ dotnet_diagnostic.rcs9001.severity = suggestion # Use pattern matching
 
 
 # ---------------------------------------------------------------------
-# .NET 10 / Roslyn 18.x analyzer escalations
+# .NET 10 analyzer escalations
 # ---------------------------------------------------------------------
 
 # Async method lacking await. CS1998 was removed entirely in Roslyn 18.0 (dotnet/roslyn#80144);
 # IDE0390/IDE0391 reintroduce the check as opt-in fixers in 18.4 (#81835). Default severity is
 # silent, so these lines are what turn it on. NB: under TreatWarningsAsErrors they build as errors.
 dotnet_diagnostic.IDE0390.severity = warning # Methods and lambdas that can drop 'async'.
-dotnet_diagnostic.IDE0391.severity = warning # Interface impls / overrides where 'async' is unnecessary.
+dotnet_diagnostic.IDE0391.severity = suggestion # Interface impls / overrides where 'async' is unnecessary.
 
 # System.Threading.Lock type safety (see C# lock-statement compiler messages).
 # CS9216 (warning by default): a Lock converted to another type (e.g. object) falls back to
