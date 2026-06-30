@@ -1,5 +1,5 @@
 # For command-line and ASP.NET apps, and UI combined
-# 29 Jun 2026
+# 30 Jun 2026
 
 # Remove the line below if you want to inherit .editorconfig settings from higher directories
 root = true
@@ -285,6 +285,30 @@ dotnet_diagnostic.rcs1252.severity = suggestion # Normalize usage of infinite lo
 roslynator_infinite_loop_style = while
 dotnet_diagnostic.rcs1255.severity = suggestion # Simplify argument null check
 dotnet_diagnostic.rcs9001.severity = suggestion # Use pattern matching
+
+
+# ---------------------------------------------------------------------
+# .NET 10 / Roslyn 18.x analyzer escalations
+# ---------------------------------------------------------------------
+
+# Async method lacking await. CS1998 was removed entirely in Roslyn 18.0 (dotnet/roslyn#80144);
+# IDE0390/IDE0391 reintroduce the check as opt-in fixers in 18.4 (#81835). Default severity is
+# silent, so these lines are what turn it on. NB: under TreatWarningsAsErrors they build as errors.
+dotnet_diagnostic.IDE0390.severity = warning # Methods and lambdas that can drop 'async'.
+dotnet_diagnostic.IDE0391.severity = warning # Interface impls / overrides where 'async' is unnecessary.
+
+# System.Threading.Lock type safety (see C# lock-statement compiler messages).
+# CS9216 (warning by default): a Lock converted to another type (e.g. object) falls back to
+#   unintended monitor-based locking instead of the Lock-specific fast path.
+# CS9217 (error by default): locking a Lock inside an async method or async lambda is disallowed.
+# Both pinned to error; CS9217 is already an error, so that line is belt-and-suspenders.
+dotnet_diagnostic.CS9216.severity = error
+dotnet_diagnostic.CS9217.severity = error
+
+# Defensive I/O reliability. CA2022 flags a discarded Stream.Read/ReadAsync return value (short
+# reads silently lost); migrate to ReadExactly/ReadExactlyAsync. Already a warning under
+# AnalysisModeReliability=All; pinned to error here.
+dotnet_diagnostic.CA2022.severity = error
 
 
 # =====================================================================
