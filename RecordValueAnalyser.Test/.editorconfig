@@ -1,5 +1,5 @@
 # For command-line and ASP.NET apps, and UI combined
-# 30 Jun 2026
+# 01 Jul 2026
 
 # Remove the line below if you want to inherit .editorconfig settings from higher directories
 root = true
@@ -230,6 +230,9 @@ dotnet_diagnostic.IDE0042.severity = none
 # Threading Warnings (VSTHRD)
 dotnet_diagnostic.VSTHRD111.severity = silent
 dotnet_diagnostic.VSTHRD103.severity = none # Duplicate of CA1849
+dotnet_diagnostic.VSTHRD001.severity = none # legacy thread-switch APIs, not relevant outside VSIX
+dotnet_diagnostic.VSTHRD002.severity = warning # catches sync-over-async deadlocks
+dotnet_diagnostic.VSTHRD100.severity = warning # avoid async void
 
 
 # =====================================================================
