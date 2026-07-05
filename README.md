@@ -163,6 +163,23 @@ public readonly bool Equals(Test other) => Numbers.SequenceEqual(other.Numbers);
 
 When you write your implementations `SequenceEqual` is very useful for comparing  collections.
 
+## Helpful collections
+
+`Helpful_collections/` (namespace `RecordValueAnalyser.Useful`) contains drop-in replacements for the collection types that most commonly trigger JSV01, so a record member can keep proper value semantics instead of needing a hand-written `Equals`/`GetHashCode` override:
+
+- **`EquatableArray<T>`** — a value-semantics replacement for `IReadOnlyList<T>`/arrays. A `readonly struct` wrapping an `ImmutableArray<T>`, so it adds no heap allocation beyond the backing array. Equality compares elements in order. Supports collection expressions (`[]`, `[.. xs]`) via `[CollectionBuilder]`.
+- **`EquatableDictionary<TKey, TValue>`** — a value-semantics replacement for `IReadOnlyDictionary<TKey, TValue>`. A `readonly struct` wrapping a `Dictionary<TKey, TValue>`. Equality compares key/value entries independent of insertion order.
+- **`EquatableJsonConverters.cs`** — internal `System.Text.Json` converters required by the two types above; each struct is annotated with `[JsonConverter(typeof(...Factory))]`, so including this file is what makes them serialise as plain JSON arrays/objects instead of STJ reflecting over the struct's fields. Not called directly — it wires itself in automatically, and delegates to the element/value type's own `JsonTypeInfo`, so it works with source-generated (reflection-free) `JsonSerializerContext` setups too.
+
+```csharp
+public record Order(int Id, EquatableArray<int> LineItemIds, EquatableDictionary<string, decimal> Prices);
+
+var a = new Order(1, [1, 2, 3], EquatableDictionaryFactory.CopyOf(prices));
+var b = new Order(1, [1, 2, 3], EquatableDictionaryFactory.CopyOf(prices));
+
+a == b; // true — compares contents, not references
+```
+
 ## Testing
 
 [![Test](https://github.com/lookbusy1344/RecordValueAnalyser/actions/workflows/test.yml/badge.svg)](https://github.com/lookbusy1344/RecordValueAnalyser/actions/workflows/test.yml)
