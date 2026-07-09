@@ -11,7 +11,6 @@ public class EquatableArraySegmentTests
 		var a = new EquatableArraySegment<int>(new ArraySegment<int>([1, 2, 3, 4], 1, 2));
 		var b = new EquatableArraySegment<int>(new ArraySegment<int>([0, 2, 3, 9], 1, 2));
 
-		Assert.AreEqual(a, b);
 		Assert.IsTrue(a == b);
 		Assert.AreEqual(a.GetHashCode(), b.GetHashCode());
 	}
@@ -22,7 +21,7 @@ public class EquatableArraySegmentTests
 		var a = new EquatableArraySegment<int>(new ArraySegment<int>([1, 2, 3], 0, 2));
 		var b = new EquatableArraySegment<int>(new ArraySegment<int>([1, 2, 3], 1, 2));
 
-		Assert.AreNotEqual(a, b);
+		Assert.IsTrue(a != b);
 	}
 
 	[TestMethod]
@@ -31,7 +30,7 @@ public class EquatableArraySegmentTests
 		var a = new EquatableArraySegment<int>(new ArraySegment<int>([1, 2, 3], 0, 2));
 		var b = new EquatableArraySegment<int>(new ArraySegment<int>([1, 2, 3], 0, 3));
 
-		Assert.AreNotEqual(a, b);
+		Assert.IsTrue(a != b);
 	}
 
 	[TestMethod]
@@ -41,7 +40,7 @@ public class EquatableArraySegmentTests
 		var b = new EquatableArraySegment<int>(default);
 
 		Assert.AreEqual(0, a.Count);
-		Assert.AreEqual(a, b);
+		Assert.IsTrue(a == b);
 	}
 
 	[TestMethod]

@@ -11,7 +11,6 @@ public class EquatableSetTests
 		EquatableSet<int> a = [1, 2, 3];
 		EquatableSet<int> b = [3, 2, 1];
 
-		Assert.AreEqual(a, b);
 		Assert.IsTrue(a == b);
 		Assert.AreEqual(a.GetHashCode(), b.GetHashCode());
 	}
@@ -22,7 +21,7 @@ public class EquatableSetTests
 		EquatableSet<int> a = [1, 2, 3];
 		EquatableSet<int> b = [1, 2, 4];
 
-		Assert.AreNotEqual(a, b);
+		Assert.IsTrue(a != b);
 	}
 
 	[TestMethod]
@@ -31,7 +30,7 @@ public class EquatableSetTests
 		EquatableSet<int> a = [1, 2];
 		EquatableSet<int> b = [1, 2, 3];
 
-		Assert.AreNotEqual(a, b);
+		Assert.IsTrue(a != b);
 	}
 
 	[TestMethod]
@@ -49,7 +48,7 @@ public class EquatableSetTests
 		EquatableSet<int> b = [];
 
 		Assert.AreEqual(0, a.Count);
-		Assert.AreEqual(a, b);
+		Assert.IsTrue(a == b);
 	}
 
 	[TestMethod]

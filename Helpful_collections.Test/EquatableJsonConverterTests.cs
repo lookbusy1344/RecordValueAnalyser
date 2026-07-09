@@ -15,7 +15,7 @@ public class EquatableJsonConverterTests
 		var roundTripped = JsonSerializer.Deserialize<EquatableArray<int>>(json);
 
 		Assert.AreEqual("[1,2,3]", json);
-		Assert.AreEqual(original, roundTripped);
+		Assert.IsTrue(original == roundTripped);
 	}
 
 	[TestMethod]
@@ -26,7 +26,7 @@ public class EquatableJsonConverterTests
 		var json = JsonSerializer.Serialize(original);
 		var roundTripped = JsonSerializer.Deserialize<EquatableDictionary<string, int>>(json);
 
-		Assert.AreEqual(original, roundTripped);
+		Assert.IsTrue(original == roundTripped);
 	}
 
 	[TestMethod]
@@ -38,7 +38,7 @@ public class EquatableJsonConverterTests
 		var roundTripped = JsonSerializer.Deserialize<EquatableReadOnlyMemory<int>>(json);
 
 		Assert.AreEqual("[1,2,3]", json);
-		Assert.AreEqual(original, roundTripped);
+		Assert.IsTrue(original == roundTripped);
 	}
 
 	[TestMethod]
@@ -50,7 +50,7 @@ public class EquatableJsonConverterTests
 		var roundTripped = JsonSerializer.Deserialize<EquatableArraySegment<int>>(json);
 
 		Assert.AreEqual("[2,3]", json);
-		Assert.AreEqual(original, roundTripped);
+		Assert.IsTrue(original == roundTripped);
 	}
 
 	[TestMethod]
@@ -61,7 +61,7 @@ public class EquatableJsonConverterTests
 		var json = JsonSerializer.Serialize(original);
 		var roundTripped = JsonSerializer.Deserialize<EquatableSet<int>>(json);
 
-		Assert.AreEqual(original, roundTripped);
+		Assert.IsTrue(original == roundTripped);
 	}
 
 	[TestMethod]

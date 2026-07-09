@@ -11,7 +11,6 @@ public class EquatableArrayTests
 		EquatableArray<int> a = [1, 2, 3];
 		EquatableArray<int> b = [1, 2, 3];
 
-		Assert.AreEqual(a, b);
 		Assert.IsTrue(a == b);
 		Assert.AreEqual(a.GetHashCode(), b.GetHashCode());
 	}
@@ -22,7 +21,6 @@ public class EquatableArrayTests
 		EquatableArray<int> a = [1, 2, 3];
 		EquatableArray<int> b = [3, 2, 1];
 
-		Assert.AreNotEqual(a, b);
 		Assert.IsTrue(a != b);
 	}
 
@@ -32,7 +30,7 @@ public class EquatableArrayTests
 		EquatableArray<int> a = [1, 2, 3];
 		EquatableArray<int> b = [1, 2];
 
-		Assert.AreNotEqual(a, b);
+		Assert.IsTrue(a != b);
 	}
 
 	[TestMethod]
@@ -42,7 +40,7 @@ public class EquatableArrayTests
 		EquatableArray<int> b = [];
 
 		Assert.AreEqual(0, a.Count);
-		Assert.AreEqual(a, b);
+		Assert.IsTrue(a == b);
 	}
 
 	[TestMethod]

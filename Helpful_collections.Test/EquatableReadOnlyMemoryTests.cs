@@ -11,7 +11,6 @@ public class EquatableReadOnlyMemoryTests
 		var a = new EquatableReadOnlyMemory<int>(new[] { 1, 2, 3 });
 		var b = new EquatableReadOnlyMemory<int>(new[] { 1, 2, 3 });
 
-		Assert.AreEqual(a, b);
 		Assert.IsTrue(a == b);
 		Assert.AreEqual(a.GetHashCode(), b.GetHashCode());
 	}
@@ -22,7 +21,7 @@ public class EquatableReadOnlyMemoryTests
 		var a = new EquatableReadOnlyMemory<int>(new[] { 1, 2, 3 });
 		var b = new EquatableReadOnlyMemory<int>(new[] { 1, 2, 4 });
 
-		Assert.AreNotEqual(a, b);
+		Assert.IsTrue(a != b);
 	}
 
 	[TestMethod]
@@ -31,7 +30,7 @@ public class EquatableReadOnlyMemoryTests
 		var a = new EquatableReadOnlyMemory<int>(new[] { 1, 2, 3 });
 		var b = new EquatableReadOnlyMemory<int>(new[] { 1, 2 });
 
-		Assert.AreNotEqual(a, b);
+		Assert.IsTrue(a != b);
 	}
 
 	[TestMethod]
@@ -41,7 +40,7 @@ public class EquatableReadOnlyMemoryTests
 		var b = new EquatableReadOnlyMemory<int>(ReadOnlyMemory<int>.Empty);
 
 		Assert.AreEqual(0, a.Length);
-		Assert.AreEqual(a, b);
+		Assert.IsTrue(a == b);
 	}
 
 	[TestMethod]

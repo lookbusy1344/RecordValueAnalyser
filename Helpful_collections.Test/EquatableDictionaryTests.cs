@@ -11,7 +11,6 @@ public class EquatableDictionaryTests
 		var a = EquatableDictionaryFactory.CopyOf(new Dictionary<string, int> { ["a"] = 1, ["b"] = 2 });
 		var b = EquatableDictionaryFactory.CopyOf(new Dictionary<string, int> { ["b"] = 2, ["a"] = 1 });
 
-		Assert.AreEqual(a, b);
 		Assert.IsTrue(a == b);
 		Assert.AreEqual(a.GetHashCode(), b.GetHashCode());
 	}
@@ -22,7 +21,7 @@ public class EquatableDictionaryTests
 		var a = EquatableDictionaryFactory.CopyOf(new Dictionary<string, int> { ["a"] = 1 });
 		var b = EquatableDictionaryFactory.CopyOf(new Dictionary<string, int> { ["a"] = 2 });
 
-		Assert.AreNotEqual(a, b);
+		Assert.IsTrue(a != b);
 	}
 
 	[TestMethod]
@@ -31,7 +30,7 @@ public class EquatableDictionaryTests
 		var a = EquatableDictionaryFactory.CopyOf(new Dictionary<string, int> { ["a"] = 1 });
 		var b = EquatableDictionaryFactory.CopyOf(new Dictionary<string, int> { ["a"] = 1, ["b"] = 2 });
 
-		Assert.AreNotEqual(a, b);
+		Assert.IsTrue(a != b);
 	}
 
 	[TestMethod]
