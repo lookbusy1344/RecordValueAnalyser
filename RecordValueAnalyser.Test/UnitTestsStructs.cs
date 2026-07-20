@@ -409,17 +409,12 @@ public class RecordValueAnalyserUnitTest
 							  public readonly record struct Tester(int I, MyInlineArray Ar);
 							  """;
 
-		// bodge for "Target runtime doesn't support inline array types."
-		var unsupported = DiagnosticResult
-			.CompilerError("CS9171")
-			.WithSpan(14, 15, 14, 28);
-
 		// the expected error
 		var expected = VerifyCS.Diagnostic()
 			.WithSpan(16, 45, 16, 61)
 			.WithArguments("MyInlineArray Ar");
 
-		await VerifyCS.VerifyAnalyzerAsync(test, unsupported, expected);
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
 	}
 
 	[TestMethod]
