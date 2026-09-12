@@ -21,16 +21,16 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.9.0"/>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.10.0" />
         <PackageReference Include="MSTest.TestAdapter" Version="4.4.0" />
         <PackageReference Include="MSTest.TestFramework" Version="4.4.0" />
-        <PackageReference Include="Microsoft.CodeAnalysis" Version="5.9.0"/>
-        <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Analyzer.Testing" Version="1.1.4"/>
-        <PackageReference Include="Microsoft.CodeAnalysis.CSharp.CodeFix.Testing" Version="1.1.4"/>
-        <PackageReference Include="Microsoft.CodeAnalysis.CSharp.CodeRefactoring.Testing" Version="1.1.4"/>
-        <PackageReference Include="NuGet.Common" Version="7.9.0"/>
-        <PackageReference Include="NuGet.Packaging" Version="7.9.0"/>
-        <PackageReference Include="NuGet.Protocol" Version="7.9.0"/>
+        <PackageReference Include="Microsoft.CodeAnalysis" Version="5.9.0" />
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Analyzer.Testing" Version="1.1.4" />
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp.CodeFix.Testing" Version="1.1.4" />
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp.CodeRefactoring.Testing" Version="1.1.4" />
+        <PackageReference Include="NuGet.Common" Version="7.9.0" />
+        <PackageReference Include="NuGet.Packaging" Version="7.9.0" />
+        <PackageReference Include="NuGet.Protocol" Version="7.9.0" />
         <PackageReference Include="Roslynator.Analyzers" Version="5.0.0">
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
             <PrivateAssets>all</PrivateAssets>
@@ -38,8 +38,8 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\RecordValueAnalyser.CodeFixes\RecordValueAnalyser.CodeFixes.csproj"/>
-        <ProjectReference Include="..\RecordValueAnalyser\RecordValueAnalyser.csproj"/>
+        <ProjectReference Include="..\RecordValueAnalyser.CodeFixes\RecordValueAnalyser.CodeFixes.csproj" />
+        <ProjectReference Include="..\RecordValueAnalyser\RecordValueAnalyser.csproj" />
     </ItemGroup>
 
     <ItemGroup>
