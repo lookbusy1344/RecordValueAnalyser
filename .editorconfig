@@ -1,5 +1,5 @@
 # For libraries, with VSTHRD111: Use .ConfigureAwait(bool) and other fixes
-# 01 Jul 2026
+# 23 Sep 2026
 
 # Remove the line below if you want to inherit .editorconfig settings from higher directories
 root = true
@@ -29,7 +29,8 @@ dotnet_style_object_initializer = true:suggestion
 dotnet_style_collection_initializer = true:suggestion
 dotnet_style_prefer_simplified_boolean_expressions = true:suggestion
 dotnet_style_prefer_conditional_expression_over_assignment = true:suggestion
-dotnet_style_prefer_conditional_expression_over_return = true:none # IDE0046 off: don't auto-fold guard clauses into ?: (see RCS1238)
+# Keep guard clauses instead of folding them into conditional expressions.
+dotnet_style_prefer_conditional_expression_over_return = true:none
 dotnet_style_explicit_tuple_names = true:suggestion
 dotnet_style_prefer_inferred_tuple_names = true:suggestion
 dotnet_style_prefer_inferred_anonymous_type_member_names = true:suggestion
@@ -232,10 +233,10 @@ dotnet_diagnostic.IDE0042.severity = none
 # Threading Warnings (VSTHRD)
 # VSTHRD111: Use .ConfigureAwait(bool) THIS IS A LIBRARY/PLUGIN SO DISPLAY THIS WARNING
 dotnet_diagnostic.VSTHRD111.severity = warning
-dotnet_diagnostic.VSTHRD103.severity = none # Duplicate of CA1849
-dotnet_diagnostic.VSTHRD001.severity = none # legacy thread-switch APIs, not relevant outside VSIX
-dotnet_diagnostic.VSTHRD002.severity = warning # catches sync-over-async deadlocks
-dotnet_diagnostic.VSTHRD100.severity = warning # avoid async void
+dotnet_diagnostic.VSTHRD103.severity = none
+dotnet_diagnostic.VSTHRD001.severity = none
+dotnet_diagnostic.VSTHRD002.severity = warning
+dotnet_diagnostic.VSTHRD100.severity = warning
 
 
 # =====================================================================
@@ -245,76 +246,78 @@ dotnet_diagnostic.VSTHRD100.severity = warning # avoid async void
 # Broad Mutings
 dotnet_diagnostic.RCS1001.severity = none
 dotnet_diagnostic.RCS1003.severity = none
-dotnet_diagnostic.rcs1004.severity = none # Redundant with native csharp_prefer_braces
+dotnet_diagnostic.rcs1004.severity = none
 
 # Roslynator Mutes (muted only where an enabled native .NET/VSTHRD/CA rule covers the same case)
-dotnet_diagnostic.rcs1213.severity = none # same as IDE0051 (Remove unused private members)
-dotnet_diagnostic.rcs1163.severity = none # same as IDE0060 (Remove unused parameter)
-dotnet_diagnostic.rcs1169.severity = none # same as IDE0044 (Make field read-only)
-dotnet_diagnostic.rcs1021.severity = none # same as IDE0053 / csharp_style_expression_bodied_lambdas
-dotnet_diagnostic.rcs1085.severity = none # same as IDE0032 / dotnet_style_prefer_auto_properties (Use auto-property)
-dotnet_diagnostic.rcs1016.severity = none # overlaps csharp_style_expression_bodied_* (IDE0022/IDE0023/IDE0024...)
-dotnet_diagnostic.rcs1102.severity = none # same as CA1052 (Make class static; Design category enabled)
-dotnet_diagnostic.rcs1206.severity = none # same as IDE0031 / dotnet_style_null_propagation (Use conditional access)
-dotnet_diagnostic.rcs1179.severity = none # same as IDE0059 / csharp_style_unused_value_assignment_preference
-dotnet_diagnostic.rcs1246.severity = none # same as CA1826 (Use indexer/property over Enumerable; Performance enabled)
-dotnet_diagnostic.rcs1194.severity = none # same as CA1032 (Implement standard exception constructors)
-dotnet_diagnostic.rcs1046.severity = none # same as VSTHRD200 (Async method name should end with 'Async')
-dotnet_diagnostic.rcs0044.severity = none # conflicts with global end_of_line=lf (would request CRLF)
-dotnet_diagnostic.rcs1080.severity = none # conflicts with CA1827 (CA prefers Any(); rcs1080 prefers Count/Length)
+dotnet_diagnostic.rcs1213.severity = none
+dotnet_diagnostic.rcs1163.severity = none
+dotnet_diagnostic.rcs1169.severity = none
+dotnet_diagnostic.rcs1021.severity = none
+dotnet_diagnostic.rcs1085.severity = none
+dotnet_diagnostic.rcs1016.severity = none
+dotnet_diagnostic.rcs1102.severity = none
+dotnet_diagnostic.rcs1206.severity = none
+dotnet_diagnostic.rcs1179.severity = none
+dotnet_diagnostic.rcs1246.severity = none
+dotnet_diagnostic.rcs1194.severity = none
+dotnet_diagnostic.rcs1046.severity = none
+dotnet_diagnostic.rcs0044.severity = none
+dotnet_diagnostic.rcs1080.severity = none
 
 # Explicit Active Roslynator Suggestions
-dotnet_diagnostic.rcs0042.severity = suggestion # Put auto-accessors on a single line
-dotnet_diagnostic.rcs0054.severity = suggestion # Fix formatting of a call chain
-dotnet_diagnostic.rcs0055.severity = suggestion # Fix formatting of a binary expression chain
-dotnet_diagnostic.rcs1047.severity = suggestion # Non-asynchronous method name should not end with 'Async'
-dotnet_diagnostic.rcs1070.severity = suggestion # Remove redundant default switch section
-dotnet_diagnostic.rcs1077.severity = suggestion # Optimize LINQ method call
-dotnet_diagnostic.rcs1093.severity = suggestion # File contains no code
-dotnet_diagnostic.rcs1133.severity = suggestion # Remove redundant Dispose/Close call
-dotnet_diagnostic.rcs1134.severity = suggestion # Remove redundant statement
-dotnet_diagnostic.rcs1136.severity = suggestion # Merge switch sections with equivalent content
-dotnet_diagnostic.rcs1145.severity = suggestion # Remove redundant 'as' operator
-dotnet_diagnostic.rcs1151.severity = suggestion # Remove redundant cast
-dotnet_diagnostic.rcs1155.severity = suggestion # Use StringComparison when comparing strings
-dotnet_diagnostic.rcs1162.severity = suggestion # Avoid chain of assignments
-dotnet_diagnostic.rcs1165.severity = suggestion # Unconstrained type parameter checked for null
-dotnet_diagnostic.rcs1174.severity = suggestion # Remove redundant async/await
-dotnet_diagnostic.rcs1182.severity = suggestion # Remove redundant base interface
-dotnet_diagnostic.rcs1198.severity = suggestion # Avoid unnecessary boxing of value type
-dotnet_diagnostic.rcs1201.severity = suggestion # Use method chaining
-dotnet_diagnostic.rcs1211.severity = suggestion # Remove unnecessary 'else'
-dotnet_diagnostic.rcs1224.severity = suggestion # Make method an extension method
-dotnet_diagnostic.rcs1238.severity = warning # Avoid nested ?: operators
-dotnet_diagnostic.rcs1241.severity = suggestion # Implement non-generic counterpart
-dotnet_diagnostic.rcs1252.severity = suggestion # Normalize usage of infinite loop
+dotnet_diagnostic.rcs0042.severity = suggestion
+dotnet_diagnostic.rcs0054.severity = suggestion
+dotnet_diagnostic.rcs0055.severity = suggestion
+dotnet_diagnostic.rcs1047.severity = suggestion
+dotnet_diagnostic.rcs1070.severity = suggestion
+dotnet_diagnostic.rcs1077.severity = suggestion
+dotnet_diagnostic.rcs1093.severity = suggestion
+dotnet_diagnostic.rcs1133.severity = suggestion
+dotnet_diagnostic.rcs1134.severity = suggestion
+dotnet_diagnostic.rcs1136.severity = suggestion
+dotnet_diagnostic.rcs1145.severity = suggestion
+dotnet_diagnostic.rcs1151.severity = suggestion
+dotnet_diagnostic.rcs1155.severity = suggestion
+dotnet_diagnostic.rcs1162.severity = suggestion
+dotnet_diagnostic.rcs1165.severity = suggestion
+dotnet_diagnostic.rcs1174.severity = suggestion
+dotnet_diagnostic.rcs1182.severity = suggestion
+dotnet_diagnostic.rcs1198.severity = suggestion
+dotnet_diagnostic.rcs1201.severity = suggestion
+dotnet_diagnostic.rcs1211.severity = suggestion
+dotnet_diagnostic.rcs1224.severity = suggestion
+dotnet_diagnostic.rcs1238.severity = warning
+dotnet_diagnostic.rcs1241.severity = suggestion
+dotnet_diagnostic.rcs1252.severity = suggestion
 roslynator_infinite_loop_style = while
-dotnet_diagnostic.rcs1255.severity = suggestion # Simplify argument null check
-dotnet_diagnostic.rcs9001.severity = suggestion # Use pattern matching
+dotnet_diagnostic.rcs1255.severity = suggestion
+dotnet_diagnostic.rcs9001.severity = suggestion
 
 
 # ---------------------------------------------------------------------
 # .NET 10 analyzer escalations
 # ---------------------------------------------------------------------
 
-# Async method lacking await. CS1998 was removed entirely in Roslyn 18.0 (dotnet/roslyn#80144);
-# IDE0390/IDE0391 reintroduce the check as opt-in fixers in 18.4 (#81835). Default severity is
-# silent, so these lines are what turn it on. NB: under TreatWarningsAsErrors they build as errors.
-dotnet_diagnostic.IDE0390.severity = warning # Methods and lambdas that can drop 'async'.
-dotnet_diagnostic.IDE0391.severity = suggestion # Interface impls / overrides where 'async' is unnecessary.
+# Async methods without await.
+dotnet_diagnostic.IDE0390.severity = warning
+dotnet_diagnostic.IDE0391.severity = suggestion
 
-# System.Threading.Lock type safety (see C# lock-statement compiler messages).
-# CS9216 (warning by default): a Lock converted to another type (e.g. object) falls back to
-#   unintended monitor-based locking instead of the Lock-specific fast path.
-# CS9217 (error by default): locking a Lock inside an async method or async lambda is disallowed.
-# Both pinned to error; CS9217 is already an error, so that line is belt-and-suspenders.
+# System.Threading.Lock safety.
 dotnet_diagnostic.CS9216.severity = error
 dotnet_diagnostic.CS9217.severity = error
 
-# Defensive I/O reliability. CA2022 flags a discarded Stream.Read/ReadAsync return value (short
-# reads silently lost); migrate to ReadExactly/ReadExactlyAsync. Already a warning under
-# AnalysisModeReliability=All; pinned to error here.
+# I/O reliability.
 dotnet_diagnostic.CA2022.severity = error
+
+# Unobserved asynchronous work.
+dotnet_diagnostic.CS4014.severity = error
+
+# Switch expression safety.
+dotnet_diagnostic.CS8509.severity = error
+dotnet_diagnostic.CS8524.severity = error
+dotnet_diagnostic.CS8846.severity = error
+dotnet_diagnostic.CS8510.severity = error
+dotnet_diagnostic.CS8847.severity = error
 
 
 # =====================================================================
