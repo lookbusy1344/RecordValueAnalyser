@@ -1,11 +1,15 @@
 #!/usr/bin/env bash
-# pre-commit.sh — run all required checks before committing.
+
+# Works in jj and plain Git checkouts.
 #
-# Install (one-time setup):
+# jj: no commit hooks, so run it directly before `jj commit`, `jj describe`
+# (finalising) and `jj squash`. It checks the files changed in `@`.
+#
+# Git: install as a hook, it checks the files changed against HEAD:
 #   ln -sf ../../scripts/pre-commit.sh .git/hooks/pre-commit
+#   chmod +x .git/hooks/pre-commit
 #
-# Or from an existing hook:
-#
+# Or append to an existing .git/hooks/pre-commit:
 # if [ ! -x "scripts/pre-commit.sh" ]; then
 #     echo "Missing executable scripts/pre-commit.sh" >&2
 #     exit 1
@@ -13,49 +17,97 @@
 #
 # exec ./scripts/pre-commit.sh
 
+
 set -euo pipefail
 
-# Resolve the real script path before computing directories. We can't rely on
-# `readlink -f` because it's unavailable on macOS's BSD userland by default.
-resolve_script_path() {
-    local source_dir=""
-    local source_path="$1"
+# GUI git clients launch hooks with a minimal PATH that omits the user-local
+# dotnet install and Homebrew binaries (gtimeout). Add the common locations so
+# the hook resolves the same tools as an interactive shell.
+export PATH="$HOME/.dotnet:/opt/homebrew/bin:/usr/local/bin:$PATH"
 
-    while [ -L "${source_path}" ]; do
-        source_dir="$(cd "$(dirname "${source_path}")" && pwd)"
-        source_path="$(readlink "${source_path}")"
-        [[ "${source_path}" != /* ]] && source_path="${source_dir}/${source_path}"
-    done
+readonly SOLUTION_PATH="RecordValueAnalyser.sln"
+readonly TEST_PROJECT="RecordValueAnalyser.Test"
+readonly TEST_TIMEOUT_SECONDS="120"
 
-    source_dir="$(cd "$(dirname "${source_path}")" && pwd)"
-    printf '%s\n' "${source_dir}/$(basename "${source_path}")"
+is_documentation_file() {
+  local path="$1"
+
+  [[ "$path" == *.md ]] \
+    || [[ "$path" == docs/* ]] \
+    || [[ "$(basename "$path")" == README* ]]
 }
 
-REAL_SCRIPT="$(resolve_script_path "$0")"
-SCRIPT_DIR="$(cd "$(dirname "${REAL_SCRIPT}")" && pwd)"
-PROJECT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+requires_dotnet_checks() {
+  local path="$1"
 
-cd "${PROJECT_DIR}"
-
-# Wrapper that prints each command before running it.
-run() {
-    echo "==> $*"
-    "$@"
+  [[ "$path" == *.cs ]] \
+    || [[ "$path" == *.csproj ]] \
+    || [[ "$path" == *.sln ]] \
+    || [[ "$path" == *.editorconfig ]] \
+    || [[ "$path" == *.props ]] \
+    || [[ "$path" == *.targets ]]
 }
 
-# Only trigger if .NET source or build files are modified — staged OR unstaged.
-# `git diff HEAD` catches both, so a dirty working tree can't slip past the hook
-# just because the user staged unrelated changes.
-if ! git -C "${PROJECT_DIR}" diff HEAD --name-only -z | tr '\0' '\n' | grep -qE \
-    '\.(cs|csproj|sln|editorconfig|props|targets)$'; then
-    echo "==> No .NET source or build files modified, skipping."
+changed_files() {
+  if [[ -z "${GIT_INDEX_FILE:-}" ]] && jj --ignore-working-copy root > /dev/null 2>&1; then
+    jj diff --name-only -r @ --no-pager
+  else
+    git diff HEAD --name-only --diff-filter=ACMR
+  fi
+}
+
+collect_staged_files() {
+  local staged_file
+
+  while IFS= read -r staged_file; do
+    [[ -n "$staged_file" ]] && printf '%s\n' "$staged_file"
+  done < <(changed_files)
+}
+
+run_dotnet_checks() {
+  echo "Running pre-commit checks for staged .NET files..."
+  dotnet build --configuration Debug --no-restore "$TEST_PROJECT"
+  dotnet format "$SOLUTION_PATH" --verify-no-changes
+  gtimeout "$TEST_TIMEOUT_SECONDS" dotnet test --no-restore
+}
+
+main() {
+  local staged_files=()
+  local staged_file
+
+  while IFS= read -r staged_file; do
+    staged_files+=("$staged_file")
+  done < <(collect_staged_files)
+
+  if [[ "${#staged_files[@]}" -eq 0 ]]; then
+    echo "No modified files found."
     exit 0
-fi
+  fi
 
-echo "==> Running RecordValueAnalyser pre-commit checks..."
+  local has_non_documentation_files="false"
+  local has_dotnet_files="false"
 
-run dotnet build -c Debug RecordValueAnalyser.Test
-run dotnet format --verify-no-changes
-run gtimeout 120 dotnet test
+  for staged_file in "${staged_files[@]}"; do
+    if ! is_documentation_file "$staged_file"; then
+      has_non_documentation_files="true"
+    fi
 
-echo "==> All checks passed."
+    if requires_dotnet_checks "$staged_file"; then
+      has_dotnet_files="true"
+    fi
+  done
+
+  if [[ "$has_non_documentation_files" == "false" ]]; then
+    echo "Documentation-only commit detected. Skipping .NET checks."
+    exit 0
+  fi
+
+  if [[ "$has_dotnet_files" == "false" ]]; then
+    echo "No modified .NET source or build files detected. Skipping .NET checks."
+    exit 0
+  fi
+
+  run_dotnet_checks
+}
+
+main "$@"
