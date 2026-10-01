@@ -200,12 +200,12 @@ yarn.lock text eol=lf
 *.tt text eol=lf
 *.ttinclude text eol=lf
 
-# Windows-specific scripts (require CRLF)
-*.cmd text eol=crlf
-*.bat text eol=crlf
-*.ps1 text eol=crlf
-*.psm1 text eol=crlf
-*.psd1 text eol=crlf
+# Windows-specific scripts
+*.cmd text eol=lf
+*.bat text eol=lf
+*.ps1 text eol=lf
+*.psm1 text eol=lf
+*.psd1 text eol=lf
 
 # Images
 *.png binary
