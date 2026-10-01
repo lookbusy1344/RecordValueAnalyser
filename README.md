@@ -12,6 +12,10 @@ record TestRecord(int A, string B, IReadOnlyList<int> C);
                                    ~~~~~~~~~~~~~~~~~~~~  JSV01: member lacks value semantics
 ```
 
+## Jujutsu
+
+This repo is managed with Jujutsu rather than Git. Try it out! https://docs.jj-vcs.dev/latest/
+
 ## Contents
 
 This project contains:
