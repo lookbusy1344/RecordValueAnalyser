@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # pre-push.sh — format, build and test unpushed jj revisions.
 #
-# In a plain Git checkout there are no revisions to select: it formats the
-# working tree with `dotnet format` and runs the same checks on it. --full
-# makes no difference there.
+# In a plain Git checkout there are no revisions to select or amend: it runs
+# the same checks on the working tree without formatting it, and refuses
+# uncommitted changes to tracked files so the checked tree is the pushed HEAD.
+# --full makes no difference there.
 #
 # Default: the tip only (the newest non-empty mutable revision in ::@).
 # --full: every non-empty mutable revision in ::@, each in its own checkout
@@ -60,9 +61,11 @@ fi
 cd "${root}"
 
 if [[ "${use_jj}" == false ]]; then
-    echo "==> Formatting working tree"
-    dotnet format "${SOLUTION_PATH}"
-    echo "==> Checking working tree"
+    if [[ -n "$(git status --porcelain --untracked-files=no)" ]]; then
+        echo "==> Uncommitted changes to tracked files. Commit or stash them first." >&2
+        exit 1
+    fi
+    echo "==> Checking working tree at $(git log -1 --format='%h %s')"
     bash -c "${CHECKS}"
     echo "==> All checks passed."
     exit 0
