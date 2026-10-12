@@ -20,11 +20,15 @@ internal enum ValueEqualityResult
 
 internal static class RecordValueSemantics
 {
-	// C# 15 union member names
-	// https://github.com/dotnet/csharplang/blob/main/proposals/csharp-15.0/unions.md
-	private const string UnionValuePropertyName = "Value";
-	private const string UnionMembersInterfaceName = "IUnionMembers";
-	private const string UnionFactoryMethodName = "Create";
+	/// <summary>
+	///     BCL structs whose Equals compares identity (an array or span reference), not contents
+	/// </summary>
+	private static readonly HashSet<string> ReferenceEqualityStructs = new(System.StringComparer.Ordinal) {
+		"System.Collections.Immutable.ImmutableArray<T>",
+		"System.ArraySegment<T>",
+		"System.Memory<T>",
+		"System.ReadOnlyMemory<T>",
+	};
 
 	/// <summary>
 	///     Check if this record member type has value semantics
@@ -59,16 +63,8 @@ internal static class RecordValueSemantics
 				return (ValueEqualityResult.Failed, null); // Inline array structs lack value semantics
 			}
 
-			if (IsImmutableArrayType(type)) {
-				return (ValueEqualityResult.Failed, null); // ImmutableArray<T> lacks value semantics
-			}
-
-			if (IsArraySegmentType(type)) {
-				return (ValueEqualityResult.Failed, null); // ArraySegment<T> compares array identity, not contents
-			}
-
-			if (IsMemoryType(type)) {
-				return (ValueEqualityResult.Failed, null); // Memory<T>/ReadOnlyMemory<T> compare span identity, not contents
+			if (IsReferenceEqualityStruct(type)) {
+				return (ValueEqualityResult.Failed, null); // ImmutableArray<T>, ArraySegment<T>, Memory<T> etc.
 			}
 
 			if (!type.IsTupleType) {
@@ -93,7 +89,7 @@ internal static class RecordValueSemantics
 			// get the member types of the tuple or struct
 			IEnumerable<ITypeSymbol>? memberTypes = type switch {
 				INamedTypeSymbol { IsTupleType: true } tuple => tuple.TupleElements.Select(e => e.Type),
-				INamedTypeSymbol union when IsUnionStruct(union) => GetUnionMemberTypes(union),
+				INamedTypeSymbol union when UnionSemantics.IsUnionStruct(union) => UnionSemantics.GetMemberTypes(union),
 				_ when IsStruct(type) => GetStructMembers(type).Select(MemberType),
 				_ => null,
 			};
@@ -205,7 +201,7 @@ internal static class RecordValueSemantics
 	/// <summary>
 	///     Check for System.Object
 	/// </summary>
-	private static bool IsObjectType(ITypeSymbol? type) => type?.SpecialType == SpecialType.System_Object;
+	internal static bool IsObjectType(ITypeSymbol? type) => type?.SpecialType == SpecialType.System_Object;
 
 	/// <summary>
 	///     Record class or record struct. Plain readonly structs are excluded.
@@ -225,83 +221,15 @@ internal static class RecordValueSemantics
 			attribute.AttributeClass?.ToDisplayString() == "System.Runtime.CompilerServices.InlineArrayAttribute");
 
 	/// <summary>
-	///     True if this is a C# 15 union struct, declared with 'union' or marked with UnionAttribute. Union classes compare by reference.
-	///     https://github.com/dotnet/csharplang/blob/main/proposals/csharp-15.0/unions.md
-	/// </summary>
-#pragma warning disable RSEXPERIMENTAL006 // ITypeSymbol.IsUnion is flagged experimental in Roslyn 5.9.0
-	private static bool IsUnionStruct(ITypeSymbol type) => type is { IsUnion: true, TypeKind: TypeKind.Struct };
-#pragma warning restore RSEXPERIMENTAL006
-
-	/// <summary>
-	///     A union stores its case in an object member, compared with object.Equals, so the case types stand in for that member.
-	///     Every other member is checked as for any struct.
-	/// </summary>
-	private static IEnumerable<ITypeSymbol> GetUnionMemberTypes(INamedTypeSymbol union)
-	{
-		var storage = GetUnionStorage(union);
-		var otherMembers = GetStructMembers(union)
-			.Where(m => !storage.Contains(m, SymbolEqualityComparer.Default))
-			.Select(MemberType);
-
-		return GetUnionCaseTypes(union).Concat(otherMembers);
-	}
-
-	/// <summary>
-	///     The members holding the boxed case: the Value property, and the object field behind it when Value is not an auto-property.
-	///     With several object fields the storage is ambiguous, so none of them is treated as storage.
-	/// </summary>
-	private static IReadOnlyList<ISymbol> GetUnionStorage(INamedTypeSymbol union)
-	{
-		var valueProperties = union.GetMembers().OfType<IPropertySymbol>().Where(IsUnionValueProperty).ToList();
-		var valueIsAuto = union.GetMembers().OfType<IFieldSymbol>()
-			.Any(f => f.IsImplicitlyDeclared && f.AssociatedSymbol is IPropertySymbol p && IsUnionValueProperty(p));
-		var objectFields = GetStructMembers(union).OfType<IFieldSymbol>().Where(f => IsObjectType(f.Type)).ToList();
-
-		return objectFields.Count == 1 && !valueIsAuto ? [.. valueProperties, objectFields[0]] : valueProperties;
-	}
-
-	/// <summary>
-	///     The union's object-typed Value property, declared directly or as an explicit interface implementation
-	/// </summary>
-	private static bool IsUnionValueProperty(IPropertySymbol property) =>
-		IsObjectType(property.Type)
-		&& (property.Name == UnionValuePropertyName
-			|| property.ExplicitInterfaceImplementations.Any(p => p.Name == UnionValuePropertyName));
-
-	/// <summary>
-	///     Case types are the parameter types of the union creation members. When the union implements a nested IUnionMembers
-	///     interface, those are the static Create methods found on it; otherwise the union's constructors.
-	///     A constructed generic union yields substituted types.
-	/// </summary>
-	private static IEnumerable<ITypeSymbol> GetUnionCaseTypes(INamedTypeSymbol union)
-	{
-		var provider = union.GetTypeMembers(UnionMembersInterfaceName)
-			.FirstOrDefault(i => i.TypeKind == TypeKind.Interface && union.AllInterfaces.Contains(i, SymbolEqualityComparer.Default));
-
-		var creationMembers = provider == null
-			? union.InstanceConstructors.AsEnumerable()
-			: provider.AllInterfaces.Prepend(provider)
-				.SelectMany(i => i.GetMembers(UnionFactoryMethodName))
-				.OfType<IMethodSymbol>()
-				.Where(m => m.IsStatic && m.ReturnType.Equals(union, SymbolEqualityComparer.Default));
-
-		return creationMembers.Where(IsUnionCreationMember).Select(m => m.Parameters[0].Type);
-	}
-
-	/// <summary>
-	///     A union creation member is public and takes one by-value or 'in' parameter
-	/// </summary>
-	private static bool IsUnionCreationMember(IMethodSymbol method) =>
-		method is { DeclaredAccessibility: Accessibility.Public, Parameters.Length: 1 }
-		&& method.Parameters[0].RefKind is RefKind.None or RefKind.In;
-
-	/// <summary>
 	///     The explicit fields and properties of a struct. Auto-property backing fields are covered by their property.
 	/// </summary>
-	private static IEnumerable<ISymbol> GetStructMembers(ITypeSymbol type) =>
+	internal static IEnumerable<ISymbol> GetStructMembers(ITypeSymbol type) =>
 		type.GetMembers().Where(m => m is IFieldSymbol { IsImplicitlyDeclared: false } or IPropertySymbol);
 
-	private static ITypeSymbol MemberType(ISymbol member) =>
+	/// <summary>
+	///     The type of a field or property
+	/// </summary>
+	internal static ITypeSymbol MemberType(ISymbol member) =>
 		member switch {
 			IFieldSymbol field => field.Type,
 			IPropertySymbol property => property.Type,
@@ -355,20 +283,8 @@ internal static class RecordValueSemantics
 					  && m.ContainingType.Equals(type, SymbolEqualityComparer.Default)) == true;
 
 	/// <summary>
-	///     Is this an immutable array? They lack value semantics
+	///     Is this a BCL struct whose Equals compares identity rather than contents?
 	/// </summary>
-	private static bool IsImmutableArrayType(ITypeSymbol? typeSymbol) =>
-		GetGenericName(typeSymbol) == "System.Collections.Immutable.ImmutableArray<T>";
-
-	/// <summary>
-	///     Is this an ArraySegment&lt;T&gt;? Its Equals compares array identity, not element contents.
-	/// </summary>
-	private static bool IsArraySegmentType(ITypeSymbol? typeSymbol) =>
-		GetGenericName(typeSymbol) == "System.ArraySegment<T>";
-
-	/// <summary>
-	///     Is this Memory&lt;T&gt; or ReadOnlyMemory&lt;T&gt;? Their Equals compares span identity, not element contents.
-	/// </summary>
-	private static bool IsMemoryType(ITypeSymbol? typeSymbol) =>
-		GetGenericName(typeSymbol) is "System.Memory<T>" or "System.ReadOnlyMemory<T>";
+	private static bool IsReferenceEqualityStruct(ITypeSymbol type) =>
+		GetGenericName(type) is string name && ReferenceEqualityStructs.Contains(name);
 }
