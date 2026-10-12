@@ -78,7 +78,7 @@ record TestRecord(int A, string B, IReadOnlyList<int> C);
                                    ~~~~~~~~~~~~~~~~~~~~  JSV01: member lacks value semantics
 ```
 
-It was built for C# 12+ and .NET 8, 9, and 10. It checks `record class` and `record struct` types for the following:
+It was built for C# 12+ and .NET 8, 9, 10 and 11. It checks `record class` and `record struct` types for the following:
 
 - if the record has a `Equals(T)` method, it is ok and no more checks are performed (partial records are handled correctly via the semantic model)
 - Otherwise all members are checked for:
@@ -92,6 +92,7 @@ It was built for C# 12+ and .NET 8, 9, and 10. It checks `record class` and `rec
     - it is a record (these will be checked elsewhere, so are assumed ok here)
     - it is a class (without Equals method, these are not ok)
     - it is a tuple or struct (without Equals method, their members are checked recursively)
+    - it is a C# 15 union struct (without Equals method, each case type is checked recursively, along with any other fields). Union classes are checked as classes
     - circular struct layouts (CS0523) are detected and do not cause unbounded recursion
     - Multi-variable field declarations (e.g. `int[] A, B;`) each produce their own diagnostic
 
