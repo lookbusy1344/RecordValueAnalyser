@@ -87,7 +87,7 @@ It was built for C# 12+ and .NET 8, 9, 10 and 11. It checks `record class` and `
     - it is a record (these will be checked elsewhere, so are assumed ok here)
     - it is a class (without Equals method, these are not ok)
     - it is a tuple or struct (without Equals method, their members are checked recursively)
-    - it is a C# 15 union struct (without Equals method, each case type is checked recursively, along with any other fields). Union classes are checked as classes
+    - it is a C# 15 union struct (without Equals method, each case type is checked recursively, along with any other fields). Case types come from the public single-parameter constructors, or from the static `Create` methods of a nested `IUnionMembers` interface. Union classes are checked as classes
     - circular struct layouts (CS0523) are detected and do not cause unbounded recursion
     - Multi-variable field declarations (e.g. `int[] A, B;`) each produce their own diagnostic
 

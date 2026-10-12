@@ -603,4 +603,469 @@ public class RecordValueAnalyserUnitTest
 
 		await VerifyPreviewAsync(test);
 	}
+
+	[TestMethod]
+	public async Task UnionPrivateConstructorPass()
+	{
+		// a private constructor chaining to a case constructor is not a case, so Cat[] is not checked
+		const string test = coGeneral
+							+ """
+							  public record A(Pet P);
+
+							  public record Cat(string Name);
+							  public record Dog(int Age);
+							  public union Pet(Cat, Dog)
+							  {
+							  	private Pet(Cat[] cats) : this(cats[0]) { }
+							  }
+							  """
+							+ coUnionTypes;
+
+		await VerifyPreviewAsync(test);
+	}
+
+	[TestMethod]
+	public async Task CustomUnionStructPrivateConstructorPass()
+	{
+		// only public constructors are case constructors; the private object constructor is a helper
+		const string test = coGeneral
+							+ """
+							  public record A(Result R);
+
+							  [System.Runtime.CompilerServices.Union]
+							  public struct Result : System.Runtime.CompilerServices.IUnion
+							  {
+							  	private Result(object value, bool unused) { Value = value; }
+							  	private Result(object value) { Value = value; }
+							  	internal Result(int[] value) { Value = value; }
+							  	public Result(int value) : this((object)value) { }
+							  	public object Value { get; }
+							  }
+							  """
+							+ coUnionTypes;
+
+		await VerifyPreviewAsync(test);
+	}
+
+	[TestMethod]
+	public async Task CustomUnionStructMultiParameterConstructorPass()
+	{
+		// a constructor with two parameters is not a case constructor, so int[] is not a case type
+		const string test = coGeneral
+							+ """
+							  public record A(Result R);
+
+							  [System.Runtime.CompilerServices.Union]
+							  public struct Result : System.Runtime.CompilerServices.IUnion
+							  {
+							  	public Result(int value) { Value = value; }
+							  	public Result(int[] values, int index) : this(values[index]) { }
+							  	public object Value { get; }
+							  }
+							  """
+							+ coUnionTypes;
+
+		await VerifyPreviewAsync(test);
+	}
+
+	[TestMethod]
+	public async Task CustomUnionStructRefConstructorPass()
+	{
+		// a case constructor takes its parameter by value or 'in'; ref and out constructors are not cases
+		const string test = coGeneral
+							+ """
+							  public record A(Result R);
+
+							  [System.Runtime.CompilerServices.Union]
+							  public struct Result : System.Runtime.CompilerServices.IUnion
+							  {
+							  	public Result(int value) { Value = value; }
+							  	public Result(ref int[] values) : this(values[0]) { }
+							  	public Result(out string[] values) : this(0) { values = new string[0]; }
+							  	public object Value { get; }
+							  }
+							  """
+							+ coUnionTypes;
+
+		await VerifyPreviewAsync(test);
+	}
+
+	[TestMethod]
+	public async Task CustomUnionStructInConstructorFail()
+	{
+		// an 'in' parameter is a case constructor
+		const string test = coGeneral
+							+ """
+							  public record A(Result R);
+
+							  [System.Runtime.CompilerServices.Union]
+							  public struct Result : System.Runtime.CompilerServices.IUnion
+							  {
+							  	public Result(int value) { Value = value; }
+							  	public Result(in int[] values) { Value = values; }
+							  	public object Value { get; }
+							  }
+							  """
+							+ coUnionTypes;
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 17, 6, 25)
+			.WithArguments("Result R (field int[])");
+
+		await VerifyPreviewAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task CustomUnionStructExtraObjectFieldFail()
+	{
+		// only the case storage is checked through the case types; another object field is compared with object.Equals
+		const string test = coGeneral
+							+ """
+							  public record A(Result R);
+
+							  [System.Runtime.CompilerServices.Union]
+							  public struct Result : System.Runtime.CompilerServices.IUnion
+							  {
+							  	public Result(int value) { Value = value; Tag = null; }
+							  	public object Value { get; }
+							  	public object Tag;
+							  }
+							  """
+							+ coUnionTypes;
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 17, 6, 25)
+			.WithArguments("Result R (field object)");
+
+		await VerifyPreviewAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task CustomUnionStructExtraPrivateObjectFieldFail()
+	{
+		// Value is an auto-property, so a private object field is extra state, not the case storage
+		const string test = coGeneral
+							+ """
+							  public record A(Result R);
+
+							  [System.Runtime.CompilerServices.Union]
+							  public struct Result : System.Runtime.CompilerServices.IUnion
+							  {
+							  	private object _tag;
+							  	public Result(int value) { Value = value; _tag = null; }
+							  	public object Value { get; }
+							  	public object GetTag() => _tag;
+							  }
+							  """
+							+ coUnionTypes;
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 17, 6, 25)
+			.WithArguments("Result R (field object)");
+
+		await VerifyPreviewAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task CustomUnionStructExplicitStorageFieldPass()
+	{
+		// Value reads an explicit object field; that field is the case storage
+		const string test = coGeneral
+							+ """
+							  public record A(Result R);
+
+							  [System.Runtime.CompilerServices.Union]
+							  public struct Result : System.Runtime.CompilerServices.IUnion
+							  {
+							  	private readonly object _value;
+							  	public Result(int value) { _value = value; }
+							  	public Result(string value) { _value = value; }
+							  	public object Value => _value;
+							  }
+							  """
+							+ coUnionTypes;
+
+		await VerifyPreviewAsync(test);
+	}
+
+	[TestMethod]
+	public async Task CustomUnionStructTwoObjectFieldsFail()
+	{
+		// with two object fields the case storage is ambiguous, so both are checked
+		const string test = coGeneral
+							+ """
+							  public record A(Result R);
+
+							  [System.Runtime.CompilerServices.Union]
+							  public struct Result : System.Runtime.CompilerServices.IUnion
+							  {
+							  	private readonly object _value;
+							  	private readonly object _tag;
+							  	public Result(int value) { _value = value; _tag = null; }
+							  	public object Value => _value;
+							  	public object GetTag() => _tag;
+							  }
+							  """
+							+ coUnionTypes;
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 17, 6, 25)
+			.WithArguments("Result R (field object)");
+
+		await VerifyPreviewAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task UnionMemberProviderPass()
+	{
+		// a nested IUnionMembers interface supplies the case types through static Create methods
+		const string test = coGeneral
+							+ """
+							  public record A(Result<int> R);
+
+							  [System.Runtime.CompilerServices.Union]
+							  public struct Result<T> : Result<T>.IUnionMembers
+							  {
+							  	private object _value;
+
+							  	public interface IUnionMembers
+							  	{
+							  		public static Result<T> Create(T value) => new() { _value = value };
+							  		public static Result<T> Create(string error) => new() { _value = error };
+							  		object Value { get; }
+							  	}
+
+							  	object IUnionMembers.Value => _value;
+							  }
+							  """
+							+ coUnionTypes;
+
+		await VerifyPreviewAsync(test);
+	}
+
+	[TestMethod]
+	public async Task UnionMemberProviderGenericFail()
+	{
+		// the Create parameter types come from the constructed union, so T = Cat fails
+		const string test = coGeneral
+							+ """
+							  public record A(Result<Cat> R);
+
+							  public class Cat { public string Name = ""; }
+
+							  [System.Runtime.CompilerServices.Union]
+							  public struct Result<T> : Result<T>.IUnionMembers
+							  {
+							  	private object _value;
+
+							  	public interface IUnionMembers
+							  	{
+							  		public static Result<T> Create(T value) => new() { _value = value };
+							  		public static Result<T> Create(string error) => new() { _value = error };
+							  		object Value { get; }
+							  	}
+
+							  	object IUnionMembers.Value => _value;
+							  }
+							  """
+							+ coUnionTypes;
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 17, 6, 30)
+			.WithArguments("Result<Cat> R (field Cat)");
+
+		await VerifyPreviewAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task UnionMemberProviderClassCaseFail()
+	{
+		const string test = coGeneral
+							+ """
+							  public record A(Result R);
+
+							  public class Error { public string Message = ""; }
+
+							  [System.Runtime.CompilerServices.Union]
+							  public struct Result : Result.IUnionMembers
+							  {
+							  	private object _value;
+
+							  	public interface IUnionMembers
+							  	{
+							  		public static Result Create(int value) => new() { _value = value };
+							  		public static Result Create(Error error) => new() { _value = error };
+							  		object Value { get; }
+							  	}
+
+							  	object IUnionMembers.Value => _value;
+							  }
+							  """
+							+ coUnionTypes;
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 17, 6, 25)
+			.WithArguments("Result R (field Error)");
+
+		await VerifyPreviewAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task UnionMemberProviderInheritedCreateFail()
+	{
+		// Create methods on an interface that IUnionMembers inherits are also union factory methods
+		const string test = coGeneral
+							+ """
+							  public record A(Result R);
+
+							  public class Error { public string Message = ""; }
+
+							  [System.Runtime.CompilerServices.Union]
+							  public struct Result : Result.IUnionMembers
+							  {
+							  	private object _value;
+
+							  	public interface IBaseMembers
+							  	{
+							  		public static Result Create(Error error) => new() { _value = error };
+							  	}
+
+							  	public interface IUnionMembers : IBaseMembers
+							  	{
+							  		public static Result Create(int value) => new() { _value = value };
+							  		object Value { get; }
+							  	}
+
+							  	object IUnionMembers.Value => _value;
+							  }
+							  """
+							+ coUnionTypes;
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 17, 6, 25)
+			.WithArguments("Result R (field Error)");
+
+		await VerifyPreviewAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task UnionMemberProviderIgnoresOtherMembersPass()
+	{
+		// with a provider, constructors on the union are not cases; nor are Create methods that are private, instance, return another type or take two parameters
+		const string test = coGeneral
+							+ """
+							  public record A(Result R);
+
+							  [System.Runtime.CompilerServices.Union]
+							  public struct Result : Result.IUnionMembers
+							  {
+							  	private object _value;
+
+							  	public Result(int[] values) { _value = values[0]; }
+
+							  	public interface IUnionMembers
+							  	{
+							  		public static Result Create(int value) => new() { _value = value };
+							  		private static Result Create(string[] values) => new() { _value = values[0] };
+							  		public static int Create(int[] values) => values[0];
+							  		public static Result Create(int[] values, int index) => new() { _value = values[index] };
+							  		public Result Create(List<int> values) => new() { _value = values };
+							  		object Value { get; }
+							  	}
+
+							  	object IUnionMembers.Value => _value;
+							  }
+							  """
+							+ coUnionTypes;
+
+		await VerifyPreviewAsync(test);
+	}
+
+	[TestMethod]
+	public async Task UnionMemberProviderNotImplementedUsesConstructors()
+	{
+		// a nested IUnionMembers the union does not implement is not a provider, so the constructors define the cases
+		const string test = coGeneral
+							+ """
+							  public record A(Result R);
+
+							  [System.Runtime.CompilerServices.Union]
+							  public struct Result : System.Runtime.CompilerServices.IUnion
+							  {
+							  	public Result(int value) { Value = value; }
+							  	public Result(int[] values) { Value = values; }
+							  	public object Value { get; }
+
+							  	public interface IUnionMembers
+							  	{
+							  		public static Result Create(int value) => new(value);
+							  	}
+							  }
+							  """
+							+ coUnionTypes;
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 17, 6, 25)
+			.WithArguments("Result R (field int[])");
+
+		await VerifyPreviewAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task UnionInStructFieldFail()
+	{
+		// a union reached through a plain struct field is checked by its case types
+		const string test = coGeneral
+							+ """
+							  public record A(Holder H);
+
+							  public struct Holder { public Pet P; }
+							  public class Cat { public string Name = ""; }
+							  public record Dog(int Age);
+							  public union Pet(Cat, Dog);
+							  """
+							+ coUnionTypes;
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 17, 6, 25)
+			.WithArguments("Holder H (field Pet)");
+
+		await VerifyPreviewAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task UnionInTupleFail()
+	{
+		const string test = coGeneral
+							+ """
+							  public record A((Pet, int) T);
+
+							  public class Cat { public string Name = ""; }
+							  public record Dog(int Age);
+							  public union Pet(Cat, Dog);
+							  """
+							+ coUnionTypes;
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 17, 6, 29)
+			.WithArguments("(Pet, int) T (field Pet)");
+
+		await VerifyPreviewAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task UnionInTuplePass()
+	{
+		const string test = coGeneral
+							+ """
+							  public record A((Pet, int) T);
+
+							  public record Cat(string Name);
+							  public record Dog(int Age);
+							  public union Pet(Cat, Dog);
+							  """
+							+ coUnionTypes;
+
+		await VerifyPreviewAsync(test);
+	}
 }

@@ -20,6 +20,12 @@ internal enum ValueEqualityResult
 
 internal static class RecordValueSemantics
 {
+	// C# 15 union member names
+	// https://github.com/dotnet/csharplang/blob/main/proposals/csharp-15.0/unions.md
+	private const string UnionValuePropertyName = "Value";
+	private const string UnionMembersInterfaceName = "IUnionMembers";
+	private const string UnionFactoryMethodName = "Create";
+
 	/// <summary>
 	///     Check if this record member type has value semantics
 	/// </summary>
@@ -87,10 +93,8 @@ internal static class RecordValueSemantics
 			// get the member types of the tuple or struct
 			IEnumerable<ITypeSymbol>? memberTypes = type switch {
 				INamedTypeSymbol { IsTupleType: true } tuple => tuple.TupleElements.Select(e => e.Type),
-				// a union stores its case in an object member, compared with object.Equals, so check the case types instead
-				INamedTypeSymbol union when IsUnionStruct(union) =>
-					GetUnionCaseTypes(union).Concat(GetStructMemberTypes(union).Where(t => !IsObjectType(t))),
-				_ when IsStruct(type) => GetStructMemberTypes(type),
+				INamedTypeSymbol union when IsUnionStruct(union) => GetUnionMemberTypes(union),
+				_ when IsStruct(type) => GetStructMembers(type).Select(MemberType),
 				_ => null,
 			};
 
@@ -229,25 +233,80 @@ internal static class RecordValueSemantics
 #pragma warning restore RSEXPERIMENTAL006
 
 	/// <summary>
-	///     The case types of a union are the parameter types of its single-parameter constructors.
-	///     A constructed generic union yields substituted types.
+	///     A union stores its case in an object member, compared with object.Equals, so the case types stand in for that member.
+	///     Every other member is checked as for any struct.
 	/// </summary>
-	private static IEnumerable<ITypeSymbol> GetUnionCaseTypes(INamedTypeSymbol union) =>
-		union.InstanceConstructors
-			.Where(c => c.Parameters.Length == 1)
-			.Select(c => c.Parameters[0].Type);
+	private static IEnumerable<ITypeSymbol> GetUnionMemberTypes(INamedTypeSymbol union)
+	{
+		var storage = GetUnionStorage(union);
+		var otherMembers = GetStructMembers(union)
+			.Where(m => !storage.Contains(m, SymbolEqualityComparer.Default))
+			.Select(MemberType);
+
+		return GetUnionCaseTypes(union).Concat(otherMembers);
+	}
 
 	/// <summary>
-	///     Types of the explicit fields and properties of a struct. Auto-property backing fields are covered by their property.
+	///     The members holding the boxed case: the Value property, and the object field behind it when Value is not an auto-property.
+	///     With several object fields the storage is ambiguous, so none of them is treated as storage.
 	/// </summary>
-	private static IEnumerable<ITypeSymbol> GetStructMemberTypes(ITypeSymbol type) =>
-		type.GetMembers()
-			.Select(m => m switch {
-				IFieldSymbol { IsImplicitlyDeclared: false } field => field.Type,
-				IPropertySymbol property => property.Type,
-				_ => null,
-			})
-			.OfType<ITypeSymbol>();
+	private static IReadOnlyList<ISymbol> GetUnionStorage(INamedTypeSymbol union)
+	{
+		var valueProperties = union.GetMembers().OfType<IPropertySymbol>().Where(IsUnionValueProperty).ToList();
+		var valueIsAuto = union.GetMembers().OfType<IFieldSymbol>()
+			.Any(f => f.IsImplicitlyDeclared && f.AssociatedSymbol is IPropertySymbol p && IsUnionValueProperty(p));
+		var objectFields = GetStructMembers(union).OfType<IFieldSymbol>().Where(f => IsObjectType(f.Type)).ToList();
+
+		return objectFields.Count == 1 && !valueIsAuto ? [.. valueProperties, objectFields[0]] : valueProperties;
+	}
+
+	/// <summary>
+	///     The union's object-typed Value property, declared directly or as an explicit interface implementation
+	/// </summary>
+	private static bool IsUnionValueProperty(IPropertySymbol property) =>
+		IsObjectType(property.Type)
+		&& (property.Name == UnionValuePropertyName
+			|| property.ExplicitInterfaceImplementations.Any(p => p.Name == UnionValuePropertyName));
+
+	/// <summary>
+	///     Case types are the parameter types of the union creation members. When the union implements a nested IUnionMembers
+	///     interface, those are the static Create methods found on it; otherwise the union's constructors.
+	///     A constructed generic union yields substituted types.
+	/// </summary>
+	private static IEnumerable<ITypeSymbol> GetUnionCaseTypes(INamedTypeSymbol union)
+	{
+		var provider = union.GetTypeMembers(UnionMembersInterfaceName)
+			.FirstOrDefault(i => i.TypeKind == TypeKind.Interface && union.AllInterfaces.Contains(i, SymbolEqualityComparer.Default));
+
+		var creationMembers = provider == null
+			? union.InstanceConstructors.AsEnumerable()
+			: provider.AllInterfaces.Prepend(provider)
+				.SelectMany(i => i.GetMembers(UnionFactoryMethodName))
+				.OfType<IMethodSymbol>()
+				.Where(m => m.IsStatic && m.ReturnType.Equals(union, SymbolEqualityComparer.Default));
+
+		return creationMembers.Where(IsUnionCreationMember).Select(m => m.Parameters[0].Type);
+	}
+
+	/// <summary>
+	///     A union creation member is public and takes one by-value or 'in' parameter
+	/// </summary>
+	private static bool IsUnionCreationMember(IMethodSymbol method) =>
+		method is { DeclaredAccessibility: Accessibility.Public, Parameters.Length: 1 }
+		&& method.Parameters[0].RefKind is RefKind.None or RefKind.In;
+
+	/// <summary>
+	///     The explicit fields and properties of a struct. Auto-property backing fields are covered by their property.
+	/// </summary>
+	private static IEnumerable<ISymbol> GetStructMembers(ITypeSymbol type) =>
+		type.GetMembers().Where(m => m is IFieldSymbol { IsImplicitlyDeclared: false } or IPropertySymbol);
+
+	private static ITypeSymbol MemberType(ISymbol member) =>
+		member switch {
+			IFieldSymbol field => field.Type,
+			IPropertySymbol property => property.Type,
+			_ => throw new System.ArgumentException($"Not a field or property: {member}", nameof(member)),
+		};
 
 	/// <summary>
 	///     Is this always invalid? (object, dynamic, etc)
