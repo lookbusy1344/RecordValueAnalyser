@@ -84,34 +84,24 @@ internal static class RecordValueSemantics
 				}
 			}
 
-			// get the members of the tuple or struct
-			IEnumerable<ISymbol>? members = null;
-			if (type is INamedTypeSymbol { IsTupleType: true } namedTypeSymbol) {
-				members = namedTypeSymbol.TupleElements;
-			} else if (IsStruct(type)) {
-				members = type.GetMembers()
-					.Where(m => m is IFieldSymbol f ? !f.IsImplicitlyDeclared : m is IPropertySymbol);
-			}
+			// get the member types of the tuple or struct
+			IEnumerable<ITypeSymbol>? memberTypes = type switch {
+				INamedTypeSymbol { IsTupleType: true } tuple => tuple.TupleElements.Select(e => e.Type),
+				// a union stores its case in an object member, compared with object.Equals, so check the case types instead
+				INamedTypeSymbol union when IsUnionStruct(union) =>
+					GetUnionCaseTypes(union).Concat(GetStructMemberTypes(union).Where(t => !IsObjectType(t))),
+				_ when IsStruct(type) => GetStructMemberTypes(type),
+				_ => null,
+			};
 
-			if (members != null) {
+			if (memberTypes != null) {
 				// this compound type has members. Check each one
-				foreach (var member in members) {
-					var memberType = member switch {
-						IPropertySymbol property => property.Type,
-						IFieldSymbol field => field.Type,
-						_ => null,
-					};
-
-					if (memberType == null) {
-						continue;
-					}
-
+				foreach (var memberType in memberTypes) {
 					var (result, _) = CheckMember(memberType, visited);
 
 					if (result != ValueEqualityResult.Ok) {
 						// if the nested type fails, return the type name
-						var nestedtypefail = memberType?.ToDisplayString(NullableFlowState.None) ?? "UNKNOWN";
-						return (ValueEqualityResult.NestedFailed, nestedtypefail);
+						return (ValueEqualityResult.NestedFailed, memberType.ToDisplayString(NullableFlowState.None));
 					}
 				}
 
@@ -229,6 +219,35 @@ internal static class RecordValueSemantics
 	private static bool IsInlineArray(ITypeSymbol? type) =>
 		type is { TypeKind: TypeKind.Struct } && type.GetAttributes().Any(attribute =>
 			attribute.AttributeClass?.ToDisplayString() == "System.Runtime.CompilerServices.InlineArrayAttribute");
+
+	/// <summary>
+	///     True if this is a C# 15 union struct, declared with 'union' or marked with UnionAttribute. Union classes compare by reference.
+	///     https://github.com/dotnet/csharplang/blob/main/proposals/csharp-15.0/unions.md
+	/// </summary>
+#pragma warning disable RSEXPERIMENTAL006 // ITypeSymbol.IsUnion is flagged experimental in Roslyn 5.9.0
+	private static bool IsUnionStruct(ITypeSymbol type) => type is { IsUnion: true, TypeKind: TypeKind.Struct };
+#pragma warning restore RSEXPERIMENTAL006
+
+	/// <summary>
+	///     The case types of a union are the parameter types of its single-parameter constructors.
+	///     A constructed generic union yields substituted types.
+	/// </summary>
+	private static IEnumerable<ITypeSymbol> GetUnionCaseTypes(INamedTypeSymbol union) =>
+		union.InstanceConstructors
+			.Where(c => c.Parameters.Length == 1)
+			.Select(c => c.Parameters[0].Type);
+
+	/// <summary>
+	///     Types of the explicit fields and properties of a struct. Auto-property backing fields are covered by their property.
+	/// </summary>
+	private static IEnumerable<ITypeSymbol> GetStructMemberTypes(ITypeSymbol type) =>
+		type.GetMembers()
+			.Select(m => m switch {
+				IFieldSymbol { IsImplicitlyDeclared: false } field => field.Type,
+				IPropertySymbol property => property.Type,
+				_ => null,
+			})
+			.OfType<ITypeSymbol>();
 
 	/// <summary>
 	///     Is this always invalid? (object, dynamic, etc)

@@ -20,4 +20,14 @@ namespace System.Runtime.CompilerServices { internal static class IsExternalInit
 		        public int Length { get; }
 		    } }
 		";
+
+	// Stubs for the C# 15 union runtime types (shipped in .NET 11, absent from the test reference assemblies).
+	// https://github.com/dotnet/csharplang/blob/main/proposals/csharp-15.0/unions.md
+	internal const string UnionTypes = @"
+		namespace System.Runtime.CompilerServices {
+		    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = false)]
+		    public class UnionAttribute : Attribute { }
+		    public interface IUnion { object Value { get; } }
+		}
+		";
 }
