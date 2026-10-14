@@ -842,4 +842,60 @@ public class RecordValueAnalyserUnitTest
 		t.ExpectedDiagnostics.Add(expected);
 		await t.RunAsync(CancellationToken.None);
 	}
+
+	[TestMethod]
+	public async Task RecordComputedPropertyPass()
+	{
+		// record equality compares fields; a computed property has none
+		const string test = coGeneral + "public record A(int I) { public int[] Doubled => new[] { I * 2 }; }";
+
+		await VerifyCS.VerifyAnalyzerAsync(test);
+	}
+
+	[TestMethod]
+	public async Task RecordStaticMembersPass()
+	{
+		// record equality compares instance fields only
+		const string test = coGeneral + "public record A(int I) { public static int[] Shared = new int[0]; public static object Cache { get; set; } }";
+
+		await VerifyCS.VerifyAnalyzerAsync(test);
+	}
+
+	[TestMethod]
+	public async Task RecordComputedPropertyOverFieldFail()
+	{
+		// the field is compared and reported; the property reading it is not
+		const string test = coGeneral + "public record A { private int[] _items = new int[0]; public int[] Items => _items; }";
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 19, 6, 53)
+			.WithArguments("int[] _items");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task RecordFieldKeywordPropertyFail()
+	{
+		// a property using the 'field' keyword has a backing field, which is compared
+		const string test = coGeneral + "public record A { public int[] Items { get => field; set => field = value; } }";
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 19, 6, 77)
+			.WithArguments("int[] Items");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task RecordAutoPropertyFail()
+	{
+		const string test = coGeneral + "public record A { public int[] Items { get; init; } }";
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 19, 6, 52)
+			.WithArguments("int[] Items");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
 }

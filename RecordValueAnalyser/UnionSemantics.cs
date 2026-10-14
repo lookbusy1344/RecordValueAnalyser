@@ -48,11 +48,6 @@ internal static class UnionSemantics
 								   || SymbolEqualityComparer.Default.Equals(f.AssociatedSymbol, member));
 
 	/// <summary>
-	///     True if this is the union's Value property. A computed Value reads the case and holds no state.
-	/// </summary>
-	internal static bool IsValueAccessor(ISymbol member) => member is IPropertySymbol property && IsValueProperty(property);
-
-	/// <summary>
 	///     The first case type without value semantics, or null when every case type has them
 	/// </summary>
 	internal static ITypeSymbol? FirstFailingCase(INamedTypeSymbol union) =>

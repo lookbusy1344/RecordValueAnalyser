@@ -83,8 +83,12 @@ public class RecordValueAnalyser : DiagnosticAnalyzer
 				var fieldCheck = RecordValueSemantics.CheckMember(fieldType);
 				var fieldTypeName = fieldType.ToDisplayString(NullableFlowState.None);
 				foreach (var variable in fieldDeclaration.Declaration.Variables) {
-					var memberCheck = union == null ? null : CheckUnionMember(union, context.SemanticModel.GetDeclaredSymbol(variable));
-					var (fieldResult, fieldErrorMember) = memberCheck ?? fieldCheck;
+					var fieldSymbol = context.SemanticModel.GetDeclaredSymbol(variable);
+					if (fieldSymbol != null && !RecordValueSemantics.IsComparedMember(fieldSymbol)) {
+						continue; // static fields are not compared
+					}
+
+					var (fieldResult, fieldErrorMember) = CheckUnionMember(union, fieldSymbol) ?? fieldCheck;
 					if (fieldResult == ValueEqualityResult.Ok) {
 						continue;
 					}
@@ -98,9 +102,13 @@ public class RecordValueAnalyser : DiagnosticAnalyzer
 					continue;
 				}
 
+				var memberSymbol = context.SemanticModel.GetDeclaredSymbol(member);
+				if (memberSymbol != null && !RecordValueSemantics.IsComparedMember(memberSymbol)) {
+					continue; // computed and static properties are not compared
+				}
+
 				// if the property has value semantics, then we're ok
-				var memberCheck = union == null ? null : CheckUnionMember(union, context.SemanticModel.GetDeclaredSymbol(member));
-				var (result, errorMember) = memberCheck ?? RecordValueSemantics.CheckMember(unwrappedType);
+				var (result, errorMember) = CheckUnionMember(union, memberSymbol) ?? RecordValueSemantics.CheckMember(unwrappedType);
 				if (result == ValueEqualityResult.Ok) {
 					continue;
 				}
@@ -116,21 +124,17 @@ public class RecordValueAnalyser : DiagnosticAnalyzer
 
 	/// <summary>
 	///     A union record holds its case in an object member, compared with object.Equals, so that member is checked through
-	///     the case types. A computed Value property only reads the case. Returns null for any other member.
+	///     the case types. Returns null for any other member, or when the record is not a union.
 	/// </summary>
-	private static CheckResultTuple? CheckUnionMember(INamedTypeSymbol union, ISymbol? member)
+	private static CheckResultTuple? CheckUnionMember(INamedTypeSymbol? union, ISymbol? member)
 	{
-		if (member == null) {
+		if (union == null || member == null || !UnionSemantics.HoldsCase(union, member)) {
 			return null;
 		}
 
-		if (UnionSemantics.HoldsCase(union, member)) {
-			return UnionSemantics.FirstFailingCase(union) is ITypeSymbol failingCase
-				? (ValueEqualityResult.CaseFailed, failingCase.ToDisplayString(NullableFlowState.None))
-				: (ValueEqualityResult.Ok, null);
-		}
-
-		return UnionSemantics.IsValueAccessor(member) ? (ValueEqualityResult.Ok, null) : null;
+		return UnionSemantics.FirstFailingCase(union) is ITypeSymbol failingCase
+			? (ValueEqualityResult.CaseFailed, failingCase.ToDisplayString(NullableFlowState.None))
+			: (ValueEqualityResult.Ok, null);
 	}
 
 	/// <summary>

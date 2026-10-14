@@ -901,4 +901,13 @@ public class RecordValueAnalyserUnitTest
 
 		await VerifyCS.VerifyAnalyzerAsync(test, expected);
 	}
+
+	[TestMethod]
+	public async Task RecordStructComputedPropertyPass()
+	{
+		// record struct equality compares fields; a computed property has none
+		const string test = coGeneral + "public record struct A(int I) { public readonly int[] Doubled => new[] { I * 2 }; }";
+
+		await VerifyCS.VerifyAnalyzerAsync(test);
+	}
 }

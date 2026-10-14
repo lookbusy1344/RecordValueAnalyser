@@ -228,6 +228,17 @@ internal static class RecordValueSemantics
 		type.GetMembers().OfType<IFieldSymbol>().Where(f => !f.IsStatic);
 
 	/// <summary>
+	///     True if record and struct equality compare this member: an instance field, or an instance property with a backing field
+	/// </summary>
+	internal static bool IsComparedMember(ISymbol member) =>
+		member switch {
+			IFieldSymbol field => !field.IsStatic,
+			IPropertySymbol property => GetInstanceFields(property.ContainingType)
+				.Any(f => SymbolEqualityComparer.Default.Equals(f.AssociatedSymbol, property)),
+			_ => false,
+		};
+
+	/// <summary>
 	///     Is this always invalid? (object, dynamic, etc)
 	/// </summary>
 	private static bool IsStrictlyInvalid(ITypeSymbol? type) =>
