@@ -27,7 +27,7 @@ internal static class UnionSemantics
 	internal static bool IsUnionStruct(ITypeSymbol type) => IsUnion(type) && type.TypeKind == TypeKind.Struct;
 
 	/// <summary>
-	///     A union stores its case in an object field, compared with object.Equals, so the case types stand in for that field.
+	///     A union stores its case in a field compared with object.Equals, so the case types stand in for that field.
 	///     Every other instance field is checked as for any struct.
 	/// </summary>
 	internal static IEnumerable<ITypeSymbol> GetMemberTypes(INamedTypeSymbol union)
@@ -54,19 +54,39 @@ internal static class UnionSemantics
 		GetCaseTypes(union).FirstOrDefault(t => RecordValueSemantics.CheckMember(t).Item1 != ValueEqualityResult.Ok);
 
 	/// <summary>
-	///     The instance fields holding the boxed case: the backing field of an auto-property Value, otherwise the only object field.
-	///     With several object fields the storage is ambiguous, so none of them is treated as storage.
+	///     The instance fields holding the case: the backing field of an auto-property Value, otherwise the only reference-typed
+	///     field that every case type converts to. With several such fields the storage is ambiguous, so none is treated as storage.
 	/// </summary>
 	private static IReadOnlyList<IFieldSymbol> GetStorage(INamedTypeSymbol union)
 	{
-		var objectFields = RecordValueSemantics.GetInstanceFields(union).Where(f => RecordValueSemantics.IsObjectType(f.Type)).ToList();
-		var autoValue = objectFields.Where(f => f.AssociatedSymbol is IPropertySymbol p && IsValueProperty(p)).ToList();
+		var fields = RecordValueSemantics.GetInstanceFields(union).ToList();
+		var autoValue = fields.Where(f => f.AssociatedSymbol is IPropertySymbol p && IsValueProperty(p)).ToList();
+		if (autoValue.Count > 0) {
+			return autoValue;
+		}
 
-		return (autoValue.Count, objectFields.Count) switch {
-			( > 0, _) => autoValue,
-			(_, 1) => objectFields,
-			_ => [],
-		};
+		var caseTypes = GetCaseTypes(union).ToList();
+		var candidates = fields.Where(f => f.Type.IsReferenceType && caseTypes.All(c => ConvertsTo(c, f.Type))).ToList();
+
+		return caseTypes.Count > 0 && candidates.Count == 1 ? candidates : [];
+	}
+
+	/// <summary>
+	///     True if a value of the case type can be stored in the target type: object, the type itself, a base class or an interface
+	/// </summary>
+	private static bool ConvertsTo(ITypeSymbol caseType, ITypeSymbol target)
+	{
+		var source = RecordValueSemantics.UnwrapNullable(caseType);
+		return RecordValueSemantics.IsObjectType(target)
+			   || BaseTypesAndSelf(source).Contains(target, SymbolEqualityComparer.Default)
+			   || source.AllInterfaces.Contains(target, SymbolEqualityComparer.Default);
+	}
+
+	private static IEnumerable<ITypeSymbol> BaseTypesAndSelf(ITypeSymbol type)
+	{
+		for (var current = type; current != null; current = current.BaseType) {
+			yield return current;
+		}
 	}
 
 	/// <summary>

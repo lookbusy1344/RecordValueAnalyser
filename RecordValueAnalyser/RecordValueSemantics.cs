@@ -167,10 +167,15 @@ internal static class RecordValueSemantics
 	}
 
 	/// <summary>
+	///     Given Nullable&lt;T&gt;, return T. Otherwise return the type itself.
+	/// </summary>
+	private static ITypeSymbol? GetUnderlyingType(ITypeSymbol? type) => type == null ? null : UnwrapNullable(type);
+
+	/// <summary>
 	///     Given Nullable&lt;T&gt;, return T. Otherwise return the type itself. A substituted 'T?' with T = int is an annotated int,
 	///     not Nullable&lt;int&gt;, and is returned as it is.
 	/// </summary>
-	private static ITypeSymbol? GetUnderlyingType(ITypeSymbol? type) =>
+	internal static ITypeSymbol UnwrapNullable(ITypeSymbol type) =>
 		type is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T } nullable ? nullable.TypeArguments[0] : type;
 
 	/// <summary>

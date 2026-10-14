@@ -1383,4 +1383,118 @@ public class RecordValueAnalyserUnitTest
 
 		await VerifyPreviewAsync(test);
 	}
+
+	[TestMethod]
+	public async Task CustomUnionStructInterfaceStoragePass()
+	{
+		// the case is stored in an interface field that every case type implements; the case types stand in for it
+		const string test = coGeneral
+							+ """
+							  public record A(Result R);
+
+							  [System.Runtime.CompilerServices.Union]
+							  public struct Result : System.Runtime.CompilerServices.IUnion
+							  {
+							  	private readonly IComparable _value;
+							  	public Result(int value) { _value = value; }
+							  	public Result(string value) { _value = value; }
+							  	public object Value => _value;
+							  }
+							  """
+							+ coUnionTypes;
+
+		await VerifyPreviewAsync(test);
+	}
+
+	[TestMethod]
+	public async Task CustomUnionStructInterfaceStorageFail()
+	{
+		// Money implements IComparable but compares by reference
+		const string test = coGeneral
+							+ """
+							  public record A(Result R);
+
+							  public class Money : IComparable { public int CompareTo(object obj) => 0; }
+
+							  [System.Runtime.CompilerServices.Union]
+							  public struct Result : System.Runtime.CompilerServices.IUnion
+							  {
+							  	private readonly IComparable _value;
+							  	public Result(int value) { _value = value; }
+							  	public Result(Money value) { _value = value; }
+							  	public object Value => _value;
+							  }
+							  """
+							+ coUnionTypes;
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 17, 6, 25)
+			.WithArguments("Result R (field Money)");
+
+		await VerifyPreviewAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task CustomUnionStructBaseClassStoragePass()
+	{
+		// the case is stored in a base class field; Shape compares by reference, but Circle and Square override Equals
+		const string test = coGeneral
+							+ """
+							  public record A(Result R);
+
+							  public abstract class Shape { }
+							  public sealed class Circle : Shape
+							  {
+							  	public double Radius;
+							  	public override bool Equals(object obj) => obj is Circle c && c.Radius == Radius;
+							  	public override int GetHashCode() => Radius.GetHashCode();
+							  }
+							  public sealed class Square : Shape
+							  {
+							  	public double Side;
+							  	public override bool Equals(object obj) => obj is Square s && s.Side == Side;
+							  	public override int GetHashCode() => Side.GetHashCode();
+							  }
+
+							  [System.Runtime.CompilerServices.Union]
+							  public struct Result : System.Runtime.CompilerServices.IUnion
+							  {
+							  	private readonly Shape _value;
+							  	public Result(Circle value) { _value = value; }
+							  	public Result(Square value) { _value = value; }
+							  	public object Value => _value;
+							  }
+							  """
+							+ coUnionTypes;
+
+		await VerifyPreviewAsync(test);
+	}
+
+	[TestMethod]
+	public async Task CustomUnionStructUnrelatedInterfaceFieldFail()
+	{
+		// Dog does not implement IComparable, so _tag cannot hold the case: _value is the storage and _tag is extra state
+		const string test = coGeneral
+							+ """
+							  public record A(Result R);
+
+							  public record Dog(int Age);
+
+							  [System.Runtime.CompilerServices.Union]
+							  public struct Result : System.Runtime.CompilerServices.IUnion
+							  {
+							  	private readonly object _value;
+							  	private readonly IComparable _tag;
+							  	public Result(Dog value) { _value = value; _tag = null; }
+							  	public object Value => _value;
+							  }
+							  """
+							+ coUnionTypes;
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 17, 6, 25)
+			.WithArguments("Result R (field System.IComparable)");
+
+		await VerifyPreviewAsync(test, expected);
+	}
 }
