@@ -167,32 +167,16 @@ internal static class RecordValueSemantics
 	}
 
 	/// <summary>
-	///     Given Nullable value type, return the underlying type. If not nullable, return the type itself.
+	///     Given Nullable&lt;T&gt;, return T. Otherwise return the type itself. A substituted 'T?' with T = int is an annotated int,
+	///     not Nullable&lt;int&gt;, and is returned as it is.
 	/// </summary>
-	private static ITypeSymbol? GetUnderlyingType(ITypeSymbol? type)
-	{
-		if (type == null) {
-			return null;
-		}
-
-		if (!IsNullableValueType(type)) {
-			return type;
-		}
-
-		var namedType = type as INamedTypeSymbol;
-		return namedType?.TypeArguments[0];
-	}
+	private static ITypeSymbol? GetUnderlyingType(ITypeSymbol? type) =>
+		type is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T } nullable ? nullable.TypeArguments[0] : type;
 
 	/// <summary>
 	///     Gets the generic name of type eg System.Collections.Immutable.ImmutableArray&lt;T&gt;
 	/// </summary>
 	private static string? GetGenericName(ITypeSymbol? typeSymbol) => typeSymbol?.OriginalDefinition.ToDisplayString();
-
-	/// <summary>
-	///     Is this a nullable value type, like 'int?'
-	/// </summary>
-	private static bool IsNullableValueType(ITypeSymbol? type) =>
-		type is { IsValueType: true, NullableAnnotation: NullableAnnotation.Annotated };
 
 	/// <summary>
 	///     Check for a class

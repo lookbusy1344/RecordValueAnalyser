@@ -1292,4 +1292,95 @@ public class RecordValueAnalyserUnitTest
 
 		await VerifyPreviewAsync(test, expected);
 	}
+
+	[TestMethod]
+	public async Task UnionMemberProviderNullableTypeParameterPass()
+	{
+		// Create(T? value) with T = int has case type int, annotated but not Nullable<int>
+		const string test = coGeneral
+							+ """
+							  #nullable enable
+							  public record A(Outcome<int> O);
+
+							  [System.Runtime.CompilerServices.Union]
+							  public struct Outcome<T> : Outcome<T>.IUnionMembers
+							  {
+							  	private readonly object? _value;
+							  	private Outcome(object? value) => _value = value;
+
+							  	public interface IUnionMembers
+							  	{
+							  		static Outcome<T> Create(T? value) => new(value);
+							  		static Outcome<T> Create(string? value) => new(value);
+							  		object? Value { get; }
+							  	}
+
+							  	object? IUnionMembers.Value => _value;
+							  }
+							  """
+							+ coUnionTypes;
+
+		await VerifyPreviewAsync(test);
+	}
+
+	[TestMethod]
+	public async Task UnionMemberProviderNullableTypeParameterFail()
+	{
+		// the Outcome<T> sample from the union docs: Exception compares by reference
+		const string test = coGeneral
+							+ """
+							  #nullable enable
+							  public record A(Outcome<int> O);
+
+							  [System.Runtime.CompilerServices.Union]
+							  public struct Outcome<T> : Outcome<T>.IUnionMembers
+							  {
+							  	private readonly object? _value;
+							  	private Outcome(object? value) => _value = value;
+
+							  	public interface IUnionMembers
+							  	{
+							  		static Outcome<T> Create(T? value) => new(value);
+							  		static Outcome<T> Create(Exception? value) => new(value);
+							  		object? Value { get; }
+							  	}
+
+							  	object? IUnionMembers.Value => _value;
+							  }
+							  """
+							+ coUnionTypes;
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(7, 17, 7, 31)
+			.WithArguments("Outcome<int> O (field System.Exception)");
+
+		await VerifyPreviewAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task NonBoxingUnionPass()
+	{
+		// the IntOrBool sample from the union docs: typed storage, Nullable<T> case types, computed Value
+		const string test = coGeneral
+							+ """
+							  public record A(IntOrBool V);
+
+							  [System.Runtime.CompilerServices.Union]
+							  public struct IntOrBool : System.Runtime.CompilerServices.IUnion
+							  {
+							  	private readonly int _intValue;
+							  	private readonly bool _boolValue;
+							  	private readonly byte _tag;
+							  	public IntOrBool(int? value) { if (value.HasValue) { _intValue = value.Value; _tag = 1; } }
+							  	public IntOrBool(bool? value) { if (value.HasValue) { _boolValue = value.Value; _tag = 2; } }
+							  	public object Value => _tag switch { 1 => _intValue, 2 => _boolValue, _ => null };
+							  	public bool HasValue => _tag != 0;
+							  	public bool TryGetValue(out int value) { value = _intValue; return _tag == 1; }
+							  	public bool TryGetValue(out bool value) { value = _boolValue; return _tag == 2; }
+							  }
+							  """
+							+ coUnionTypes;
+
+		await VerifyPreviewAsync(test);
+	}
 }
