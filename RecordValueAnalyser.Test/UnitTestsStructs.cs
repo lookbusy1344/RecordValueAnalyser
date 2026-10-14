@@ -858,4 +858,47 @@ public class RecordValueAnalyserUnitTest
 		t.ExpectedDiagnostics.Add(expected);
 		await t.RunAsync(CancellationToken.None);
 	}
+
+	[TestMethod]
+	public async Task StructStaticFieldPass()
+	{
+		// ValueType.Equals compares instance fields only
+		const string test = coGeneral
+							+ """
+							  public record struct A(S X);
+							  public struct S { public int I; public static int[] Shared = new int[0]; }
+							  """;
+
+		await VerifyCS.VerifyAnalyzerAsync(test);
+	}
+
+	[TestMethod]
+	public async Task StructComputedPropertyPass()
+	{
+		// a computed property has no backing field, so ValueType.Equals never compares it
+		const string test = coGeneral
+							+ """
+							  public record struct A(S X);
+							  public struct S { public int I; public int[] Doubled => new[] { I * 2 }; }
+							  """;
+
+		await VerifyCS.VerifyAnalyzerAsync(test);
+	}
+
+	[TestMethod]
+	public async Task StructAutoPropertyFail()
+	{
+		// an auto-property's backing field is compared
+		const string test = coGeneral
+							+ """
+							  public record struct A(S X);
+							  public struct S { public int[] Items { get; set; } }
+							  """;
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 24, 6, 27)
+			.WithArguments("S X (field int[])");
+
+		await VerifyCS.VerifyAnalyzerAsync(test, expected);
+	}
 }

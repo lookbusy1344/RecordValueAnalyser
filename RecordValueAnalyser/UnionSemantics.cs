@@ -5,7 +5,7 @@ using System.Linq;
 using Microsoft.CodeAnalysis;
 
 /// <summary>
-///     Value semantics of C# 15 union structs.
+///     Value semantics of C# 15 union types.
 ///     https://github.com/dotnet/csharplang/blob/main/proposals/csharp-15.0/unions.md
 /// </summary>
 internal static class UnionSemantics
@@ -15,38 +15,63 @@ internal static class UnionSemantics
 	private const string FactoryMethodName = "Create";
 
 	/// <summary>
-	///     True if this is a union struct, declared with 'union' or marked with UnionAttribute. Union classes compare by reference.
+	///     True if this is a union, declared with 'union' or marked with UnionAttribute
 	/// </summary>
 #pragma warning disable RSEXPERIMENTAL006 // ITypeSymbol.IsUnion is flagged experimental in Roslyn 5.9.0
-	internal static bool IsUnionStruct(ITypeSymbol type) => type is { IsUnion: true, TypeKind: TypeKind.Struct };
+	internal static bool IsUnion(ITypeSymbol type) => type.IsUnion;
 #pragma warning restore RSEXPERIMENTAL006
 
 	/// <summary>
-	///     A union stores its case in an object member, compared with object.Equals, so the case types stand in for that member.
-	///     Every other member is checked as for any struct.
+	///     True if this is a union struct. Union classes compare by reference, and records are checked where they are declared.
+	/// </summary>
+	internal static bool IsUnionStruct(ITypeSymbol type) => IsUnion(type) && type.TypeKind == TypeKind.Struct;
+
+	/// <summary>
+	///     A union stores its case in an object field, compared with object.Equals, so the case types stand in for that field.
+	///     Every other instance field is checked as for any struct.
 	/// </summary>
 	internal static IEnumerable<ITypeSymbol> GetMemberTypes(INamedTypeSymbol union)
 	{
 		var storage = GetStorage(union);
-		var otherMembers = RecordValueSemantics.GetStructMembers(union)
-			.Where(m => !storage.Contains(m, SymbolEqualityComparer.Default))
-			.Select(RecordValueSemantics.MemberType);
+		var otherFields = RecordValueSemantics.GetInstanceFields(union)
+			.Where(f => !storage.Contains(f, SymbolEqualityComparer.Default))
+			.Select(f => f.Type);
 
-		return GetCaseTypes(union).Concat(otherMembers);
+		return GetCaseTypes(union).Concat(otherFields);
 	}
 
 	/// <summary>
-	///     The members holding the boxed case: the Value property, and the object field behind it when Value is not an auto-property.
+	///     True if this member of a union record holds the case: a storage field, or the auto-property Value behind one
+	/// </summary>
+	internal static bool HoldsCase(INamedTypeSymbol union, ISymbol member) =>
+		GetStorage(union).Any(f => SymbolEqualityComparer.Default.Equals(f, member)
+								   || SymbolEqualityComparer.Default.Equals(f.AssociatedSymbol, member));
+
+	/// <summary>
+	///     True if this is the union's Value property. A computed Value reads the case and holds no state.
+	/// </summary>
+	internal static bool IsValueAccessor(ISymbol member) => member is IPropertySymbol property && IsValueProperty(property);
+
+	/// <summary>
+	///     The first case type without value semantics, or null when every case type has them
+	/// </summary>
+	internal static ITypeSymbol? FirstFailingCase(INamedTypeSymbol union) =>
+		GetCaseTypes(union).FirstOrDefault(t => RecordValueSemantics.CheckMember(t).Item1 != ValueEqualityResult.Ok);
+
+	/// <summary>
+	///     The instance fields holding the boxed case: the backing field of an auto-property Value, otherwise the only object field.
 	///     With several object fields the storage is ambiguous, so none of them is treated as storage.
 	/// </summary>
-	private static IReadOnlyList<ISymbol> GetStorage(INamedTypeSymbol union)
+	private static IReadOnlyList<IFieldSymbol> GetStorage(INamedTypeSymbol union)
 	{
-		var valueProperties = union.GetMembers().OfType<IPropertySymbol>().Where(IsValueProperty).ToList();
-		var valueIsAuto = union.GetMembers().OfType<IFieldSymbol>()
-			.Any(f => f.IsImplicitlyDeclared && f.AssociatedSymbol is IPropertySymbol p && IsValueProperty(p));
-		var objectFields = RecordValueSemantics.GetStructMembers(union).OfType<IFieldSymbol>().Where(f => RecordValueSemantics.IsObjectType(f.Type)).ToList();
+		var objectFields = RecordValueSemantics.GetInstanceFields(union).Where(f => RecordValueSemantics.IsObjectType(f.Type)).ToList();
+		var autoValue = objectFields.Where(f => f.AssociatedSymbol is IPropertySymbol p && IsValueProperty(p)).ToList();
 
-		return objectFields.Count == 1 && !valueIsAuto ? [.. valueProperties, objectFields[0]] : valueProperties;
+		return (autoValue.Count, objectFields.Count) switch {
+			( > 0, _) => autoValue,
+			(_, 1) => objectFields,
+			_ => [],
+		};
 	}
 
 	/// <summary>

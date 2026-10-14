@@ -16,6 +16,7 @@ internal enum ValueEqualityResult
 	Ok,
 	Failed,
 	NestedFailed,
+	CaseFailed,
 }
 
 internal static class RecordValueSemantics
@@ -90,7 +91,7 @@ internal static class RecordValueSemantics
 			IEnumerable<ITypeSymbol>? memberTypes = type switch {
 				INamedTypeSymbol { IsTupleType: true } tuple => tuple.TupleElements.Select(e => e.Type),
 				INamedTypeSymbol union when UnionSemantics.IsUnionStruct(union) => UnionSemantics.GetMemberTypes(union),
-				_ when IsStruct(type) => GetStructMembers(type).Select(MemberType),
+				_ when IsStruct(type) => GetInstanceFields(type).Select(f => f.Type),
 				_ => null,
 			};
 
@@ -221,20 +222,10 @@ internal static class RecordValueSemantics
 			attribute.AttributeClass?.ToDisplayString() == "System.Runtime.CompilerServices.InlineArrayAttribute");
 
 	/// <summary>
-	///     The explicit fields and properties of a struct. Auto-property backing fields are covered by their property.
+	///     The instance fields of a type, including auto-property backing fields. ValueType.Equals compares these and nothing else.
 	/// </summary>
-	internal static IEnumerable<ISymbol> GetStructMembers(ITypeSymbol type) =>
-		type.GetMembers().Where(m => m is IFieldSymbol { IsImplicitlyDeclared: false } or IPropertySymbol);
-
-	/// <summary>
-	///     The type of a field or property
-	/// </summary>
-	internal static ITypeSymbol MemberType(ISymbol member) =>
-		member switch {
-			IFieldSymbol field => field.Type,
-			IPropertySymbol property => property.Type,
-			_ => throw new System.ArgumentException($"Not a field or property: {member}", nameof(member)),
-		};
+	internal static IEnumerable<IFieldSymbol> GetInstanceFields(ITypeSymbol type) =>
+		type.GetMembers().OfType<IFieldSymbol>().Where(f => !f.IsStatic);
 
 	/// <summary>
 	///     Is this always invalid? (object, dynamic, etc)

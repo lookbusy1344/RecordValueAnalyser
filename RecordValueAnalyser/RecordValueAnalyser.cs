@@ -5,6 +5,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
+using CheckResultTuple = (ValueEqualityResult, string? memberName);
 
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class RecordValueAnalyser : DiagnosticAnalyzer
@@ -39,6 +40,9 @@ public class RecordValueAnalyser : DiagnosticAnalyzer
 			return;
 		}
 
+		var recordSymbol = context.SemanticModel.GetDeclaredSymbol(recordDeclaration);
+		var union = recordSymbol != null && UnionSemantics.IsUnion(recordSymbol) ? recordSymbol : null;
+
 		// check the parameter list eg record A(int i, int j)
 		var recordParams = recordDeclaration.ParameterList?.Parameters;
 		if (recordParams != null) {
@@ -59,7 +63,7 @@ public class RecordValueAnalyser : DiagnosticAnalyzer
 				// otherwise, we have a problem. show a diagnostic
 				var typeName = type?.ToDisplayString(NullableFlowState.None) ?? "";
 				var memberName = recParam.Identifier.ValueText;
-				var args = errorMember == null ? $"{typeName} {memberName}" : $"{typeName} {memberName} (field {errorMember})";
+				var args = FormatMember(typeName, memberName, result, errorMember);
 
 				var diagnostic = Diagnostic.Create(ParamValueSemanticsRule, recParam.GetLocation(), args);
 				context.ReportDiagnostic(diagnostic);
@@ -76,17 +80,16 @@ public class RecordValueAnalyser : DiagnosticAnalyzer
 					continue;
 				}
 
-				var (fieldResult, fieldErrorMember) = RecordValueSemantics.CheckMember(fieldType);
-				if (fieldResult == ValueEqualityResult.Ok) {
-					continue;
-				}
-
+				var fieldCheck = RecordValueSemantics.CheckMember(fieldType);
 				var fieldTypeName = fieldType.ToDisplayString(NullableFlowState.None);
 				foreach (var variable in fieldDeclaration.Declaration.Variables) {
-					var variableName = variable.Identifier.ValueText;
-					var args = fieldErrorMember == null
-						? $"{fieldTypeName} {variableName}"
-						: $"{fieldTypeName} {variableName} (field {fieldErrorMember})";
+					var memberCheck = union == null ? null : CheckUnionMember(union, context.SemanticModel.GetDeclaredSymbol(variable));
+					var (fieldResult, fieldErrorMember) = memberCheck ?? fieldCheck;
+					if (fieldResult == ValueEqualityResult.Ok) {
+						continue;
+					}
+
+					var args = FormatMember(fieldTypeName, variable.Identifier.ValueText, fieldResult, fieldErrorMember);
 					context.ReportDiagnostic(Diagnostic.Create(ParamValueSemanticsRule, fieldDeclaration.GetLocation(), args));
 				}
 			} else {
@@ -96,18 +99,45 @@ public class RecordValueAnalyser : DiagnosticAnalyzer
 				}
 
 				// if the property has value semantics, then we're ok
-				var (result, errorMember) = RecordValueSemantics.CheckMember(unwrappedType);
+				var memberCheck = union == null ? null : CheckUnionMember(union, context.SemanticModel.GetDeclaredSymbol(member));
+				var (result, errorMember) = memberCheck ?? RecordValueSemantics.CheckMember(unwrappedType);
 				if (result == ValueEqualityResult.Ok) {
 					continue;
 				}
 
 				// otherwise, we have a problem. show a diagnostic
 				var typeName = unwrappedType.ToDisplayString(NullableFlowState.None);
-				memberName ??= "?";
-				var args = errorMember == null ? $"{typeName} {memberName}" : $"{typeName} {memberName} (field {errorMember})";
+				var args = FormatMember(typeName, memberName ?? "?", result, errorMember);
 
 				context.ReportDiagnostic(Diagnostic.Create(ParamValueSemanticsRule, member.GetLocation(), args));
 			}
 		}
 	}
+
+	/// <summary>
+	///     A union record holds its case in an object member, compared with object.Equals, so that member is checked through
+	///     the case types. A computed Value property only reads the case. Returns null for any other member.
+	/// </summary>
+	private static CheckResultTuple? CheckUnionMember(INamedTypeSymbol union, ISymbol? member)
+	{
+		if (member == null) {
+			return null;
+		}
+
+		if (UnionSemantics.HoldsCase(union, member)) {
+			return UnionSemantics.FirstFailingCase(union) is ITypeSymbol failingCase
+				? (ValueEqualityResult.CaseFailed, failingCase.ToDisplayString(NullableFlowState.None))
+				: (ValueEqualityResult.Ok, null);
+		}
+
+		return UnionSemantics.IsValueAccessor(member) ? (ValueEqualityResult.Ok, null) : null;
+	}
+
+	/// <summary>
+	///     The diagnostic argument, eg "S X (field int[])" or "object _value (case int[])"
+	/// </summary>
+	private static string FormatMember(string typeName, string memberName, ValueEqualityResult result, string? errorMember) =>
+		errorMember == null
+			? $"{typeName} {memberName}"
+			: $"{typeName} {memberName} ({(result == ValueEqualityResult.CaseFailed ? "case" : "field")} {errorMember})";
 }

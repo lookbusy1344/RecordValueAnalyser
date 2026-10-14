@@ -1068,4 +1068,228 @@ public class RecordValueAnalyserUnitTest
 
 		await VerifyPreviewAsync(test);
 	}
+
+	[TestMethod]
+	public async Task StructUnionStaticObjectFieldPass()
+	{
+		// ValueType.Equals ignores static fields, so a static sentinel is neither state nor ambiguous case storage
+		const string test = coGeneral
+							+ """
+							  public record A(Result R);
+
+							  [System.Runtime.CompilerServices.Union]
+							  public struct Result : System.Runtime.CompilerServices.IUnion
+							  {
+							  	private static readonly object Sentinel = new object();
+							  	private readonly object _value;
+							  	public Result(int value) { _value = value; }
+							  	public object Value => _value == Sentinel ? null : _value;
+							  }
+							  """
+							+ coUnionTypes;
+
+		await VerifyPreviewAsync(test);
+	}
+
+	[TestMethod]
+	public async Task UnionComputedObjectPropertyPass()
+	{
+		// a computed property holds no state, so ValueType.Equals never compares it
+		const string test = coGeneral
+							+ """
+							  public record A(Pet P);
+
+							  public record Cat(string Name);
+							  public union Pet(Cat, int)
+							  {
+							  	public object Boxed => Value;
+							  }
+							  """
+							+ coUnionTypes;
+
+		await VerifyPreviewAsync(test);
+	}
+
+	[TestMethod]
+	public async Task RecordClassUnionPass()
+	{
+		// a record class union compares its case field with object.Equals; int and string have value semantics
+		const string test = coGeneral
+							+ """
+							  public record A(Result R);
+
+							  [System.Runtime.CompilerServices.Union]
+							  public record class Result : Result.IUnionMembers
+							  {
+							  	private readonly object _value;
+							  	private Result(object value) { _value = value; }
+
+							  	public interface IUnionMembers
+							  	{
+							  		public static Result Create(int value) => new(value);
+							  		public static Result Create(string value) => new(value);
+							  		object Value { get; }
+							  	}
+
+							  	object IUnionMembers.Value => _value;
+							  }
+							  """
+							+ coUnionTypes;
+
+		await VerifyPreviewAsync(test);
+	}
+
+	[TestMethod]
+	public async Task RecordClassUnionBadCaseFail()
+	{
+		// the case field compares int[] by reference; reported where the union is declared, not where it is used
+		const string test = coGeneral
+							+ """
+							  public record A(Result R);
+
+							  [System.Runtime.CompilerServices.Union]
+							  public record class Result : Result.IUnionMembers
+							  {
+							  	private readonly object _value;
+							  	private Result(object value) { _value = value; }
+
+							  	public interface IUnionMembers
+							  	{
+							  		public static Result Create(int value) => new(value);
+							  		public static Result Create(int[] value) => new(value);
+							  		object Value { get; }
+							  	}
+
+							  	object IUnionMembers.Value => _value;
+							  }
+							  """
+							+ coUnionTypes;
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(11, 2, 11, 33)
+			.WithArguments("object _value (case int[])");
+
+		await VerifyPreviewAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task GenericRecordClassUnionFail()
+	{
+		// an open case type T has no guaranteed equality, matching record Wrapper<T>(T Value)
+		const string test = coGeneral
+							+ """
+							  public record A(Result<int[]> R);
+
+							  [System.Runtime.CompilerServices.Union]
+							  public record class Result<T> : Result<T>.IUnionMembers
+							  {
+							  	private readonly object _value;
+							  	private Result(object value) { _value = value; }
+
+							  	public interface IUnionMembers
+							  	{
+							  		public static Result<T> Create(string error) => new(error);
+							  		public static Result<T> Create(T value) => new(value);
+							  		object Value { get; }
+							  	}
+
+							  	object IUnionMembers.Value => _value;
+							  }
+							  """
+							+ coUnionTypes;
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(11, 2, 11, 33)
+			.WithArguments("object _value (case T)");
+
+		await VerifyPreviewAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task RecordStructUnionPass()
+	{
+		const string test = coGeneral
+							+ """
+							  public record A(Result R);
+
+							  [System.Runtime.CompilerServices.Union]
+							  public record struct Result : System.Runtime.CompilerServices.IUnion
+							  {
+							  	public Result(int value) { Value = value; }
+							  	public Result(string value) { Value = value; }
+							  	public object Value { get; }
+							  }
+							  """
+							+ coUnionTypes;
+
+		await VerifyPreviewAsync(test);
+	}
+
+	[TestMethod]
+	public async Task RecordStructUnionBadCaseFail()
+	{
+		// an auto-property Value holds the case, so it is reported with the failing case type
+		const string test = coGeneral
+							+ """
+							  public record A(Result R);
+
+							  [System.Runtime.CompilerServices.Union]
+							  public record struct Result : System.Runtime.CompilerServices.IUnion
+							  {
+							  	public Result(int[] value) { Value = value; }
+							  	public object Value { get; }
+							  }
+							  """
+							+ coUnionTypes;
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(12, 2, 12, 30)
+			.WithArguments("object Value (case int[])");
+
+		await VerifyPreviewAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task RecordUnionExtraObjectFieldFail()
+	{
+		// only the case storage is checked through the case types; other record fields are checked as usual
+		const string test = coGeneral
+							+ """
+							  [System.Runtime.CompilerServices.Union]
+							  public record struct Result : System.Runtime.CompilerServices.IUnion
+							  {
+							  	public Result(int value) { Value = value; Tag = null; }
+							  	public object Value { get; }
+							  	public object Tag;
+							  }
+							  """
+							+ coUnionTypes;
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(11, 2, 11, 20)
+			.WithArguments("object Tag");
+
+		await VerifyPreviewAsync(test, expected);
+	}
+
+	[TestMethod]
+	public async Task RecordUnionPrimaryConstructorFail()
+	{
+		// the positional parameter is reported once; the computed Value only reads it
+		const string test = coGeneral
+							+ """
+							  [System.Runtime.CompilerServices.Union]
+							  public record class Result(int[] Items) : System.Runtime.CompilerServices.IUnion
+							  {
+							  	public object Value => Items;
+							  }
+							  """
+							+ coUnionTypes;
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(7, 28, 7, 39)
+			.WithArguments("int[] Items");
+
+		await VerifyPreviewAsync(test, expected);
+	}
 }
