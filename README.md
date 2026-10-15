@@ -23,12 +23,12 @@ This project contains:
 - the same sources built against Roslyn 4.8 for older compilers (`RecordValueAnalyser.Roslyn48`, `RecordValueAnalyser.CodeFixes.Roslyn48`)
 - a wrapper to make a nuget package holding both builds https://www.nuget.org/packages/lookbusy1344.RecordValueAnalyser
 - a VSIX plugin for Visual Studio 2022 17.8+ and 2026, built from the Roslyn 4.8 sources
-- test projects for each build (`RecordValueAnalyser.Test`, `RecordValueAnalyser.Test.Roslyn48`)
+- test projects for each build (`RecordValueAnalyser.Test`, `RecordValueAnalyser.Test.Roslyn48`), and for the Roslyn 4.8 build running on a Roslyn 5.9 compiler as in Visual Studio 2026 (`RecordValueAnalyser.Test.Roslyn48OnRoslyn59`)
 - a package check that builds a consumer project with each .NET SDK (`scripts/check-package.sh`)
 
 ## Supported versions
 
-The package holds two builds of the analyser, and the compiler loads the newest one it supports. Union type checks are only in the Roslyn 5.9 build.
+The package holds two builds of the analyser, and the compiler loads the newest one it supports. Union types are checked whenever the running compiler supports them (Roslyn 5.9 or newer).
 
 | Toolchain | Default C# | Analyser build | Union type checks |
 |---|---|---|---|
@@ -42,7 +42,7 @@ The package holds two builds of the analyser, and the compiler loads the newest 
 
 CI packs the package and checks that the .NET 8, 9, 10 and 11 SDKs each load the expected build and report JSV01.
 
-The VSIX holds only the Roslyn 4.8 build, because Visual Studio cannot pick a VSIX analyser build by compiler version. It installs in Visual Studio 2022 17.8 or newer and every Visual Studio 2026 release. It does not recognise union types: a record member whose type is a union type is reported as `(field object)`, even when every case type has value semantics. Projects that use union types should use the NuGet package instead.
+The VSIX holds only the Roslyn 4.8 build, because Visual Studio cannot pick a VSIX analyser build by compiler version. It installs in Visual Studio 2022 17.8 or newer and every Visual Studio 2026 release. It asks the running compiler whether a type is a union type, so it checks union types in any Visual Studio whose compiler supports them.
 
 ## Why?
 
@@ -116,7 +116,7 @@ It works with .NET 8, 9, 10 and 11 (see [Supported versions](#supported-versions
         - each case type is checked recursively, along with any other fields. Case types come from the public single-parameter constructors, or from the static `Create` methods of a nested `IUnionMembers` interface
         - a union type that is a class, without an Equals method, compares by reference and fails like any class
         - a record that is itself a union type is checked through its case types
-        - the Roslyn 4.8 build (used by the VSIX and by older compilers) does not recognise union types. It checks them as ordinary structs or classes, so a member whose type is a union type is reported as `(field object)`, even when every case type has value semantics
+        - the Roslyn 4.8 build (used by the VSIX and by older compilers) asks the running compiler whether a type is a union type, so it checks union types under any compiler that supports them
     - circular struct layouts (CS0523) are detected and do not cause unbounded recursion
     - Multi-variable field declarations (e.g. `int[] A, B;`) each produce their own diagnostic
 
@@ -200,7 +200,7 @@ When you write your implementations `SequenceEqual` is very useful for comparing
 
 [![Test](https://github.com/lookbusy1344/RecordValueAnalyser/actions/workflows/test.yml/badge.svg)](https://github.com/lookbusy1344/RecordValueAnalyser/actions/workflows/test.yml)
 
-Tests are in `RecordValueAnalyser.Test`, and `RecordValueAnalyser.Test.Roslyn48` runs the class and struct tests against the Roslyn 4.8 build. They are run in the CI pipeline, which also packs the package and checks that the .NET 8, 9, 10 and 11 SDKs each load the right build (`scripts/check-package.sh`).
+Tests are in `RecordValueAnalyser.Test`. `RecordValueAnalyser.Test.Roslyn48` runs the class and struct tests against the Roslyn 4.8 build, and `RecordValueAnalyser.Test.Roslyn48OnRoslyn59` runs every test against the Roslyn 4.8 build on a Roslyn 5.9 compiler. They are run in the CI pipeline, which also packs the package and checks that the .NET 8, 9, 10 and 11 SDKs each load the right build (`scripts/check-package.sh`).
 
 ### Running CI locally
 

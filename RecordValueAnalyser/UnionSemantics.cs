@@ -14,13 +14,22 @@ internal static class UnionSemantics
 	private const string MembersInterfaceName = "IUnionMembers";
 	private const string FactoryMethodName = "Create";
 
-	/// <summary>
-	///     True if this is a union, declared with 'union' or marked with UnionAttribute.
-	///     Roslyn 4.8 has no union support, so the legacy build sees no unions.
-	/// </summary>
 #if LEGACY_ROSLYN
-	internal static bool IsUnion(ITypeSymbol type) => false;
+	private const string IsUnionPropertyName = "IsUnion";
+
+	/// <summary>
+	///     ITypeSymbol.IsUnion of the running compiler. Roslyn 4.8 lacks it, so it is null under compilers without union support.
+	/// </summary>
+	private static readonly System.Reflection.PropertyInfo? IsUnionProperty = typeof(ITypeSymbol).GetProperty(IsUnionPropertyName);
+
+	/// <summary>
+	///     True if this is a union, declared with 'union' or marked with UnionAttribute
+	/// </summary>
+	internal static bool IsUnion(ITypeSymbol type) => IsUnionProperty?.GetValue(type) is true;
 #else
+	/// <summary>
+	///     True if this is a union, declared with 'union' or marked with UnionAttribute
+	/// </summary>
 #pragma warning disable RSEXPERIMENTAL006 // ITypeSymbol.IsUnion is flagged experimental in Roslyn 5.9.0
 	internal static bool IsUnion(ITypeSymbol type) => type.IsUnion;
 #pragma warning restore RSEXPERIMENTAL006

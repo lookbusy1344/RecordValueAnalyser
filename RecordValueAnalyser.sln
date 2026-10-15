@@ -29,6 +29,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RecordValueAnalyser.CodeFix
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RecordValueAnalyser.Test.Roslyn48", "RecordValueAnalyser.Test.Roslyn48\RecordValueAnalyser.Test.Roslyn48.csproj", "{5C996467-A7EC-45A5-8463-5382CAF7EF01}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RecordValueAnalyser.Test.Roslyn48OnRoslyn59", "RecordValueAnalyser.Test.Roslyn48OnRoslyn59\RecordValueAnalyser.Test.Roslyn48OnRoslyn59.csproj", "{2DA8B65B-8FA3-4856-B994-789D585759C0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -159,6 +161,18 @@ Global
 		{5C996467-A7EC-45A5-8463-5382CAF7EF01}.Release|x64.Build.0 = Release|Any CPU
 		{5C996467-A7EC-45A5-8463-5382CAF7EF01}.Release|x86.ActiveCfg = Release|Any CPU
 		{5C996467-A7EC-45A5-8463-5382CAF7EF01}.Release|x86.Build.0 = Release|Any CPU
+		{2DA8B65B-8FA3-4856-B994-789D585759C0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2DA8B65B-8FA3-4856-B994-789D585759C0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2DA8B65B-8FA3-4856-B994-789D585759C0}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{2DA8B65B-8FA3-4856-B994-789D585759C0}.Debug|x64.Build.0 = Debug|Any CPU
+		{2DA8B65B-8FA3-4856-B994-789D585759C0}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{2DA8B65B-8FA3-4856-B994-789D585759C0}.Debug|x86.Build.0 = Debug|Any CPU
+		{2DA8B65B-8FA3-4856-B994-789D585759C0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2DA8B65B-8FA3-4856-B994-789D585759C0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2DA8B65B-8FA3-4856-B994-789D585759C0}.Release|x64.ActiveCfg = Release|Any CPU
+		{2DA8B65B-8FA3-4856-B994-789D585759C0}.Release|x64.Build.0 = Release|Any CPU
+		{2DA8B65B-8FA3-4856-B994-789D585759C0}.Release|x86.ActiveCfg = Release|Any CPU
+		{2DA8B65B-8FA3-4856-B994-789D585759C0}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

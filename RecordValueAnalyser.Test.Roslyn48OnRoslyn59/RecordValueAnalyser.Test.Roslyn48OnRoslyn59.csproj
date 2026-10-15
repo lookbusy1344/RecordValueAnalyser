@@ -1,0 +1,49 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!-- Runs every test against the analyzer built for Roslyn 4.8, hosted by the Roslyn 5.9 compiler, as the VSIX runs in
+         Visual Studio 2026. The direct Roslyn 5.9 references win over the 4.8 references of the analyzer projects. -->
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <RootNamespace>RecordValueAnalyser.Test</RootNamespace>
+        <NoWarn>1701;1702;VSTHRD200;RCS1046</NoWarn>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Include="..\RecordValueAnalyser.Test\Verifiers\*.cs" Link="Verifiers\%(Filename)%(Extension)"/>
+        <Compile Include="..\RecordValueAnalyser.Test\GlobalSuppressions.cs" Link="GlobalSuppressions.cs"/>
+        <Compile Include="..\RecordValueAnalyser.Test\TestConstants.cs" Link="TestConstants.cs"/>
+        <Compile Include="..\RecordValueAnalyser.Test\UnitTestsClasses.cs" Link="UnitTestsClasses.cs"/>
+        <Compile Include="..\RecordValueAnalyser.Test\UnitTestsStructs.cs" Link="UnitTestsStructs.cs"/>
+        <Compile Include="..\RecordValueAnalyser.Test\UnitTestsUnions.cs" Link="UnitTestsUnions.cs"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
+        <PackageReference Include="MSTest.TestAdapter" Version="4.5.1" />
+        <PackageReference Include="MSTest.TestFramework" Version="4.5.1" />
+        <PackageReference Include="Microsoft.CodeAnalysis" Version="5.9.0" />
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Analyzer.Testing" Version="1.1.4" />
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp.CodeFix.Testing" Version="1.1.4" />
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp.CodeRefactoring.Testing" Version="1.1.4" />
+        <PackageReference Include="NuGet.Common" Version="7.9.0" />
+        <PackageReference Include="NuGet.Packaging" Version="7.9.0" />
+        <PackageReference Include="NuGet.Protocol" Version="7.9.0" />
+        <!-- Transitive via NuGet.Packaging; 8.0.1 has GHSA-2fmv-rv2c-59x7 and GHSA-846f-f764-76mx -->
+        <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
+        <PackageReference Include="Roslynator.Analyzers" Version="5.0.1">
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+            <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="18.12.1">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\RecordValueAnalyser.CodeFixes.Roslyn48\RecordValueAnalyser.CodeFixes.Roslyn48.csproj" />
+        <ProjectReference Include="..\RecordValueAnalyser.Roslyn48\RecordValueAnalyser.Roslyn48.csproj" />
+    </ItemGroup>
+
+</Project>
