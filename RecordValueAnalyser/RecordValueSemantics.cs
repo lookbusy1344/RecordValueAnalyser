@@ -91,7 +91,7 @@ internal static class RecordValueSemantics
 			// get the member types of the tuple or struct
 			IEnumerable<ITypeSymbol>? memberTypes = type switch {
 				INamedTypeSymbol { IsTupleType: true } tuple => tuple.TupleElements.Select(e => e.Type),
-				INamedTypeSymbol union when UnionSemantics.IsUnionStruct(union) => UnionSemantics.GetMemberTypes(union),
+				INamedTypeSymbol union when UnionSemantics.IsStructUnionType(union) => UnionSemantics.GetMemberTypes(union),
 				_ when IsStruct(type) => GetInstanceFields(type).Select(f => f.Type),
 				_ => null,
 			};

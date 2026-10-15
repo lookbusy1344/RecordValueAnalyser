@@ -123,8 +123,8 @@ public class RecordValueAnalyser : DiagnosticAnalyzer
 	}
 
 	/// <summary>
-	///     A union record holds its case in an object member, compared with object.Equals, so that member is checked through
-	///     the case types. Returns null for any other member, or when the record is not a union.
+	///     A record that is a union type holds its case in an object member, compared with object.Equals, so that member is
+	///     checked through the case types. Returns null for any other member, or when the record is not a union type.
 	/// </summary>
 	private static CheckResultTuple? CheckUnionMember(INamedTypeSymbol? union, ISymbol? member)
 	{

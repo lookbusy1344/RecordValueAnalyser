@@ -27,9 +27,10 @@ internal static class UnionSemantics
 #endif
 
 	/// <summary>
-	///     True if this is a union struct. Union classes compare by reference, and records are checked where they are declared.
+	///     True if this is a union type that is a struct. A union type that is a class compares by reference, and a record
+	///     that is a union type is checked where it is declared.
 	/// </summary>
-	internal static bool IsUnionStruct(ITypeSymbol type) => IsUnion(type) && type.TypeKind == TypeKind.Struct;
+	internal static bool IsStructUnionType(ITypeSymbol type) => IsUnion(type) && type.TypeKind == TypeKind.Struct;
 
 	/// <summary>
 	///     A union stores its case in a field compared with object.Equals, so the case types stand in for that field.
@@ -46,7 +47,7 @@ internal static class UnionSemantics
 	}
 
 	/// <summary>
-	///     True if this member of a union record holds the case: a storage field, or the auto-property Value behind one
+	///     True if this member of a record that is a union type holds the case: a storage field, or the auto-property Value behind one
 	/// </summary>
 	internal static bool HoldsCase(INamedTypeSymbol union, ISymbol member) =>
 		GetStorage(union).Any(f => SymbolEqualityComparer.Default.Equals(f, member)

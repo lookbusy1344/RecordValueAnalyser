@@ -16,6 +16,22 @@ record TestRecord(int A, string B, IReadOnlyList<int> C);
 
 Source code and issue tracker: https://github.com/lookbusy1344/RecordValueAnalyser
 
+## Supported versions
+
+The package holds two builds of the analyser, and the compiler loads the newest one it supports. Union type checks are only in the Roslyn 5.9 build.
+
+| Toolchain | Default C# | Analyser build | Union type checks |
+|---|---|---|---|
+| .NET 8 SDK | 12 | Roslyn 4.8 | no |
+| .NET 9 SDK | 13 | Roslyn 4.8 | no |
+| .NET 10 SDK with a compiler older than Roslyn 5.9 | 14 | Roslyn 4.8 | no |
+| .NET 10 SDK with Roslyn 5.9 or newer (e.g. 10.0.402) | 14 | Roslyn 5.9 | yes |
+| .NET 11 SDK | 15 | Roslyn 5.9 | yes |
+| Visual Studio 2022 17.8 or newer | 12–13 | Roslyn 4.8 | no |
+| Visual Studio 2026 | 14–15 | depends on its compiler, as for the .NET 10 SDK | with the Roslyn 5.9 build |
+
+CI packs the package and checks that the .NET 8, 9, 10 and 11 SDKs each load the expected build and report JSV01. The VSIX needs Visual Studio 2026.
+
 ## Why?
 
 This project is a C# Roslyn code analyser to check records for correct value semantics.
@@ -65,7 +81,7 @@ The C member is an array, and these lack value semantics. Therefore `a` and `b` 
 
 ## What the analyser does
 
-It scans your records, and reports any members that don't have value semantics. It also scans into any nested stucts and tuples. In the above example,
+It scans your records, and reports any members that don't have value semantics. It also scans into any nested structs and tuples. In the above example,
 it would cause a warning on the C field:
 
 ```
@@ -73,7 +89,7 @@ record TestRecord(int A, string B, IReadOnlyList<int> C);
                                    ~~~~~~~~~~~~~~~~~~~~  JSV01: member lacks value semantics
 ```
 
-It was built for C# 12+ and .NET 8, 9, 10 and 11. The package holds two builds: one for Roslyn 4.8 (.NET 8 and 9 SDKs, Visual Studio 2022) and one for Roslyn 5.9 (.NET 11 and recent .NET 10 SDKs). The compiler loads the newest build it supports, so older .NET 10 SDKs and Visual Studio 2026 releases with an older compiler use the Roslyn 4.8 build. Union checks are only in the Roslyn 5.9 build. It checks `record class` and `record struct` types for the following:
+It works with .NET 8, 9, 10 and 11 (see [Supported versions](#supported-versions)). It checks `record class` and `record struct` types for the following:
 
 - if the record has a `Equals(T)` method, it is ok and no more checks are performed (partial records are handled correctly via the semantic model)
 - Otherwise all members are checked for:
@@ -87,7 +103,11 @@ It was built for C# 12+ and .NET 8, 9, 10 and 11. The package holds two builds: 
     - it is a record (these will be checked elsewhere, so are assumed ok here)
     - it is a class (without Equals method, these are not ok)
     - it is a tuple or struct (without Equals method, their members are checked recursively)
-    - it is a C# 15 union struct (without Equals method, each case type is checked recursively, along with any other fields). Case types come from the public single-parameter constructors, or from the static `Create` methods of a nested `IUnionMembers` interface. Union classes are checked as classes
+    - it is a C# 15 union type. A union type compares its case through `object.Equals`, so it has value semantics when every case type has them:
+        - each case type is checked recursively, along with any other fields. Case types come from the public single-parameter constructors, or from the static `Create` methods of a nested `IUnionMembers` interface
+        - a union type that is a class, without an Equals method, compares by reference and fails like any class
+        - a record that is itself a union type is checked through its case types
+        - the Roslyn 4.8 build does not recognise union types, and checks them as ordinary structs or classes
     - circular struct layouts (CS0523) are detected and do not cause unbounded recursion
     - Multi-variable field declarations (e.g. `int[] A, B;`) each produce their own diagnostic
 

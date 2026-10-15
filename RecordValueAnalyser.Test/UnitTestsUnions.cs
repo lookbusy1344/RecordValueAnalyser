@@ -8,8 +8,8 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using VerifyCS = CSharpCodeFixVerifier<RecordValueAnalyser, RecordValueAnalyserCodeFixProvider>;
 
 // tests for records holding C# 15 union types
-// A union struct stores its case in an object field, and ValueType.Equals compares that field with object.Equals,
-// so a union has value semantics exactly when every case type has value semantics.
+// A union type that is a struct stores its case in an object field, and ValueType.Equals compares that field with
+// object.Equals, so the union type has value semantics exactly when every case type has value semantics.
 
 [TestClass]
 public class RecordValueAnalyserUnitTest
