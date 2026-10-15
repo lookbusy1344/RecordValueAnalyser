@@ -1,0 +1,4 @@
+-P ubuntu-latest=catthehacker/ubuntu:act-latest
+--container-architecture linux/arm64
+--artifact-server-path .act-artifacts
+--no-cache-server

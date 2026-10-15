@@ -7,3 +7,4 @@ TestResults/
 copilotDiffState.xml
 copilot.data.*.xml
 *.DotSettings.user
+.act-artifacts/

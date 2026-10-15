@@ -176,7 +176,17 @@ When you write your implementations `SequenceEqual` is very useful for comparing
 
 [![Test](https://github.com/lookbusy1344/RecordValueAnalyser/actions/workflows/test.yml/badge.svg)](https://github.com/lookbusy1344/RecordValueAnalyser/actions/workflows/test.yml)
 
-Tests are in `RecordValueAnalyser.Test`. They are run in the CI pipeline.
+Tests are in `RecordValueAnalyser.Test`, and `RecordValueAnalyser.Test.Roslyn48` runs the class and struct tests against the Roslyn 4.8 build. They are run in the CI pipeline, which also packs the package and checks that the .NET 8, 9, 10 and 11 SDKs each load the right build (`scripts/check-package.sh`).
+
+### Running CI locally
+
+[act](https://github.com/nektos/act) runs the GitHub workflows in Docker (OrbStack or Docker Desktop). The flags are in `.actrc`, set for Apple Silicon:
+
+```bash
+act push -W .github/workflows/test.yml
+```
+
+A full run takes several minutes. act serves workflow artifacts to the job containers from a local HTTP server, so the macOS firewall asks whether `act` may accept incoming connections. Allow it on a trusted network; without it the package jobs cannot pass the package between them. On an x86 machine, override the architecture with `--container-architecture linux/amd64`.
 
 ## Formatting
 

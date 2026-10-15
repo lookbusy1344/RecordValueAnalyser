@@ -41,6 +41,13 @@ Main logic split between `RecordValueAnalyser.cs` (entry point / diagnostics) an
 - Analyzer: .NET Standard 2.0
 - Tests: .NET 10.0, C# 12-14, nullable reference types enabled
 
+## Running workflows locally
+
+`act push -W .github/workflows/test.yml` runs the CI workflow in Docker, with flags from `.actrc` (see README). Use it once to check a workflow change, not while iterating: a full run takes several minutes.
+
+- Run `act` with `dangerouslyDisableSandbox: true`. It uses the Docker socket, and its artifact server listens for the job containers.
+- If a run is interrupted, remove the leftover containers: `docker ps -a --filter name=act-`, then `docker rm -f` each one.
+
 ## Pre-Commit
 
 Run in order before every commit. Stop and fix on any failure — never skip with `--no-verify`.
