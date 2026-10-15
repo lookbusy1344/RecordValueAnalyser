@@ -32,3 +32,55 @@ jobs:
 
       - name: Check formatting
         run: dotnet format --verify-no-changes
+
+  package:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Pack
+        run: dotnet pack RecordValueAnalyser.Package/RecordValueAnalyser.Package.csproj --configuration Release --output ./nuget-output /p:Version=0.0.0-ci
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: package
+          path: ./nuget-output/*.nupkg
+
+  # each SDK must load the analyzer build for its compiler, and the analyzer must report JSV01
+  package-consumer:
+    needs: package
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { sdk: "8", tfm: net8.0, quality: ga, roslyn: roslyn4.8 }
+          - { sdk: "9", tfm: net9.0, quality: ga, roslyn: roslyn4.8 }
+          - { sdk: "10", tfm: net10.0, quality: ga, roslyn: roslyn5.9 }
+          - { sdk: "11", tfm: net11.0, quality: preview, roslyn: roslyn5.9 }
+
+    name: package-consumer (.NET ${{ matrix.sdk }})
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: "${{ matrix.sdk }}.0.x"
+          dotnet-quality: ${{ matrix.quality }}
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: package
+          path: ./nuget-output
+
+      - name: Check package
+        run: scripts/check-package.sh ./nuget-output ${{ matrix.sdk }} ${{ matrix.tfm }} ${{ matrix.roslyn }}
