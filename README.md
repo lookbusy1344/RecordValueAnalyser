@@ -42,7 +42,7 @@ The package holds two builds of the analyser, and the compiler loads the newest 
 
 CI packs the package and checks that the .NET 8, 9, 10 and 11 SDKs each load the expected build and report JSV01.
 
-The VSIX holds only the Roslyn 4.8 build, because Visual Studio cannot pick a VSIX analyser build by compiler version. It installs in Visual Studio 2022 17.8 or newer and every Visual Studio 2026 release, and does not check union types. For union type checks, use the NuGet package.
+The VSIX holds only the Roslyn 4.8 build, because Visual Studio cannot pick a VSIX analyser build by compiler version. It installs in Visual Studio 2022 17.8 or newer and every Visual Studio 2026 release. It does not recognise union types: a record member whose type is a union type is reported as `(field object)`, even when every case type has value semantics. Projects that use union types should use the NuGet package instead.
 
 ## Why?
 
@@ -116,7 +116,7 @@ It works with .NET 8, 9, 10 and 11 (see [Supported versions](#supported-versions
         - each case type is checked recursively, along with any other fields. Case types come from the public single-parameter constructors, or from the static `Create` methods of a nested `IUnionMembers` interface
         - a union type that is a class, without an Equals method, compares by reference and fails like any class
         - a record that is itself a union type is checked through its case types
-        - the Roslyn 4.8 build does not recognise union types, and checks them as ordinary structs or classes
+        - the Roslyn 4.8 build (used by the VSIX and by older compilers) does not recognise union types. It checks them as ordinary structs or classes, so a member whose type is a union type is reported as `(field object)`, even when every case type has value semantics
     - circular struct layouts (CS0523) are detected and do not cause unbounded recursion
     - Multi-variable field declarations (e.g. `int[] A, B;`) each produce their own diagnostic
 
