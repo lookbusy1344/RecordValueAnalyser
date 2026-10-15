@@ -4,7 +4,7 @@ RecordValueAnalyser is a C# Roslyn code analyzer that checks records for correct
 
 ## Version control (read first)
 
-Before the first VCS command, run `jj --ignore-working-copy root`. This may be a jj repo on one machine and plain Git on another.
+Before the first VCS command, run `jj --ignore-working-copy root` as a command of its own. Do not chain it with other commands: a later failure hides its exit status. If it prints a path, the repo is jj. This may be a jj repo on one machine and plain Git on another.
 
 **IMPORTANT:** if it succeeds, use `jj` for all VCS commands, including `log`, `show`, `status` and `diff`. Do not run `git` on jj repos. The `gitStatus` snapshot in the session context is not a reason to use git.
 
