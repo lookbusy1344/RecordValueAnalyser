@@ -38,7 +38,7 @@ The package holds two builds of the analyser, and the compiler loads the newest 
 | .NET 10 SDK with Roslyn 5.9 or newer (e.g. 10.0.402) | 14 | Roslyn 5.9 | yes |
 | .NET 11 SDK | 15 | Roslyn 5.9 | yes |
 | Visual Studio 2022 17.8 or newer | 12–13 | Roslyn 4.8 | no |
-| Visual Studio 2026 | 14–15 | depends on its compiler, as for the .NET 10 SDK | with the Roslyn 5.9 build |
+| Visual Studio 2026 | 14–15 | depends on its compiler, as for the .NET 10 SDK | when its compiler is Roslyn 5.9 or newer |
 
 CI packs the package and checks that the .NET 8, 9, 10 and 11 SDKs each load the expected build and report JSV01.
 
