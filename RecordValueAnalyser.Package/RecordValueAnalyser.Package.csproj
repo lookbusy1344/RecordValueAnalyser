@@ -55,14 +55,27 @@
         <ProjectReference Include="..\RecordValueAnalyser\RecordValueAnalyser.csproj"/>
     </ItemGroup>
 
+    <!-- The Roslyn 4.8 builds have the same assembly names, so they are built but not copied to this project's output -->
+    <ItemGroup>
+        <LegacyAnalyzerProject Include="..\RecordValueAnalyser.Roslyn48\RecordValueAnalyser.Roslyn48.csproj"/>
+        <LegacyAnalyzerProject Include="..\RecordValueAnalyser.CodeFixes.Roslyn48\RecordValueAnalyser.CodeFixes.Roslyn48.csproj"/>
+        <ProjectReference Include="@(LegacyAnalyzerProject)" ReferenceOutputAssembly="false"/>
+    </ItemGroup>
+
     <ItemGroup>
         <None Include="README.md" Pack="true" PackagePath="."/>
     </ItemGroup>
 
+    <!-- The SDK loads the highest roslynX.Y folder no newer than the running compiler:
+         .NET 8/9 SDKs and Visual Studio 2022 load roslyn4.8, current .NET 10 and 11 SDKs load roslyn5.9 -->
     <Target Name="_AddAnalyzersToOutput">
+        <MSBuild Projects="@(LegacyAnalyzerProject)" Targets="GetTargetPath">
+            <Output TaskParameter="TargetOutputs" ItemName="_LegacyAnalyzerAssembly"/>
+        </MSBuild>
         <ItemGroup>
-            <TfmSpecificPackageFile Include="$(OutputPath)\RecordValueAnalyser.dll" PackagePath="analyzers/dotnet/cs"/>
-            <TfmSpecificPackageFile Include="$(OutputPath)\RecordValueAnalyser.CodeFixes.dll" PackagePath="analyzers/dotnet/cs"/>
+            <TfmSpecificPackageFile Include="$(OutputPath)\RecordValueAnalyser.dll" PackagePath="analyzers/dotnet/roslyn5.9/cs"/>
+            <TfmSpecificPackageFile Include="$(OutputPath)\RecordValueAnalyser.CodeFixes.dll" PackagePath="analyzers/dotnet/roslyn5.9/cs"/>
+            <TfmSpecificPackageFile Include="@(_LegacyAnalyzerAssembly)" PackagePath="analyzers/dotnet/roslyn4.8/cs"/>
         </ItemGroup>
     </Target>
 

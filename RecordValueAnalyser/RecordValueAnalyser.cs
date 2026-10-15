@@ -21,7 +21,7 @@ public class RecordValueAnalyser : DiagnosticAnalyzer
 		true,
 		new LocalizableResourceString(nameof(Resources.AnalyzerDescription), Resources.ResourceManager, typeof(Resources)));
 
-	public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => [ParamValueSemanticsRule];
+	public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(ParamValueSemanticsRule);
 
 	public override void Initialize(AnalysisContext context)
 	{

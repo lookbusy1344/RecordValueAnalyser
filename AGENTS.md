@@ -23,6 +23,10 @@ Exclude PII from every commit, commit message and bookmark name: real names, ema
 
 5 projects: core analyzer (`RecordValueAnalyser`), code fixes (`RecordValueAnalyser.CodeFixes`), NuGet package wrapper, MSTest tests (`RecordValueAnalyser.Test`, net10.0), and VS extension (`RecordValueAnalyser.Vsix`).
 
+Legacy builds for .NET 8/9 SDKs and Visual Studio 2022: `RecordValueAnalyser.Roslyn48` and `RecordValueAnalyser.CodeFixes.Roslyn48` compile the same sources against Roslyn 4.8 with `LEGACY_ROSLYN` defined, which turns off union detection. `RecordValueAnalyser.Test.Roslyn48` runs the class and struct tests against them. The package ships both builds, in `analyzers/dotnet/roslyn4.8/cs` and `analyzers/dotnet/roslyn5.9/cs`.
+
+Shared sources must compile against Roslyn 4.8 and System.Collections.Immutable 7.0. Do not use collection expressions for `ImmutableArray<T>` or `SyntaxList<T>`: for `SyntaxList<T>` the 4.8 build compiles them as a collection initializer whose `Add` results are discarded, which yields an empty list.
+
 Main logic split between `RecordValueAnalyser.cs` (entry point / diagnostics) and `RecordValueSemantics.cs` (value semantics checks).
 
 ## Key Implementation Details

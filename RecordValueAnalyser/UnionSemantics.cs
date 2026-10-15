@@ -15,11 +15,16 @@ internal static class UnionSemantics
 	private const string FactoryMethodName = "Create";
 
 	/// <summary>
-	///     True if this is a union, declared with 'union' or marked with UnionAttribute
+	///     True if this is a union, declared with 'union' or marked with UnionAttribute.
+	///     Roslyn 4.8 has no union support, so the legacy build sees no unions.
 	/// </summary>
+#if LEGACY_ROSLYN
+	internal static bool IsUnion(ITypeSymbol type) => false;
+#else
 #pragma warning disable RSEXPERIMENTAL006 // ITypeSymbol.IsUnion is flagged experimental in Roslyn 5.9.0
 	internal static bool IsUnion(ITypeSymbol type) => type.IsUnion;
 #pragma warning restore RSEXPERIMENTAL006
+#endif
 
 	/// <summary>
 	///     True if this is a union struct. Union classes compare by reference, and records are checked where they are declared.

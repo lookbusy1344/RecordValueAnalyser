@@ -874,6 +874,7 @@ public class RecordValueAnalyserUnitTest
 		await VerifyCS.VerifyAnalyzerAsync(test, expected);
 	}
 
+#if !LEGACY_ROSLYN // the 'field' keyword is C# 14
 	[TestMethod]
 	public async Task RecordFieldKeywordPropertyFail()
 	{
@@ -886,6 +887,7 @@ public class RecordValueAnalyserUnitTest
 
 		await VerifyCS.VerifyAnalyzerAsync(test, expected);
 	}
+#endif
 
 	[TestMethod]
 	public async Task RecordAutoPropertyFail()

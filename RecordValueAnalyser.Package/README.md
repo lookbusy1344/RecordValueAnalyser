@@ -73,7 +73,7 @@ record TestRecord(int A, string B, IReadOnlyList<int> C);
                                    ~~~~~~~~~~~~~~~~~~~~  JSV01: member lacks value semantics
 ```
 
-It was built for C# 12+ and .NET 10 and 11. It checks `record class` and `record struct` types for the following:
+It was built for C# 12+ and .NET 8, 9, 10 and 11. The package holds two builds: one for Roslyn 4.8 (.NET 8 and 9 SDKs, Visual Studio 2022) and one for Roslyn 5.9 (.NET 11 and recent .NET 10 SDKs). The compiler loads the newest build it supports, so older .NET 10 SDKs and Visual Studio 2026 releases with an older compiler use the Roslyn 4.8 build. Union checks are only in the Roslyn 5.9 build. It checks `record class` and `record struct` types for the following:
 
 - if the record has a `Equals(T)` method, it is ok and no more checks are performed (partial records are handled correctly via the semantic model)
 - Otherwise all members are checked for:
@@ -93,7 +93,7 @@ It was built for C# 12+ and .NET 10 and 11. It checks `record class` and `record
 
 It works with:
 
-- Visual Studio 2026
+- Visual Studio 2022 and 2026 (the VSIX needs 2026)
 - Visual Studio Code
 - Rider
 - `dotnet` command line tools
