@@ -22,7 +22,7 @@ This project contains:
 - the Roslyn code analyser and code fix (`RecordValueAnalyser`, `RecordValueAnalyser.CodeFixes`), built against Roslyn 5.9
 - the same sources built against Roslyn 4.8 for older compilers (`RecordValueAnalyser.Roslyn48`, `RecordValueAnalyser.CodeFixes.Roslyn48`)
 - a wrapper to make a nuget package holding both builds https://www.nuget.org/packages/lookbusy1344.RecordValueAnalyser
-- a VSIX plugin for Visual Studio 2026
+- a VSIX plugin for Visual Studio 2022 17.8+ and 2026, built from the Roslyn 4.8 sources
 - test projects for each build (`RecordValueAnalyser.Test`, `RecordValueAnalyser.Test.Roslyn48`)
 - a package check that builds a consumer project with each .NET SDK (`scripts/check-package.sh`)
 
@@ -40,7 +40,9 @@ The package holds two builds of the analyser, and the compiler loads the newest 
 | Visual Studio 2022 17.8 or newer | 12–13 | Roslyn 4.8 | no |
 | Visual Studio 2026 | 14–15 | depends on its compiler, as for the .NET 10 SDK | with the Roslyn 5.9 build |
 
-CI packs the package and checks that the .NET 8, 9, 10 and 11 SDKs each load the expected build and report JSV01. The VSIX needs Visual Studio 2026.
+CI packs the package and checks that the .NET 8, 9, 10 and 11 SDKs each load the expected build and report JSV01.
+
+The VSIX holds only the Roslyn 4.8 build, because Visual Studio cannot pick a VSIX analyser build by compiler version. It installs in Visual Studio 2022 17.8 or newer and every Visual Studio 2026 release, and does not check union types. For union type checks, use the NuGet package.
 
 ## Why?
 
@@ -119,7 +121,7 @@ It works with .NET 8, 9, 10 and 11 (see [Supported versions](#supported-versions
     - Multi-variable field declarations (e.g. `int[] A, B;`) each produce their own diagnostic
 
 It works with:
-- Visual Studio 2022 and 2026 (the VSIX needs 2026)
+- Visual Studio 2022 17.8+ and 2026, through the NuGet package or the VSIX
 - Visual Studio Code
 - Rider
 - `dotnet` command line tools

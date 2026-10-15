@@ -8,7 +8,7 @@
     <Tags>Roslyn;CodeAnalysis;Analyzers;ValueSemantics;Semantics;IEquatable</Tags>    
   </Metadata>
   <Installation>
-	  <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[18.0,)">
+	  <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[17.8,)">
 		  <ProductArchitecture>amd64</ProductArchitecture>
 	  </InstallationTarget>
   </Installation>
@@ -16,10 +16,10 @@
     <Dependency Id="Microsoft.Framework.NDP" DisplayName="Microsoft .NET Framework" d:Source="Manual" Version="[4.5,)" />
   </Dependencies>
   <Assets>
-    <Asset Type="Microsoft.VisualStudio.MefComponent" d:Source="Project" d:ProjectName="RecordValueAnalyser" Path="|RecordValueAnalyser|"/>
-    <Asset Type="Microsoft.VisualStudio.Analyzer" d:Source="Project" d:ProjectName="RecordValueAnalyser" Path="|RecordValueAnalyser|"/>
-    <Asset Type="Microsoft.VisualStudio.MefComponent" d:Source="Project" d:ProjectName="RecordValueAnalyser.CodeFixes" Path="|RecordValueAnalyser.CodeFixes|"/>
-    <Asset Type="Microsoft.VisualStudio.Analyzer" d:Source="Project" d:ProjectName="RecordValueAnalyser.CodeFixes" Path="|RecordValueAnalyser.CodeFixes|"/>
+    <Asset Type="Microsoft.VisualStudio.MefComponent" d:Source="Project" d:ProjectName="RecordValueAnalyser.Roslyn48" Path="|RecordValueAnalyser.Roslyn48|"/>
+    <Asset Type="Microsoft.VisualStudio.Analyzer" d:Source="Project" d:ProjectName="RecordValueAnalyser.Roslyn48" Path="|RecordValueAnalyser.Roslyn48|"/>
+    <Asset Type="Microsoft.VisualStudio.MefComponent" d:Source="Project" d:ProjectName="RecordValueAnalyser.CodeFixes.Roslyn48" Path="|RecordValueAnalyser.CodeFixes.Roslyn48|"/>
+    <Asset Type="Microsoft.VisualStudio.Analyzer" d:Source="Project" d:ProjectName="RecordValueAnalyser.CodeFixes.Roslyn48" Path="|RecordValueAnalyser.CodeFixes.Roslyn48|"/>
   </Assets>
   <Prerequisites>
     <Prerequisite Id="Microsoft.VisualStudio.Component.CoreEditor" Version="[15.0,)" DisplayName="Visual Studio core editor" />

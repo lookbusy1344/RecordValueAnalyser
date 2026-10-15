@@ -47,9 +47,11 @@
 
     <Import Project="$(VSToolsPath)\VSSDK\Microsoft.VsSDK.targets" Condition="'$(IsWindows)' == 'true' AND Exists('$(VSToolsPath)\VSSDK\Microsoft.VsSDK.targets')"/>
 
+    <!-- A VSIX holds one analyzer build and Visual Studio cannot pick one by compiler version, so it ships the Roslyn 4.8
+         build, which loads in Visual Studio 2022 17.8+ and every Visual Studio 2026 release. Union types are not checked. -->
     <ItemGroup>
-        <ProjectReference Include="..\RecordValueAnalyser.CodeFixes\RecordValueAnalyser.CodeFixes.csproj"/>
-        <ProjectReference Include="..\RecordValueAnalyser\RecordValueAnalyser.csproj"/>
+        <ProjectReference Include="..\RecordValueAnalyser.CodeFixes.Roslyn48\RecordValueAnalyser.CodeFixes.Roslyn48.csproj"/>
+        <ProjectReference Include="..\RecordValueAnalyser.Roslyn48\RecordValueAnalyser.Roslyn48.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
