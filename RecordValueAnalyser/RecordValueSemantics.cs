@@ -44,10 +44,11 @@ internal static class RecordValueSemantics
 			return (ValueEqualityResult.Ok, null);
 		}
 
-		// Cycle detection: a circular struct layout (CS0523) must not cause unbounded recursion.
-		// Track only the current recursion path; remove on exit so sibling branches are not skipped.
+		// Cycle detection: a circular struct layout (CS0523), or a union reached again through its case types, must not cause
+		// unbounded recursion. Track only the current recursion path; remove on exit so sibling branches are not skipped.
+		// A back-edge adds no new member types, so it passes; any failing type on the cycle is reported where it is checked.
 		if (!visited.Add(type)) {
-			return (ValueEqualityResult.Ok, null); // back-edge: compiler already reports CS0523
+			return (ValueEqualityResult.Ok, null);
 		}
 
 		try {

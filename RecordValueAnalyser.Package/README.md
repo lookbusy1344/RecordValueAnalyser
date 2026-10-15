@@ -73,7 +73,7 @@ record TestRecord(int A, string B, IReadOnlyList<int> C);
                                    ~~~~~~~~~~~~~~~~~~~~  JSV01: member lacks value semantics
 ```
 
-It was built for C# 12+ and .NET 8, 9, 10 and 11. It checks `record class` and `record struct` types for the following:
+It was built for C# 12+ and .NET 10 and 11. It checks `record class` and `record struct` types for the following:
 
 - if the record has a `Equals(T)` method, it is ok and no more checks are performed (partial records are handled correctly via the semantic model)
 - Otherwise all members are checked for:
@@ -93,7 +93,7 @@ It was built for C# 12+ and .NET 8, 9, 10 and 11. It checks `record class` and `
 
 It works with:
 
-- Visual Studio 2022/6
+- Visual Studio 2026
 - Visual Studio Code
 - Rider
 - `dotnet` command line tools
