@@ -1497,4 +1497,43 @@ public class RecordValueAnalyserUnitTest
 
 		await VerifyPreviewAsync(test, expected);
 	}
+
+	[TestMethod]
+	public async Task RecursiveUnionPass()
+	{
+		// Node holds Tree, and Tree holds Node through its object storage, so this is legal (no CS0523).
+		// Reaching Tree again adds nothing new, so the cycle passes
+		const string test = coGeneral
+							+ """
+							  public record A(Tree T);
+
+							  public record Leaf(int V);
+							  public struct Node { public Tree Left; public Tree Right; }
+							  public union Tree(Leaf, Node);
+							  """
+							+ coUnionTypes;
+
+		await VerifyPreviewAsync(test);
+	}
+
+	[TestMethod]
+	public async Task RecursiveUnionWithArrayFail()
+	{
+		// the cycle back to Tree must not hide the array field that follows it in Node
+		const string test = coGeneral
+							+ """
+							  public record A(Tree T);
+
+							  public record Leaf(int V);
+							  public struct Node { public Tree Left; public int[] Data; }
+							  public union Tree(Leaf, Node);
+							  """
+							+ coUnionTypes;
+
+		var expected = VerifyCS.Diagnostic("JSV01")
+			.WithSpan(6, 17, 6, 23)
+			.WithArguments("Tree T (field Node)");
+
+		await VerifyPreviewAsync(test, expected);
+	}
 }
