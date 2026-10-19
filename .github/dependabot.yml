@@ -5,8 +5,11 @@ updates:
     directories:
       - "/RecordValueAnalyser"
       - "/RecordValueAnalyser.CodeFixes"
+      - "/RecordValueAnalyser.Roslyn48"
+      - "/RecordValueAnalyser.CodeFixes.Roslyn48"
       - "/RecordValueAnalyser.Package"
       - "/RecordValueAnalyser.Test"
+      - "/RecordValueAnalyser.Test.Roslyn48"
       - "/RecordValueAnalyser.Test.Roslyn48OnRoslyn59"
       - "/RecordValueAnalyser.Vsix"
       - "/Helpful_collections"
@@ -14,19 +17,13 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 10
-
-  # The legacy builds compile against Roslyn 4.8 and must stay on it.
-  - package-ecosystem: nuget
-    directories:
-      - "/RecordValueAnalyser.Roslyn48"
-      - "/RecordValueAnalyser.CodeFixes.Roslyn48"
-      - "/RecordValueAnalyser.Test.Roslyn48"
-    schedule:
-      interval: weekly
-    open-pull-requests-limit: 10
+    # Each analyser build references the oldest compiler it supports (Roslyn 4.8 and 5.9, matching the
+    # package's analyzer folders). Dependabot follows project references, so a per-directory rule cannot
+    # protect the 4.8 pins. Roslyn upgrades are manual.
     ignore:
-      - dependency-name: "Microsoft.CodeAnalysis.CSharp*"
-        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "Microsoft.CodeAnalysis"
+      - dependency-name: "Microsoft.CodeAnalysis.CSharp"
+      - dependency-name: "Microsoft.CodeAnalysis.CSharp.Workspaces"
 
   - package-ecosystem: github-actions
     directory: "/"
