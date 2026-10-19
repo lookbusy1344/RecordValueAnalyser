@@ -51,7 +51,7 @@ jobs:
       - name: Pack
         run: dotnet pack RecordValueAnalyser.Package/RecordValueAnalyser.Package.csproj --configuration Release --no-build --output ./nuget-output /p:Version=0.0.0-ci
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: package
           path: ./nuget-output/*.nupkg
@@ -81,7 +81,7 @@ jobs:
           dotnet-version: "${{ matrix.sdk }}.0.x"
           dotnet-quality: ${{ matrix.quality }}
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: package
           path: ./nuget-output

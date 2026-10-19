@@ -27,3 +27,9 @@ updates:
     ignore:
       - dependency-name: "Microsoft.CodeAnalysis.CSharp*"
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
