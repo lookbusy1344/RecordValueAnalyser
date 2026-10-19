@@ -2,7 +2,28 @@ version: 2
 
 updates:
   - package-ecosystem: nuget
-    directory: "/"
+    directories:
+      - "/RecordValueAnalyser"
+      - "/RecordValueAnalyser.CodeFixes"
+      - "/RecordValueAnalyser.Package"
+      - "/RecordValueAnalyser.Test"
+      - "/RecordValueAnalyser.Test.Roslyn48OnRoslyn59"
+      - "/RecordValueAnalyser.Vsix"
+      - "/Helpful_collections"
+      - "/Helpful_collections.Test"
     schedule:
       interval: weekly
     open-pull-requests-limit: 10
+
+  # The legacy builds compile against Roslyn 4.8 and must stay on it.
+  - package-ecosystem: nuget
+    directories:
+      - "/RecordValueAnalyser.Roslyn48"
+      - "/RecordValueAnalyser.CodeFixes.Roslyn48"
+      - "/RecordValueAnalyser.Test.Roslyn48"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    ignore:
+      - dependency-name: "Microsoft.CodeAnalysis.CSharp*"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]

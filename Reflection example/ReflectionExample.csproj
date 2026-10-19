@@ -18,11 +18,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="lookbusy1344.RecordValueAnalyser" Version="1.2.2">
+    <PackageReference Include="lookbusy1344.RecordValueAnalyser" Version="1.4.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Roslynator.Analyzers" Version="4.14.0">
+    <PackageReference Include="Roslynator.Analyzers" Version="5.0.1">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
