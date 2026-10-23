@@ -2,7 +2,7 @@
 name: require-pre-commit-checks
 enabled: true
 event: bash
-pattern: (jj\s+(commit|describe|squash)|git\s+commit)
+pattern: \bgit\s+commit\b|\bjj(\s+--?\S+)*\s+(commit|ci|describe|desc|squash)\b
 action: warn
 ---
 

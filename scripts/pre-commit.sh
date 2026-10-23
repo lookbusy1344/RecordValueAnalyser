@@ -72,6 +72,8 @@ run_dotnet_checks() {
 }
 
 main() {
+  cd "$(dirname "${BASH_SOURCE[0]}")/.."
+
   local staged_files=()
   local staged_file
 

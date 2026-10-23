@@ -9,9 +9,15 @@
 
 set -euo pipefail
 
+# GUI and hook launches omit the user-local dotnet and Homebrew paths.
+export PATH="$HOME/.dotnet:/opt/homebrew/bin:/usr/local/bin:$PATH"
+
 readonly BLOCK_EXIT_CODE=2
 readonly LOG_TAIL_LINES=60
-readonly PUSH_PATTERN='\b(jj\s+git\s+push|jj\s+pmain|git\s+push)\b'
+readonly PUSH_PATTERN='\b(jj\s+git\s+push|jj\s+(pmain|fixpush)|git(\s+-C\s+\S+)?\s+push)\b'
+
+# Any other exit code is a non-blocking error, which would let the push through.
+trap 'echo "Push blocked: agent-pre-push-hook.sh failed at line ${LINENO}." >&2; exit "${BLOCK_EXIT_CODE}"' ERR
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 readonly PROJECT_DIR
