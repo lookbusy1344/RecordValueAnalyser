@@ -1,5 +1,11 @@
 # For libraries, with VSTHRD111: Use .ConfigureAwait(bool) and other fixes
-# 23 Sep 2026
+# 12 Nov 2026
+
+# Pair with these Directory.Build.props settings. Without the first, no IDE
+# style rule runs in the build; without the second, every warning-level rule
+# below is advisory:
+#   <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+#   <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
 
 # Remove the line below if you want to inherit .editorconfig settings from higher directories
 root = true
@@ -149,12 +155,12 @@ csharp_prefer_static_local_function = true:suggestion
 csharp_style_prefer_readonly_struct = true:suggestion
 csharp_style_prefer_readonly_struct_member = true:suggestion
 csharp_style_conditional_delegate_call = true:suggestion
-csharp_style_prefer_switch_expression = true:suggestion
-csharp_style_prefer_pattern_matching = true:suggestion
+csharp_style_prefer_switch_expression = true:warning
+csharp_style_prefer_pattern_matching = true:warning
 csharp_style_pattern_matching_over_is_with_cast_check = true:suggestion
 csharp_style_pattern_matching_over_as_with_null_check = true:suggestion
-csharp_style_prefer_not_pattern = true:suggestion
-csharp_style_prefer_extended_property_pattern = true:suggestion
+csharp_style_prefer_not_pattern = true:warning
+csharp_style_prefer_extended_property_pattern = true:warning
 
 # Experimental formatting options
 csharp_style_allow_embedded_statements_on_same_line_experimental = true
@@ -214,8 +220,6 @@ dotnet_analyzer_diagnostic.category-Design.severity = warning
 dotnet_analyzer_diagnostic.category-Performance.severity = warning
 dotnet_analyzer_diagnostic.category-Reliability.severity = warning
 dotnet_analyzer_diagnostic.category-Usage.severity = warning
-dotnet_analyzer_diagnostic.category-Naming.severity = warning
-dotnet_analyzer_diagnostic.category-Globalization.severity = warning
 
 # Native Compiler overrides (Explicit CA / IDE Rules)
 dotnet_diagnostic.CA2000.severity = warning
@@ -312,12 +316,103 @@ dotnet_diagnostic.CA2022.severity = error
 # Unobserved asynchronous work.
 dotnet_diagnostic.CS4014.severity = error
 
-# Switch expression safety.
+# Exhaustive switches. A switch over an enum, a closed hierarchy (C# 15
+# `closed`) or a union lists every case, so adding a case breaks the build at
+# every switch that misses it instead of failing at run time.
+# CS8509: a case is not handled. On closed hierarchies and unions it is the
+#   whole check, so those switches carry no `_` or `var` arm.
+# CS8524: an enum switch does not handle unnamed values (`(Status)99`). Satisfy
+#   it with `_ => throw new ArgumentOutOfRangeException(...)` and nothing else.
+# CS8846/CS8847: not exhaustive (CS8847: null not handled) once `when`
+#   clauses are discounted.
+# CS8655: null input not handled. A default union holds null contents, so
+#   every union switch needs an explicit `null` arm.
+# CS8510: an arm is unreachable because an earlier arm covers it.
 dotnet_diagnostic.CS8509.severity = error
 dotnet_diagnostic.CS8524.severity = error
 dotnet_diagnostic.CS8846.severity = error
-dotnet_diagnostic.CS8510.severity = error
 dotnet_diagnostic.CS8847.severity = error
+dotnet_diagnostic.CS8655.severity = error
+dotnet_diagnostic.CS8510.severity = error
+
+# Missing enum members. The throwing `_` arm CS8524 demands also silences
+# CS8509, so only these report an enum member added later. IDE0072 covers
+# switch expressions, IDE0010 switch statements. IDE0010 also requires
+# `default:` on a statement over an open type such as a string; make that arm
+# decide something (reject unknown input), not just `break`. A switch over an
+# open enum we don't own (HttpStatusCode, ConsoleKey) with a correct fallback
+# suppresses IDE0072 locally: `#pragma warning disable IDE0072 // reason`.
+# Needs <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>.
+dotnet_diagnostic.IDE0010.severity = error
+dotnet_diagnostic.IDE0072.severity = error
+
+# ---------------------------------------------------------------------
+# Modern C# idioms (C# 12-15)
+# ---------------------------------------------------------------------
+# A style option's inline severity (`option = true:suggestion`) overrides
+# `dotnet_diagnostic.<ID>.severity` in the build. Rules governed by an
+# option above take their severity there; the rest are set here.
+
+# Collection expressions: `[]`, `[.. xs]` over Array.Empty, ToArray, ToList,
+# builders and `new List<T> { }`.
+dotnet_diagnostic.IDE0300.severity = warning
+dotnet_diagnostic.IDE0301.severity = warning
+dotnet_diagnostic.IDE0302.severity = warning
+dotnet_diagnostic.IDE0303.severity = warning
+dotnet_diagnostic.IDE0304.severity = warning
+dotnet_diagnostic.IDE0305.severity = warning
+dotnet_diagnostic.IDE0306.severity = warning
+
+# IDE0320 (static lambdas) never runs in the build or `dotnet format`, only
+# in the IDE. At warning it would flag every non-capturing lambda in the
+# editor with no build to back it, so it stays a suggestion.
+dotnet_diagnostic.IDE0320.severity = suggestion
+# IDE0330: lock on System.Threading.Lock, not object.
+dotnet_diagnostic.IDE0330.severity = warning
+# IDE0340: nameof(List<>) over nameof(List<int>).
+dotnet_diagnostic.IDE0340.severity = warning
+# IDE0350: implicitly typed lambda parameters.
+dotnet_diagnostic.IDE0350.severity = warning
+# IDE0360: simplify accessors with the `field` keyword.
+dotnet_diagnostic.IDE0360.severity = warning
+# IDE0410: labeled break/continue over flags and goto.
+dotnet_diagnostic.IDE0410.severity = warning
+
+# Primary constructors on ordinary classes capture parameters as mutable
+# state. Records use positional syntax by convention; IDE0290 never applies
+# to records, so it is off rather than restricted.
+csharp_style_prefer_primary_constructors = false
+dotnet_diagnostic.IDE0290.severity = none
+
+# IDE0005 (unused usings) runs in the build only where
+# GenerateDocumentationFile is true; elsewhere it fails the build with
+# EnableGenerateDocumentationFile. Hosts and tests usually turn docs off, so
+# it stays a suggestion and `dotnet format` removes unused usings.
+dotnet_diagnostic.IDE0005.severity = suggestion
+
+# Stale suppressions: unneeded `!`, pragma/SuppressMessage and `unsafe`.
+# IDE0079 runs only in the IDE, never on build.
+dotnet_diagnostic.IDE0079.severity = warning
+dotnet_diagnostic.IDE0370.severity = warning
+dotnet_diagnostic.IDE0380.severity = warning
+
+
+# ---------------------------------------------------------------------
+# .NET 11 analyzer escalations
+# ---------------------------------------------------------------------
+
+# AsParallel() in foreach runs sequentially.
+dotnet_diagnostic.CA1876.severity = error
+
+# Non-cancellable Task.Delay in Task.WhenAny leaks the timer.
+dotnet_diagnostic.CA2027.severity = error
+
+# New rules default to suggestion. Category lines are ignored when a project sets
+# AnalysisMode, and CA1517 is Maintainability, so set each rule by ID.
+dotnet_diagnostic.CA1517.severity = warning
+dotnet_diagnostic.CA1830.severity = warning
+dotnet_diagnostic.CA1877.severity = warning
+dotnet_diagnostic.CA2026.severity = warning
 
 
 # =====================================================================

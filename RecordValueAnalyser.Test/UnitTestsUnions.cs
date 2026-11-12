@@ -24,7 +24,7 @@ public class RecordValueAnalyserUnitTest
 	{
 		var test = new VerifyCS.Test { TestCode = source };
 		test.SolutionTransforms.Add((solution, projectId) => {
-			var parseOptions = (CSharpParseOptions)solution.GetProject(projectId)!.ParseOptions!;
+			var parseOptions = (CSharpParseOptions)solution.GetProject(projectId).ParseOptions;
 			return solution.WithProjectParseOptions(projectId, parseOptions.WithLanguageVersion(LanguageVersion.Preview));
 		});
 		test.ExpectedDiagnostics.AddRange(expected);

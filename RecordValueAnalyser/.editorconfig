@@ -1,0 +1,12 @@
+# Shared source: the Roslyn 4.8 projects compile these files against
+# System.Collections.Immutable 7.0. There, ImmutableArray<T> has no collection
+# builder, so `[x]` compiles as a collection initializer that discards each
+# Add result and yields an empty (or default) array. These rules rewrite
+# ImmutableArray code into collection expressions, so `dotnet format` must
+# not apply them here.
+
+[*.cs]
+dotnet_diagnostic.IDE0301.severity = none
+dotnet_diagnostic.IDE0303.severity = none
+dotnet_diagnostic.IDE0304.severity = none
+dotnet_diagnostic.IDE0305.severity = none

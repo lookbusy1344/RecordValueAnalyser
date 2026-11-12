@@ -242,6 +242,7 @@ internal static class RecordValueSemantics
 	/// <summary>
 	///     Is this a primitive type? Includes string
 	/// </summary>
+#pragma warning disable IDE0072 // SpecialType is Roslyn's open enum; this is a membership test, every other member is false
 	private static bool IsPrimitiveType(ITypeSymbol? type) =>
 		type != null
 		&& type.SpecialType switch {
@@ -252,6 +253,7 @@ internal static class RecordValueSemantics
 				=> true,
 			_ => false,
 		};
+#pragma warning restore IDE0072
 
 	/// <summary>
 	///     Does this type have an Equals(T) method that takes a single parameter of the same type?
