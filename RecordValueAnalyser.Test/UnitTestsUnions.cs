@@ -15,17 +15,20 @@ using VerifyCS = CSharpCodeFixVerifier<RecordValueAnalyser, RecordValueAnalyserC
 public class RecordValueAnalyserUnitTest
 {
 	private const string coGeneral = TestConstants.General;
-	private const string coUnionTypes = TestConstants.UnionTypes;
 
 	/// <summary>
-	///     Roslyn 5.9.0 has no LanguageVersion.CSharp15, so unions need Preview
+	///     Runs the test with the language version, reference assemblies and support source of this test project's compiler
 	/// </summary>
-	private static async Task VerifyPreviewAsync(string source, params DiagnosticResult[] expected)
+	private static async Task VerifyUnionAsync(string source, params DiagnosticResult[] expected)
 	{
-		var test = new VerifyCS.Test { TestCode = source };
+		var test = new VerifyCS.Test { TestCode = source, ReferenceAssemblies = UnionTestEnvironment.ReferenceAssemblies };
+		foreach (var support in UnionTestEnvironment.SupportSources) {
+			test.TestState.Sources.Add(support);
+		}
+
 		test.SolutionTransforms.Add((solution, projectId) => {
 			var parseOptions = (CSharpParseOptions)solution.GetProject(projectId).ParseOptions;
-			return solution.WithProjectParseOptions(projectId, parseOptions.WithLanguageVersion(LanguageVersion.Preview));
+			return solution.WithProjectParseOptions(projectId, parseOptions.WithLanguageVersion(UnionTestEnvironment.LanguageVersion));
 		});
 		test.ExpectedDiagnostics.AddRange(expected);
 		await test.RunAsync(CancellationToken.None);
@@ -42,10 +45,9 @@ public class RecordValueAnalyserUnitTest
 							  public record Cat(string Name);
 							  public record Dog(int Age);
 							  public union Pet(Cat, Dog);
-							  """
-							+ coUnionTypes;
+							  """;
 
-		await VerifyPreviewAsync(test);
+		await VerifyUnionAsync(test);
 	}
 
 	[TestMethod]
@@ -57,10 +59,9 @@ public class RecordValueAnalyserUnitTest
 							  public record A(Num N);
 
 							  public union Num(int, string, decimal);
-							  """
-							+ coUnionTypes;
+							  """;
 
-		await VerifyPreviewAsync(test);
+		await VerifyUnionAsync(test);
 	}
 
 	[TestMethod]
@@ -73,10 +74,9 @@ public class RecordValueAnalyserUnitTest
 							  public record Cat(string Name);
 							  public record Dog(int Age);
 							  public union Pet(Cat, Dog);
-							  """
-							+ coUnionTypes;
+							  """;
 
-		await VerifyPreviewAsync(test);
+		await VerifyUnionAsync(test);
 	}
 
 	[TestMethod]
@@ -90,14 +90,13 @@ public class RecordValueAnalyserUnitTest
 							  public class Cat { public string Name = ""; }
 							  public record Dog(int Age);
 							  public union Pet(Cat, Dog);
-							  """
-							+ coUnionTypes;
+							  """;
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(6, 17, 6, 22)
 			.WithArguments("Pet P (field Cat)");
 
-		await VerifyPreviewAsync(test, expected);
+		await VerifyUnionAsync(test, expected);
 	}
 
 	[TestMethod]
@@ -109,14 +108,13 @@ public class RecordValueAnalyserUnitTest
 							  public record A(Data D);
 
 							  public union Data(int, int[]);
-							  """
-							+ coUnionTypes;
+							  """;
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(6, 17, 6, 23)
 			.WithArguments("Data D (field int[])");
 
-		await VerifyPreviewAsync(test, expected);
+		await VerifyUnionAsync(test, expected);
 	}
 
 	[TestMethod]
@@ -127,14 +125,13 @@ public class RecordValueAnalyserUnitTest
 							  public record A(Data D);
 
 							  public union Data(int, IReadOnlyList<int>);
-							  """
-							+ coUnionTypes;
+							  """;
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(6, 17, 6, 23)
 			.WithArguments("Data D (field System.Collections.Generic.IReadOnlyList<int>)");
 
-		await VerifyPreviewAsync(test, expected);
+		await VerifyUnionAsync(test, expected);
 	}
 
 	[TestMethod]
@@ -147,14 +144,13 @@ public class RecordValueAnalyserUnitTest
 
 							  public struct StructA { public int I; public int[] Numbers; }
 							  public union Data(int, StructA);
-							  """
-							+ coUnionTypes;
+							  """;
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(6, 17, 6, 23)
 			.WithArguments("Data D (field StructA)");
 
-		await VerifyPreviewAsync(test, expected);
+		await VerifyUnionAsync(test, expected);
 	}
 
 	[TestMethod]
@@ -167,10 +163,9 @@ public class RecordValueAnalyserUnitTest
 							  public record Cat(string Name);
 							  public record Dog(int Age);
 							  public union Pet(Cat, Dog);
-							  """
-							+ coUnionTypes;
+							  """;
 
-		await VerifyPreviewAsync(test);
+		await VerifyUnionAsync(test);
 	}
 
 	[TestMethod]
@@ -183,14 +178,13 @@ public class RecordValueAnalyserUnitTest
 							  public class Cat { public string Name = ""; }
 							  public record Dog(int Age);
 							  public union Pet(Cat, Dog);
-							  """
-							+ coUnionTypes;
+							  """;
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(6, 17, 6, 23)
 			.WithArguments("Pet? P (field Cat)");
 
-		await VerifyPreviewAsync(test, expected);
+		await VerifyUnionAsync(test, expected);
 	}
 
 	[TestMethod]
@@ -202,14 +196,13 @@ public class RecordValueAnalyserUnitTest
 							  public record A { public Data D { get; init; } }
 
 							  public union Data(int, int[]);
-							  """
-							+ coUnionTypes;
+							  """;
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(6, 19, 6, 47)
 			.WithArguments("Data D (field int[])");
 
-		await VerifyPreviewAsync(test, expected);
+		await VerifyUnionAsync(test, expected);
 	}
 
 	[TestMethod]
@@ -223,10 +216,9 @@ public class RecordValueAnalyserUnitTest
 							  public record Cat(string Name);
 							  public union Inner(Cat, int);
 							  public union Outer(Inner, string);
-							  """
-							+ coUnionTypes;
+							  """;
 
-		await VerifyPreviewAsync(test);
+		await VerifyUnionAsync(test);
 	}
 
 	[TestMethod]
@@ -240,14 +232,13 @@ public class RecordValueAnalyserUnitTest
 							  public class Cat { public string Name = ""; }
 							  public union Inner(Cat, int);
 							  public union Outer(Inner, string);
-							  """
-							+ coUnionTypes;
+							  """;
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(6, 17, 6, 24)
 			.WithArguments("Outer O (field Inner)");
 
-		await VerifyPreviewAsync(test, expected);
+		await VerifyUnionAsync(test, expected);
 	}
 
 	[TestMethod]
@@ -260,10 +251,9 @@ public class RecordValueAnalyserUnitTest
 
 							  public struct Box { public U Inner; }
 							  public union U(int, Box);
-							  """
-							+ coUnionTypes;
+							  """;
 
-		await VerifyPreviewAsync(test);
+		await VerifyUnionAsync(test);
 	}
 
 	[TestMethod]
@@ -275,10 +265,9 @@ public class RecordValueAnalyserUnitTest
 
 							  public record None;
 							  public union Option<T>(None, T);
-							  """
-							+ coUnionTypes;
+							  """;
 
-		await VerifyPreviewAsync(test);
+		await VerifyUnionAsync(test);
 	}
 
 	[TestMethod]
@@ -291,14 +280,13 @@ public class RecordValueAnalyserUnitTest
 
 							  public record None;
 							  public union Option<T>(None, T);
-							  """
-							+ coUnionTypes;
+							  """;
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(6, 17, 6, 32)
 			.WithArguments("Option<int[]> O (field int[])");
 
-		await VerifyPreviewAsync(test, expected);
+		await VerifyUnionAsync(test, expected);
 	}
 
 	[TestMethod]
@@ -311,14 +299,13 @@ public class RecordValueAnalyserUnitTest
 
 							  public record None;
 							  public union Option<T>(None, T);
-							  """
-							+ coUnionTypes;
+							  """;
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(6, 26, 6, 37)
 			.WithArguments("Option<T> O (field T)");
 
-		await VerifyPreviewAsync(test, expected);
+		await VerifyUnionAsync(test, expected);
 	}
 
 	[TestMethod]
@@ -329,10 +316,9 @@ public class RecordValueAnalyserUnitTest
 							  public record A(Either<int, string> E);
 
 							  public union Either<L, R>(L, R);
-							  """
-							+ coUnionTypes;
+							  """;
 
-		await VerifyPreviewAsync(test);
+		await VerifyUnionAsync(test);
 	}
 
 	[TestMethod]
@@ -345,14 +331,13 @@ public class RecordValueAnalyserUnitTest
 
 							  public class Cat { public string Name = ""; }
 							  public union Either<L, R>(L, R);
-							  """
-							+ coUnionTypes;
+							  """;
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(6, 17, 6, 35)
 			.WithArguments("Either<int, Cat> E (field Cat)");
 
-		await VerifyPreviewAsync(test, expected);
+		await VerifyUnionAsync(test, expected);
 	}
 
 	[TestMethod]
@@ -365,10 +350,9 @@ public class RecordValueAnalyserUnitTest
 
 							  public record None;
 							  public union Option<T>(None, T);
-							  """
-							+ coUnionTypes;
+							  """;
 
-		await VerifyPreviewAsync(test);
+		await VerifyUnionAsync(test);
 	}
 
 	[TestMethod]
@@ -380,14 +364,13 @@ public class RecordValueAnalyserUnitTest
 							  public record A(Many<int> M);
 
 							  public union Many<T>(T, List<T>);
-							  """
-							+ coUnionTypes;
+							  """;
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(6, 17, 6, 28)
 			.WithArguments("Many<int> M (field System.Collections.Generic.List<int>)");
 
-		await VerifyPreviewAsync(test, expected);
+		await VerifyUnionAsync(test, expected);
 	}
 
 	[TestMethod]
@@ -399,10 +382,9 @@ public class RecordValueAnalyserUnitTest
 
 							  public record None;
 							  public union Option<T>(None, T);
-							  """
-							+ coUnionTypes;
+							  """;
 
-		await VerifyPreviewAsync(test);
+		await VerifyUnionAsync(test);
 	}
 
 	[TestMethod]
@@ -415,14 +397,13 @@ public class RecordValueAnalyserUnitTest
 
 							  public record None;
 							  public union Option<T>(None, T);
-							  """
-							+ coUnionTypes;
+							  """;
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(6, 17, 6, 40)
 			.WithArguments("Option<Option<int[]>> O (field Option<int[]>)");
 
-		await VerifyPreviewAsync(test, expected);
+		await VerifyUnionAsync(test, expected);
 	}
 
 	[TestMethod]
@@ -435,14 +416,13 @@ public class RecordValueAnalyserUnitTest
 
 							  public record None;
 							  public union Option<T>(None, T);
-							  """
-							+ coUnionTypes;
+							  """;
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(6, 35, 6, 52)
 			.WithArguments("Option<int[]> Bad (field int[])");
 
-		await VerifyPreviewAsync(test, expected);
+		await VerifyUnionAsync(test, expected);
 	}
 
 	[TestMethod]
@@ -455,10 +435,9 @@ public class RecordValueAnalyserUnitTest
 
 							  public struct Node<T> { public Tree<T> Next; }
 							  public union Tree<T>(T, Node<T>);
-							  """
-							+ coUnionTypes;
+							  """;
 
-		await VerifyPreviewAsync(test);
+		await VerifyUnionAsync(test);
 	}
 
 	[TestMethod]
@@ -478,14 +457,13 @@ public class RecordValueAnalyserUnitTest
 							  	public Result(string error) { Value = error; }
 							  	public object Value { get; }
 							  }
-							  """
-							+ coUnionTypes;
+							  """;
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(6, 17, 6, 30)
 			.WithArguments("Result<Cat> R (field Cat)");
 
-		await VerifyPreviewAsync(test, expected);
+		await VerifyUnionAsync(test, expected);
 	}
 
 	[TestMethod]
@@ -503,10 +481,9 @@ public class RecordValueAnalyserUnitTest
 							  	public Result(string value) { Value = value; }
 							  	public object Value { get; }
 							  }
-							  """
-							+ coUnionTypes;
+							  """;
 
-		await VerifyPreviewAsync(test);
+		await VerifyUnionAsync(test);
 	}
 
 	[TestMethod]
@@ -525,14 +502,13 @@ public class RecordValueAnalyserUnitTest
 							  	public Result(Error value) { Value = value; }
 							  	public object Value { get; }
 							  }
-							  """
-							+ coUnionTypes;
+							  """;
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(6, 17, 6, 25)
 			.WithArguments("Result R (field Error)");
 
-		await VerifyPreviewAsync(test, expected);
+		await VerifyUnionAsync(test, expected);
 	}
 
 	[TestMethod]
@@ -550,14 +526,13 @@ public class RecordValueAnalyserUnitTest
 							  	public object Value { get; }
 							  	public int[] Tags;
 							  }
-							  """
-							+ coUnionTypes;
+							  """;
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(6, 17, 6, 25)
 			.WithArguments("Result R (field int[])");
 
-		await VerifyPreviewAsync(test, expected);
+		await VerifyUnionAsync(test, expected);
 	}
 
 	[TestMethod]
@@ -574,14 +549,13 @@ public class RecordValueAnalyserUnitTest
 							  	public Result(int value) { Value = value; }
 							  	public object Value { get; }
 							  }
-							  """
-							+ coUnionTypes;
+							  """;
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(6, 17, 6, 25)
 			.WithArguments("Result R");
 
-		await VerifyPreviewAsync(test, expected);
+		await VerifyUnionAsync(test, expected);
 	}
 
 	[TestMethod]
@@ -598,10 +572,9 @@ public class RecordValueAnalyserUnitTest
 							  {
 							  	public bool Equals(Pet other) => false;
 							  }
-							  """
-							+ coUnionTypes;
+							  """;
 
-		await VerifyPreviewAsync(test);
+		await VerifyUnionAsync(test);
 	}
 
 	[TestMethod]
@@ -618,10 +591,9 @@ public class RecordValueAnalyserUnitTest
 							  {
 							  	private Pet(Cat[] cats) : this(cats[0]) { }
 							  }
-							  """
-							+ coUnionTypes;
+							  """;
 
-		await VerifyPreviewAsync(test);
+		await VerifyUnionAsync(test);
 	}
 
 	[TestMethod]
@@ -641,10 +613,9 @@ public class RecordValueAnalyserUnitTest
 							  	public Result(int value) : this((object)value) { }
 							  	public object Value { get; }
 							  }
-							  """
-							+ coUnionTypes;
+							  """;
 
-		await VerifyPreviewAsync(test);
+		await VerifyUnionAsync(test);
 	}
 
 	[TestMethod]
@@ -662,10 +633,9 @@ public class RecordValueAnalyserUnitTest
 							  	public Result(int[] values, int index) : this(values[index]) { }
 							  	public object Value { get; }
 							  }
-							  """
-							+ coUnionTypes;
+							  """;
 
-		await VerifyPreviewAsync(test);
+		await VerifyUnionAsync(test);
 	}
 
 	[TestMethod]
@@ -684,10 +654,9 @@ public class RecordValueAnalyserUnitTest
 							  	public Result(out string[] values) : this(0) { values = new string[0]; }
 							  	public object Value { get; }
 							  }
-							  """
-							+ coUnionTypes;
+							  """;
 
-		await VerifyPreviewAsync(test);
+		await VerifyUnionAsync(test);
 	}
 
 	[TestMethod]
@@ -705,14 +674,13 @@ public class RecordValueAnalyserUnitTest
 							  	public Result(in int[] values) { Value = values; }
 							  	public object Value { get; }
 							  }
-							  """
-							+ coUnionTypes;
+							  """;
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(6, 17, 6, 25)
 			.WithArguments("Result R (field int[])");
 
-		await VerifyPreviewAsync(test, expected);
+		await VerifyUnionAsync(test, expected);
 	}
 
 	[TestMethod]
@@ -730,14 +698,13 @@ public class RecordValueAnalyserUnitTest
 							  	public object Value { get; }
 							  	public object Tag;
 							  }
-							  """
-							+ coUnionTypes;
+							  """;
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(6, 17, 6, 25)
 			.WithArguments("Result R (field object)");
 
-		await VerifyPreviewAsync(test, expected);
+		await VerifyUnionAsync(test, expected);
 	}
 
 	[TestMethod]
@@ -756,14 +723,13 @@ public class RecordValueAnalyserUnitTest
 							  	public object Value { get; }
 							  	public object GetTag() => _tag;
 							  }
-							  """
-							+ coUnionTypes;
+							  """;
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(6, 17, 6, 25)
 			.WithArguments("Result R (field object)");
 
-		await VerifyPreviewAsync(test, expected);
+		await VerifyUnionAsync(test, expected);
 	}
 
 	[TestMethod]
@@ -782,10 +748,9 @@ public class RecordValueAnalyserUnitTest
 							  	public Result(string value) { _value = value; }
 							  	public object Value => _value;
 							  }
-							  """
-							+ coUnionTypes;
+							  """;
 
-		await VerifyPreviewAsync(test);
+		await VerifyUnionAsync(test);
 	}
 
 	[TestMethod]
@@ -805,14 +770,13 @@ public class RecordValueAnalyserUnitTest
 							  	public object Value => _value;
 							  	public object GetTag() => _tag;
 							  }
-							  """
-							+ coUnionTypes;
+							  """;
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(6, 17, 6, 25)
 			.WithArguments("Result R (field object)");
 
-		await VerifyPreviewAsync(test, expected);
+		await VerifyUnionAsync(test, expected);
 	}
 
 	[TestMethod]
@@ -837,10 +801,9 @@ public class RecordValueAnalyserUnitTest
 
 							  	object IUnionMembers.Value => _value;
 							  }
-							  """
-							+ coUnionTypes;
+							  """;
 
-		await VerifyPreviewAsync(test);
+		await VerifyUnionAsync(test);
 	}
 
 	[TestMethod]
@@ -867,14 +830,13 @@ public class RecordValueAnalyserUnitTest
 
 							  	object IUnionMembers.Value => _value;
 							  }
-							  """
-							+ coUnionTypes;
+							  """;
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(6, 17, 6, 30)
 			.WithArguments("Result<Cat> R (field Cat)");
 
-		await VerifyPreviewAsync(test, expected);
+		await VerifyUnionAsync(test, expected);
 	}
 
 	[TestMethod]
@@ -900,14 +862,13 @@ public class RecordValueAnalyserUnitTest
 
 							  	object IUnionMembers.Value => _value;
 							  }
-							  """
-							+ coUnionTypes;
+							  """;
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(6, 17, 6, 25)
 			.WithArguments("Result R (field Error)");
 
-		await VerifyPreviewAsync(test, expected);
+		await VerifyUnionAsync(test, expected);
 	}
 
 	[TestMethod]
@@ -938,14 +899,13 @@ public class RecordValueAnalyserUnitTest
 
 							  	object IUnionMembers.Value => _value;
 							  }
-							  """
-							+ coUnionTypes;
+							  """;
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(6, 17, 6, 25)
 			.WithArguments("Result R (field Error)");
 
-		await VerifyPreviewAsync(test, expected);
+		await VerifyUnionAsync(test, expected);
 	}
 
 	[TestMethod]
@@ -975,10 +935,9 @@ public class RecordValueAnalyserUnitTest
 
 							  	object IUnionMembers.Value => _value;
 							  }
-							  """
-							+ coUnionTypes;
+							  """;
 
-		await VerifyPreviewAsync(test);
+		await VerifyUnionAsync(test);
 	}
 
 	[TestMethod]
@@ -1001,14 +960,13 @@ public class RecordValueAnalyserUnitTest
 							  		public static Result Create(int value) => new(value);
 							  	}
 							  }
-							  """
-							+ coUnionTypes;
+							  """;
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(6, 17, 6, 25)
 			.WithArguments("Result R (field int[])");
 
-		await VerifyPreviewAsync(test, expected);
+		await VerifyUnionAsync(test, expected);
 	}
 
 	[TestMethod]
@@ -1023,14 +981,13 @@ public class RecordValueAnalyserUnitTest
 							  public class Cat { public string Name = ""; }
 							  public record Dog(int Age);
 							  public union Pet(Cat, Dog);
-							  """
-							+ coUnionTypes;
+							  """;
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(6, 17, 6, 25)
 			.WithArguments("Holder H (field Pet)");
 
-		await VerifyPreviewAsync(test, expected);
+		await VerifyUnionAsync(test, expected);
 	}
 
 	[TestMethod]
@@ -1043,14 +1000,13 @@ public class RecordValueAnalyserUnitTest
 							  public class Cat { public string Name = ""; }
 							  public record Dog(int Age);
 							  public union Pet(Cat, Dog);
-							  """
-							+ coUnionTypes;
+							  """;
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(6, 17, 6, 29)
 			.WithArguments("(Pet, int) T (field Pet)");
 
-		await VerifyPreviewAsync(test, expected);
+		await VerifyUnionAsync(test, expected);
 	}
 
 	[TestMethod]
@@ -1063,10 +1019,9 @@ public class RecordValueAnalyserUnitTest
 							  public record Cat(string Name);
 							  public record Dog(int Age);
 							  public union Pet(Cat, Dog);
-							  """
-							+ coUnionTypes;
+							  """;
 
-		await VerifyPreviewAsync(test);
+		await VerifyUnionAsync(test);
 	}
 
 	[TestMethod]
@@ -1085,10 +1040,9 @@ public class RecordValueAnalyserUnitTest
 							  	public Result(int value) { _value = value; }
 							  	public object Value => _value == Sentinel ? null : _value;
 							  }
-							  """
-							+ coUnionTypes;
+							  """;
 
-		await VerifyPreviewAsync(test);
+		await VerifyUnionAsync(test);
 	}
 
 	[TestMethod]
@@ -1104,10 +1058,9 @@ public class RecordValueAnalyserUnitTest
 							  {
 							  	public object Boxed => Value;
 							  }
-							  """
-							+ coUnionTypes;
+							  """;
 
-		await VerifyPreviewAsync(test);
+		await VerifyUnionAsync(test);
 	}
 
 	[TestMethod]
@@ -1133,10 +1086,9 @@ public class RecordValueAnalyserUnitTest
 
 							  	object IUnionMembers.Value => _value;
 							  }
-							  """
-							+ coUnionTypes;
+							  """;
 
-		await VerifyPreviewAsync(test);
+		await VerifyUnionAsync(test);
 	}
 
 	[TestMethod]
@@ -1162,14 +1114,13 @@ public class RecordValueAnalyserUnitTest
 
 							  	object IUnionMembers.Value => _value;
 							  }
-							  """
-							+ coUnionTypes;
+							  """;
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(11, 2, 11, 33)
 			.WithArguments("object _value (case int[])");
 
-		await VerifyPreviewAsync(test, expected);
+		await VerifyUnionAsync(test, expected);
 	}
 
 	[TestMethod]
@@ -1195,14 +1146,13 @@ public class RecordValueAnalyserUnitTest
 
 							  	object IUnionMembers.Value => _value;
 							  }
-							  """
-							+ coUnionTypes;
+							  """;
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(11, 2, 11, 33)
 			.WithArguments("object _value (case T)");
 
-		await VerifyPreviewAsync(test, expected);
+		await VerifyUnionAsync(test, expected);
 	}
 
 	[TestMethod]
@@ -1219,10 +1169,9 @@ public class RecordValueAnalyserUnitTest
 							  	public Result(string value) { Value = value; }
 							  	public object Value { get; }
 							  }
-							  """
-							+ coUnionTypes;
+							  """;
 
-		await VerifyPreviewAsync(test);
+		await VerifyUnionAsync(test);
 	}
 
 	[TestMethod]
@@ -1239,14 +1188,13 @@ public class RecordValueAnalyserUnitTest
 							  	public Result(int[] value) { Value = value; }
 							  	public object Value { get; }
 							  }
-							  """
-							+ coUnionTypes;
+							  """;
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(12, 2, 12, 30)
 			.WithArguments("object Value (case int[])");
 
-		await VerifyPreviewAsync(test, expected);
+		await VerifyUnionAsync(test, expected);
 	}
 
 	[TestMethod]
@@ -1262,14 +1210,13 @@ public class RecordValueAnalyserUnitTest
 							  	public object Value { get; }
 							  	public object Tag;
 							  }
-							  """
-							+ coUnionTypes;
+							  """;
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(11, 2, 11, 20)
 			.WithArguments("object Tag");
 
-		await VerifyPreviewAsync(test, expected);
+		await VerifyUnionAsync(test, expected);
 	}
 
 	[TestMethod]
@@ -1283,14 +1230,13 @@ public class RecordValueAnalyserUnitTest
 							  {
 							  	public object Value => Items;
 							  }
-							  """
-							+ coUnionTypes;
+							  """;
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(7, 28, 7, 39)
 			.WithArguments("int[] Items");
 
-		await VerifyPreviewAsync(test, expected);
+		await VerifyUnionAsync(test, expected);
 	}
 
 	[TestMethod]
@@ -1317,10 +1263,9 @@ public class RecordValueAnalyserUnitTest
 
 							  	object? IUnionMembers.Value => _value;
 							  }
-							  """
-							+ coUnionTypes;
+							  """;
 
-		await VerifyPreviewAsync(test);
+		await VerifyUnionAsync(test);
 	}
 
 	[TestMethod]
@@ -1347,14 +1292,13 @@ public class RecordValueAnalyserUnitTest
 
 							  	object? IUnionMembers.Value => _value;
 							  }
-							  """
-							+ coUnionTypes;
+							  """;
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(7, 17, 7, 31)
 			.WithArguments("Outcome<int> O (field System.Exception)");
 
-		await VerifyPreviewAsync(test, expected);
+		await VerifyUnionAsync(test, expected);
 	}
 
 	[TestMethod]
@@ -1378,10 +1322,9 @@ public class RecordValueAnalyserUnitTest
 							  	public bool TryGetValue(out int value) { value = _intValue; return _tag == 1; }
 							  	public bool TryGetValue(out bool value) { value = _boolValue; return _tag == 2; }
 							  }
-							  """
-							+ coUnionTypes;
+							  """;
 
-		await VerifyPreviewAsync(test);
+		await VerifyUnionAsync(test);
 	}
 
 	[TestMethod]
@@ -1400,10 +1343,9 @@ public class RecordValueAnalyserUnitTest
 							  	public Result(string value) { _value = value; }
 							  	public object Value => _value;
 							  }
-							  """
-							+ coUnionTypes;
+							  """;
 
-		await VerifyPreviewAsync(test);
+		await VerifyUnionAsync(test);
 	}
 
 	[TestMethod]
@@ -1424,14 +1366,13 @@ public class RecordValueAnalyserUnitTest
 							  	public Result(Money value) { _value = value; }
 							  	public object Value => _value;
 							  }
-							  """
-							+ coUnionTypes;
+							  """;
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(6, 17, 6, 25)
 			.WithArguments("Result R (field Money)");
 
-		await VerifyPreviewAsync(test, expected);
+		await VerifyUnionAsync(test, expected);
 	}
 
 	[TestMethod]
@@ -1464,10 +1405,9 @@ public class RecordValueAnalyserUnitTest
 							  	public Result(Square value) { _value = value; }
 							  	public object Value => _value;
 							  }
-							  """
-							+ coUnionTypes;
+							  """;
 
-		await VerifyPreviewAsync(test);
+		await VerifyUnionAsync(test);
 	}
 
 	[TestMethod]
@@ -1488,14 +1428,13 @@ public class RecordValueAnalyserUnitTest
 							  	public Result(Dog value) { _value = value; _tag = null; }
 							  	public object Value => _value;
 							  }
-							  """
-							+ coUnionTypes;
+							  """;
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(6, 17, 6, 25)
 			.WithArguments("Result R (field System.IComparable)");
 
-		await VerifyPreviewAsync(test, expected);
+		await VerifyUnionAsync(test, expected);
 	}
 
 	[TestMethod]
@@ -1510,10 +1449,9 @@ public class RecordValueAnalyserUnitTest
 							  public record Leaf(int V);
 							  public struct Node { public Tree Left; public Tree Right; }
 							  public union Tree(Leaf, Node);
-							  """
-							+ coUnionTypes;
+							  """;
 
-		await VerifyPreviewAsync(test);
+		await VerifyUnionAsync(test);
 	}
 
 	[TestMethod]
@@ -1527,13 +1465,12 @@ public class RecordValueAnalyserUnitTest
 							  public record Leaf(int V);
 							  public struct Node { public Tree Left; public int[] Data; }
 							  public union Tree(Leaf, Node);
-							  """
-							+ coUnionTypes;
+							  """;
 
 		var expected = VerifyCS.Diagnostic("JSV01")
 			.WithSpan(6, 17, 6, 23)
 			.WithArguments("Tree T (field Node)");
 
-		await VerifyPreviewAsync(test, expected);
+		await VerifyUnionAsync(test, expected);
 	}
 }

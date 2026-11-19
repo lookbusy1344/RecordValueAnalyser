@@ -200,7 +200,7 @@ When you write your implementations `SequenceEqual` is very useful for comparing
 
 [![Test](https://github.com/lookbusy1344/RecordValueAnalyser/actions/workflows/test.yml/badge.svg)](https://github.com/lookbusy1344/RecordValueAnalyser/actions/workflows/test.yml)
 
-Tests are in `RecordValueAnalyser.Test`. `RecordValueAnalyser.Test.Roslyn48` runs the class and struct tests against the Roslyn 4.8 build, and `RecordValueAnalyser.Test.Roslyn48OnRoslyn59` runs every test against the Roslyn 4.8 build on a Roslyn 5.9 compiler. They are run in the CI pipeline, which also packs the package and checks that the .NET 8, 9, 10 and 11 SDKs each load the right build (`scripts/check-package.sh`).
+Tests are in `RecordValueAnalyser.Test`, which runs on the Roslyn 5.12 compiler of the .NET 11 SDK and checks union types with C# 15 against the .NET 11 reference assemblies. `RecordValueAnalyser.Test.Roslyn48` runs the class and struct tests against the Roslyn 4.8 build, and `RecordValueAnalyser.Test.Roslyn48OnRoslyn59` runs every test against the Roslyn 4.8 build on a Roslyn 5.9 compiler. They are run in the CI pipeline, which also packs the package and checks that the .NET 8, 9, 10 and 11 SDKs each load the right build (`scripts/check-package.sh`).
 
 ### Running CI locally
 
