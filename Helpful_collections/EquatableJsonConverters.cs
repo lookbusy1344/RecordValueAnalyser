@@ -29,7 +29,7 @@ internal sealed class EquatableArrayJsonConverter<T> : JsonConverter<EquatableAr
 			throw new JsonException($"Expected start of array for {typeToConvert}.");
 		}
 
-		var elementInfo = (JsonTypeInfo<T>)options.GetTypeInfo(typeof(T));
+		var elementInfo = options.GetTypeInfo<T>();
 		var builder = ImmutableArray.CreateBuilder<T>();
 		while (reader.Read() && reader.TokenType != JsonTokenType.EndArray) {
 			builder.Add(JsonSerializer.Deserialize(ref reader, elementInfo)!);
@@ -40,7 +40,7 @@ internal sealed class EquatableArrayJsonConverter<T> : JsonConverter<EquatableAr
 
 	public override void Write(Utf8JsonWriter writer, EquatableArray<T> value, JsonSerializerOptions options)
 	{
-		var elementInfo = (JsonTypeInfo<T>)options.GetTypeInfo(typeof(T));
+		var elementInfo = options.GetTypeInfo<T>();
 		writer.WriteStartArray();
 		foreach (var item in value) {
 			JsonSerializer.Serialize(writer, item, elementInfo);
@@ -70,7 +70,7 @@ internal sealed class EquatableDictionaryJsonConverter<TKey, TValue> : JsonConve
 {
 	public override EquatableDictionary<TKey, TValue> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
 	{
-		var info = (JsonTypeInfo<Dictionary<TKey, TValue>>)options.GetTypeInfo(typeof(Dictionary<TKey, TValue>));
+		var info = options.GetTypeInfo<Dictionary<TKey, TValue>>();
 		// The deserialized dictionary is freshly allocated and unaliased, so hand it straight to the
 		// ownership constructor rather than copying it again through the public CopyOf factory.
 		var entries = JsonSerializer.Deserialize(ref reader, info)
@@ -80,7 +80,7 @@ internal sealed class EquatableDictionaryJsonConverter<TKey, TValue> : JsonConve
 
 	public override void Write(Utf8JsonWriter writer, EquatableDictionary<TKey, TValue> value, JsonSerializerOptions options)
 	{
-		var info = (JsonTypeInfo<Dictionary<TKey, TValue>>)options.GetTypeInfo(typeof(Dictionary<TKey, TValue>));
+		var info = options.GetTypeInfo<Dictionary<TKey, TValue>>();
 		JsonSerializer.Serialize(writer, new(value), info);
 	}
 }
@@ -100,14 +100,14 @@ internal sealed class EquatableReadOnlyMemoryJsonConverter<T> : JsonConverter<Eq
 {
 	public override EquatableReadOnlyMemory<T> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
 	{
-		var arrayInfo = (JsonTypeInfo<T[]>)options.GetTypeInfo(typeof(T[]));
+		var arrayInfo = options.GetTypeInfo<T[]>();
 		var items = JsonSerializer.Deserialize(ref reader, arrayInfo) ?? [];
 		return new(items);
 	}
 
 	public override void Write(Utf8JsonWriter writer, EquatableReadOnlyMemory<T> value, JsonSerializerOptions options)
 	{
-		var elementInfo = (JsonTypeInfo<T>)options.GetTypeInfo(typeof(T));
+		var elementInfo = options.GetTypeInfo<T>();
 		writer.WriteStartArray();
 		foreach (var item in value.Span) {
 			JsonSerializer.Serialize(writer, item, elementInfo);
@@ -132,14 +132,14 @@ internal sealed class EquatableArraySegmentJsonConverter<T> : JsonConverter<Equa
 {
 	public override EquatableArraySegment<T> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
 	{
-		var arrayInfo = (JsonTypeInfo<T[]>)options.GetTypeInfo(typeof(T[]));
+		var arrayInfo = options.GetTypeInfo<T[]>();
 		var items = JsonSerializer.Deserialize(ref reader, arrayInfo) ?? [];
 		return new(items);
 	}
 
 	public override void Write(Utf8JsonWriter writer, EquatableArraySegment<T> value, JsonSerializerOptions options)
 	{
-		var elementInfo = (JsonTypeInfo<T>)options.GetTypeInfo(typeof(T));
+		var elementInfo = options.GetTypeInfo<T>();
 		writer.WriteStartArray();
 		foreach (var item in value.Span) {
 			JsonSerializer.Serialize(writer, item, elementInfo);
@@ -164,7 +164,7 @@ internal sealed class EquatableSetJsonConverter<T> : JsonConverter<EquatableSet<
 {
 	public override EquatableSet<T> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
 	{
-		var arrayInfo = (JsonTypeInfo<T[]>)options.GetTypeInfo(typeof(T[]));
+		var arrayInfo = options.GetTypeInfo<T[]>();
 		var items = JsonSerializer.Deserialize(ref reader, arrayInfo)
 					?? throw new JsonException($"Expected an array for {typeToConvert}.");
 		return EquatableSet.CopyOf(items);
@@ -172,7 +172,7 @@ internal sealed class EquatableSetJsonConverter<T> : JsonConverter<EquatableSet<
 
 	public override void Write(Utf8JsonWriter writer, EquatableSet<T> value, JsonSerializerOptions options)
 	{
-		var elementInfo = (JsonTypeInfo<T>)options.GetTypeInfo(typeof(T));
+		var elementInfo = options.GetTypeInfo<T>();
 		writer.WriteStartArray();
 		foreach (var item in value) {
 			JsonSerializer.Serialize(writer, item, elementInfo);
@@ -197,7 +197,7 @@ internal sealed class EquatableGridJsonConverter<T> : JsonConverter<EquatableGri
 {
 	public override EquatableGrid<T> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
 	{
-		var rowInfo = (JsonTypeInfo<T[]>)options.GetTypeInfo(typeof(T[]));
+		var rowInfo = options.GetTypeInfo<T[]>();
 
 		if (reader.TokenType != JsonTokenType.StartArray) {
 			throw new JsonException($"Expected start of array for {typeToConvert}.");
@@ -220,7 +220,7 @@ internal sealed class EquatableGridJsonConverter<T> : JsonConverter<EquatableGri
 
 	public override void Write(Utf8JsonWriter writer, EquatableGrid<T> value, JsonSerializerOptions options)
 	{
-		var elementInfo = (JsonTypeInfo<T>)options.GetTypeInfo(typeof(T));
+		var elementInfo = options.GetTypeInfo<T>();
 		writer.WriteStartArray();
 		for (var row = 0; row < value.Rows; row++) {
 			writer.WriteStartArray();

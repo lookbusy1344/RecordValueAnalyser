@@ -3,7 +3,7 @@
     <!-- Runs the class and struct tests against the analyzer built for Roslyn 4.8 (.NET 8/9 SDKs, Visual Studio 2022) -->
 
     <PropertyGroup>
-        <TargetFramework>net10.0</TargetFramework>
+        <TargetFramework>net11.0</TargetFramework>
         <RootNamespace>RecordValueAnalyser.Test</RootNamespace>
         <DefineConstants>$(DefineConstants);LEGACY_ROSLYN</DefineConstants>
         <NoWarn>1701;1702;VSTHRD200;RCS1046</NoWarn>

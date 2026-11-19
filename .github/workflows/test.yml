@@ -19,7 +19,7 @@ jobs:
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: "10.0.x"
+          dotnet-version: "11.0.x"
 
       - name: Restore dependencies
         run: dotnet restore
@@ -42,7 +42,7 @@ jobs:
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: "10.0.x"
+          dotnet-version: "11.0.x"
 
       # build, then pack without building, as publish-nuget.yml does
       - name: Build
@@ -68,7 +68,7 @@ jobs:
           - { sdk: "8", tfm: net8.0, quality: ga, roslyn: roslyn4.8 }
           - { sdk: "9", tfm: net9.0, quality: ga, roslyn: roslyn4.8 }
           - { sdk: "10", tfm: net10.0, quality: ga, roslyn: roslyn5.9 }
-          - { sdk: "11", tfm: net11.0, quality: preview, roslyn: roslyn5.9 }
+          - { sdk: "11", tfm: net11.0, quality: ga, roslyn: roslyn5.9 }
 
     name: package-consumer (.NET ${{ matrix.sdk }})
 

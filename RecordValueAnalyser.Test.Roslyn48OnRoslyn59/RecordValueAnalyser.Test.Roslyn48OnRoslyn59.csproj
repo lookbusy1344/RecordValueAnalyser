@@ -4,7 +4,7 @@
          Visual Studio 2026. The direct Roslyn 5.9 references win over the 4.8 references of the analyzer projects. -->
 
     <PropertyGroup>
-        <TargetFramework>net10.0</TargetFramework>
+        <TargetFramework>net11.0</TargetFramework>
         <RootNamespace>RecordValueAnalyser.Test</RootNamespace>
         <NoWarn>1701;1702;VSTHRD200;RCS1046</NoWarn>
     </PropertyGroup>
