@@ -13,13 +13,20 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    # run the analyser tests on each supported runtime
+    env:
+      TestTargetFrameworks: "net9.0;net10.0;net11.0"
+
     steps:
       - uses: actions/checkout@v7
 
-      - name: Setup .NET SDK
+      - name: Setup .NET SDKs
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: "11.0.x"
+          dotnet-version: |
+            9.0.x
+            10.0.x
+            11.0.x
 
       - name: Restore dependencies
         run: dotnet restore

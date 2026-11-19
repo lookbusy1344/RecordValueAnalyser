@@ -200,7 +200,7 @@ When you write your implementations `SequenceEqual` is very useful for comparing
 
 [![Test](https://github.com/lookbusy1344/RecordValueAnalyser/actions/workflows/test.yml/badge.svg)](https://github.com/lookbusy1344/RecordValueAnalyser/actions/workflows/test.yml)
 
-Tests are in `RecordValueAnalyser.Test`, which runs on the Roslyn 5.12 compiler of the .NET 11 SDK and checks union types with C# 15 against the .NET 11 reference assemblies. `RecordValueAnalyser.Test.Roslyn48` runs the class and struct tests against the Roslyn 4.8 build, and `RecordValueAnalyser.Test.Roslyn48OnRoslyn59` runs every test against the Roslyn 4.8 build on a Roslyn 5.9 compiler. They are run in the CI pipeline, which also packs the package and checks that the .NET 8, 9, 10 and 11 SDKs each load the right build (`scripts/check-package.sh`).
+Tests are in `RecordValueAnalyser.Test`, which runs on the Roslyn 5.12 compiler of the .NET 11 SDK and checks union types with C# 15 against the .NET 11 reference assemblies. `RecordValueAnalyser.Test.Roslyn48` runs the class and struct tests against the Roslyn 4.8 build, and `RecordValueAnalyser.Test.Roslyn48OnRoslyn59` runs every test against the Roslyn 4.8 build on a Roslyn 5.9 compiler. The test projects target `$(TestTargetFrameworks)` from `Directory.Build.props`, `net11.0` by default. CI runs them on .NET 9, 10 and 11; locally, set `TestTargetFrameworks="net10.0;net11.0"` to run on each installed runtime. They are run in the CI pipeline, which also packs the package and checks that the .NET 8, 9, 10 and 11 SDKs each load the right build (`scripts/check-package.sh`).
 
 ### Running CI locally
 
@@ -210,7 +210,7 @@ Tests are in `RecordValueAnalyser.Test`, which runs on the Roslyn 5.12 compiler 
 act push -W .github/workflows/test.yml
 ```
 
-A full run takes several minutes. act serves workflow artifacts to the job containers from a local HTTP server, so the macOS firewall asks whether `act` may accept incoming connections. Allow it on a trusted network; without it the package jobs cannot pass the package between them. On an x86 machine, override the architecture with `--container-architecture linux/amd64`.
+A full run takes several minutes. act serves workflow artifacts to the job containers from a local HTTP server, so the macOS firewall asks whether `act` may accept incoming connections. Allow it on a trusted network; without it the package jobs cannot pass the package between them. On an x86 machine, override the architecture with `--container-architecture linux/amd64`. The act image has no libicu, which the .NET 11 SDK needs, so `.actrc` runs .NET in globalization-invariant mode.
 
 ## Formatting
 

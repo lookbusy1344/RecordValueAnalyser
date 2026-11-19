@@ -1,5 +1,10 @@
 <Project>
     <PropertyGroup>
         <Version>1.4.1.0</Version>
+        <!-- Target frameworks of the analyser test projects. CI sets this to every supported runtime, e.g. "net9.0;net10.0;net11.0". -->
+        <TestTargetFrameworks Condition="'$(TestTargetFrameworks)' == ''">net11.0</TestTargetFrameworks>
+        <!-- NuGet client of the test projects, which Microsoft.CodeAnalysis.Testing uses to fetch reference assemblies. 8.x targets net10.0 and later. -->
+        <NuGetClientVersion>8.0.0</NuGetClientVersion>
+        <NuGetClientVersion Condition="'$(TargetFramework)' == 'net9.0'">7.9.0</NuGetClientVersion>
     </PropertyGroup>
 </Project>
